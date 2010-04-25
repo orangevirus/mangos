@@ -9158,6 +9158,7 @@ void SpellAuraHolder::HandleSpellSpecificBoosts(bool apply)
                             break;
                         }
                     }
+					break;
                 }
                 else
                     return;
