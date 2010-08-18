@@ -1589,6 +1589,7 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                 case 33711:                                 // Murmur's Touch
                 case 38794:                                 // Murmur's Touch (h)
                 case 50988:                                 // Glare of the Tribunal (Halls of Stone)
+                case 54522:                                 // Summon Ghouls On Scarlet Crusade
                 case 59870:                                 // Glare of the Tribunal (h) (Halls of Stone)
                 case 68950:                                 // Fear (ICC: Forge of Souls)
                 case 66001:                                 // Touch of Darkness
