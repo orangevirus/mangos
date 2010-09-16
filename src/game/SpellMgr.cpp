@@ -644,6 +644,7 @@ bool IsPositiveEffect(uint32 spellId, SpellEffectIndex effIndex)
                     return false;
                 case 49634:                                 // Sergeant's Flare
                 case 54530:                                 // Opening
+                case 48021:                                 // support for quest 12173
                     return true;
                 default:
                     break;
