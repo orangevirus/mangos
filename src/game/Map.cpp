@@ -728,6 +728,7 @@ Map::Remove(T *obj, bool remove)
         // if option set then object already saved at this moment
         if(!sWorld.getConfig(CONFIG_BOOL_SAVE_RESPAWN_TIME_IMMEDIATLY))
             obj->SaveRespawnTime();
+        i_objectsToRemove.erase(obj); //i think it tried to delete allready deleted things on next worldupdate, so just remove it from the removelist when deleting it
         DeleteFromWorld(obj);
     }
 }
