@@ -34,7 +34,7 @@ namespace FactorySelector
     {
         // Allow scripting AI for normal creatures and not controlled pets (guardians and mini-pets)
         // Also allow possessed summons to use a special AI. Maybe there is a better sollution
-        if ((!creature->isPet() || !((Pet*)creature)->isControlled()) && (!creature->isCharmed() || creature->isPossessedSummon()))
+        if ((!creature->IsPet() || !((Pet*)creature)->isControlled()) && (!creature->isCharmed() || creature->isPossessedSummon()))
             if(CreatureAI* scriptedAI = Script->GetAI(creature))
                 return scriptedAI;
 
@@ -47,8 +47,8 @@ namespace FactorySelector
         // select by NPC flags _first_ - otherwise EventAI might be choosen for pets/totems
         // excplicit check for isControlled() and owner type to allow guardian, mini-pets and pets controlled by NPCs to be scripted by EventAI
         Unit *owner=NULL;
-        if ((creature->isPet() && ((Pet*)creature)->isControlled() &&
-            ((owner=creature->GetOwner()) && owner->GetTypeId()==TYPEID_PLAYER)) || (creature->isCharmed() && !creature->isVehicle()))
+        if ((creature->IsPet() && ((Pet*)creature)->isControlled() &&
+            ((owner=creature->GetOwner()) && owner->GetTypeId()==TYPEID_PLAYER)) || (creature->isCharmed() && !creature->IsVehicle()))
             ai_factory = ai_registry.GetRegistryItem("PetAI");
         else if (creature->IsTotem())
             ai_factory = ai_registry.GetRegistryItem("TotemAI");

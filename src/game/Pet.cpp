@@ -966,7 +966,7 @@ bool Pet::InitStatsForLevel(uint32 petlevel, Unit* owner)
                 // Greater Earth Elemetal (Earth Elemeantal Totem)
                 case 15352:
                 {
-                    if (owner->GetTypeId() == TYPEID_UNIT && ((Creature*)owner)->isTotem())
+                    if (owner->GetTypeId() == TYPEID_UNIT && ((Creature*)owner)->IsTotem())
                         if (Unit* ownerOwner = ((Totem*)owner)->GetOwner())
                         {
                             statBonus[STAT_STAMINA] = ownerOwner->GetStat(STAT_STAMINA) * 0.5f;
@@ -978,7 +978,7 @@ bool Pet::InitStatsForLevel(uint32 petlevel, Unit* owner)
                 // Greater Fire Elemetal (Fire Elemeantal Totem)
                 case 15438:
                 {
-                    if (owner->GetTypeId() == TYPEID_UNIT && ((Creature*)owner)->isTotem())
+                    if (owner->GetTypeId() == TYPEID_UNIT && ((Creature*)owner)->IsTotem())
                         if (Unit* ownerOwner = ((Totem*)owner)->GetOwner())
                         {
                             statBonus[STAT_STAMINA] = ownerOwner->GetStat(STAT_STAMINA) * 0.2f;

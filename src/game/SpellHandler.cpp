@@ -611,7 +611,7 @@ void WorldSession::HandleSpellClick( WorldPacket & recv_data )
         vehicleId = cainfo->vehicle_id;
 
     // handled other (hacky) way to avoid overwriting auras
-    if(vehicleId || unit->isVehicle())
+    if(vehicleId || unit->IsVehicle())
     {
         if(!unit->isAlive())
             return;
@@ -620,7 +620,7 @@ void WorldSession::HandleSpellClick( WorldPacket & recv_data )
             return;
 
         // create vehicle if no one present and kill the original creature to avoid double, triple etc spawns
-        if(!unit->isVehicle())
+        if(!unit->IsVehicle())
         {
             Vehicle *v = _player->SummonVehicle(unit->GetEntry(), unit->GetPositionX(), unit->GetPositionY(), unit->GetPositionZ(), unit->GetOrientation(), vehicleId);
             if(!v)
@@ -629,7 +629,7 @@ void WorldSession::HandleSpellClick( WorldPacket & recv_data )
             if(v->GetVehicleFlags() & VF_DESPAWN_NPC)
             {
                 v->SetSpawnDuration(unit->GetRespawnDelay()*IN_MILLISECONDS);
-                unit->setDeathState(JUST_DIED);
+                unit->SetDeathState(JUST_DIED);
                 unit->RemoveCorpse();
                 unit->SetHealth(0);
             }

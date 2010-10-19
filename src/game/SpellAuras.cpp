@@ -2378,7 +2378,7 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
             }
             case 59907:                                     // Lightwell charges - despawn creature if no charges remain
             {
-                if (GetTarget()->GetTypeId() == TYPEID_UNIT && ((Creature*)GetTarget())->isTemporarySummon())
+                if (GetTarget()->GetTypeId() == TYPEID_UNIT && ((Creature*)GetTarget())->IsTemporarySummon())
                     ((TemporarySummon*)GetTarget())->UnSummon();
                 return;
             }
@@ -5446,7 +5446,7 @@ void Aura::HandleModTotalPercentStat(bool apply, bool /*Real*/)
             {
                 // bear forms receive stamina bonus
                 GetTarget()->HandleStatModifier(UNIT_MOD_STAT_STAMINA, TOTAL_PCT, float(GetSpellProto()->CalculateSimpleValue(EFFECT_INDEX_1)), apply);
-                if(GetTarget()->GetTypeId() == TYPEID_PLAYER || ((Creature*)GetTarget())->isPet())
+                if(GetTarget()->GetTypeId() == TYPEID_PLAYER || ((Creature*)GetTarget())->IsPet())
                     GetTarget()->ApplyStatPercentBuffMod(STAT_STAMINA, float(GetSpellProto()->CalculateSimpleValue(EFFECT_INDEX_1)), apply );
 
                 // restore percentage hp
@@ -6817,7 +6817,7 @@ void Aura::PeriodicTick()
                 return;
 
             // Check for immune (not use charges)
-            if(target->IsImmunedToDamage(GetSpellSchoolMask(spellProto)))
+            if(target->IsImmuneToDamage(GetSpellSchoolMask(spellProto)))
                 return;
 
             // some custom stuff
@@ -7028,7 +7028,7 @@ void Aura::PeriodicTick()
                 return;
 
             // Check for immune
-            if(target->IsImmunedToDamage(GetSpellSchoolMask(spellProto)))
+            if(target->IsImmuneToDamage(GetSpellSchoolMask(spellProto)))
                 return;
 
             uint32 absorb=0;
@@ -7236,7 +7236,7 @@ void Aura::PeriodicTick()
                 return;
 
             // Check for immune (not use charges)
-            if(target->IsImmunedToDamage(GetSpellSchoolMask(spellProto)))
+            if(target->IsImmuneToDamage(GetSpellSchoolMask(spellProto)))
                 return;
 
             // ignore non positive values (can be result apply spellmods to aura damage
@@ -7332,7 +7332,7 @@ void Aura::PeriodicTick()
                 return;
 
             // Check for immune (not use charges)
-            if(target->IsImmunedToDamage(GetSpellSchoolMask(spellProto)))
+            if(target->IsImmuneToDamage(GetSpellSchoolMask(spellProto)))
                 return;
 
             int32 pdamage = m_modifier.m_amount > 0 ? m_modifier.m_amount : 0;
@@ -8181,7 +8181,7 @@ void Aura::HandleAuraControlVehicle(bool apply, bool Real)
 
     Unit* target = GetTarget();
     Unit* caster = GetCaster();
-    if (target->GetTypeId() != TYPEID_UNIT || !((Creature*)target)->isVehicle())
+    if (target->GetTypeId() != TYPEID_UNIT || !((Creature*)target)->IsVehicle())
         return;
     Vehicle* vehicle = (Vehicle*)target;
 

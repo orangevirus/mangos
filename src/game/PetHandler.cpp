@@ -681,7 +681,7 @@ void WorldSession::HandlePetCastSpellOpcode( WorldPacket& recvPacket )
     SpellCastResult result = spell->CheckPetCast(NULL);
     if (result == SPELL_CAST_OK)
     {
-        if (pet->isPet())
+        if (pet->IsPet())
         {
             //10% chance to play special pet attack talk, else growl
             //actually this only seems to happen on special spells, fire shield for imp, torment for voidwalker, but it's stupid to check every spell

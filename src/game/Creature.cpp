@@ -440,7 +440,7 @@ void Creature::Update(uint32 diff)
         case DEAD:
         {
             // no respawn handling for temporary summons
-            if (isTemporarySummon())
+            if (IsTemporarySummon())
                 break;
 
             if( m_respawnTime <= time(NULL) )
@@ -1422,8 +1422,8 @@ void Creature::SetDeathState(DeathState s)
         if (CanFly() && FallGround())
             return;
 
-        Unit::setDeathState(CORPSE);
-        if(isVehicle())
+        Unit::SetDeathState(CORPSE);
+        if(IsVehicle())
             ((Vehicle*)this)->Die();
     }
 
@@ -1554,7 +1554,7 @@ bool Creature::IsImmuneToSpellEffect(SpellEntry const* spellInfo, SpellEffectInd
     }
 
     // Heal immunity
-    if (isVehicle() && !(((Vehicle*)this)->GetVehicleFlags() & VF_CAN_BE_HEALED))
+    if (IsVehicle() && !(((Vehicle*)this)->GetVehicleFlags() & VF_CAN_BE_HEALED))
     {
         switch(spellInfo->Effect[index])
         {
@@ -2102,14 +2102,14 @@ float Creature::GetBaseSpeedMod(UnitMoveType mtype) const
     {
         case MOVE_WALK:
         {
-            if (isPet() && ((Pet*)this)->getPetType() == HUNTER_PET)
+            if (IsPet() && ((Pet*)this)->getPetType() == HUNTER_PET)
                 return 1.0f;
             else
                 return GetCreatureInfo()->speed_walk;
         }
         case MOVE_RUN:
         {
-             if (isPet() && ((Pet*)this)->getPetType() == HUNTER_PET)
+             if (IsPet() && ((Pet*)this)->getPetType() == HUNTER_PET)
                 return 8.0f/7.0f;
             else
                 return GetCreatureInfo()->speed_run;

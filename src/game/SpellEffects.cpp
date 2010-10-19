@@ -2641,7 +2641,7 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
 
         case SPELLFAMILY_PET:
         {
-            if (m_spellInfo->SpellIconID == 3748 && unitTarget->GetTypeId() == TYPEID_UNIT && ((Creature*)unitTarget)->isPet())
+            if (m_spellInfo->SpellIconID == 3748 && unitTarget->GetTypeId() == TYPEID_UNIT && ((Creature*)unitTarget)->IsPet())
                 ((Pet*)unitTarget)->UpdateScalingAuras();
         }
     }
@@ -7183,7 +7183,7 @@ void Spell::EffectAddComboPoints(SpellEffectIndex /*eff_idx*/)
 
     if(m_caster->GetTypeId() != TYPEID_PLAYER)
     {
-        if(((Creature*)m_caster)->isVehicle())
+        if(((Creature*)m_caster)->IsVehicle())
             ((Player*)m_caster->GetCharmer())->AddComboPoints(unitTarget, damage);
     }else
         ((Player*)m_caster)->AddComboPoints(unitTarget, damage);
@@ -8581,7 +8581,7 @@ void Spell::EffectUntrainTalents(SpellEffectIndex /*eff_idx*/)
         //if (!m_session || m_session->GetPlayer() != target)
         //    PSendSysMessage(LANG_RESET_TALENTS_ONLINE,GetNameLink(target).c_str());
     }
-    else if (unitTarget->GetTypeId() == TYPEID_UNIT && ((Creature*)unitTarget)->isPet() &&
+    else if (unitTarget->GetTypeId() == TYPEID_UNIT && ((Creature*)unitTarget)->IsPet() &&
         ((Pet*)unitTarget)->IsPermanentPetFor(pTarget) && ((Pet*)unitTarget)->resetTalents(true))
     {
         pTarget->SendTalentsInfoData(true);

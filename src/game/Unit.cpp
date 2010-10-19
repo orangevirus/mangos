@@ -1493,7 +1493,7 @@ void Unit::CalculateMeleeDamage(Unit *pVictim, uint32 damage, CalcDamageInfo *da
     }
 
     // Physical Immune check
-    if (damageInfo->target->IsImmunedToDamage(damageInfo->damageSchoolMask))
+    if (damageInfo->target->IsImmuneToDamage(damageInfo->damageSchoolMask))
     {
         damageInfo->HitInfo       |= HITINFO_NORMALSWING;
         damageInfo->TargetState    = VICTIMSTATE_IS_IMMUNE;
@@ -1980,7 +1980,7 @@ void Unit::CalculateDamageAbsorbAndResist(Unit *pCaster, SpellSchoolMask schoolM
         // Ignore resistance by self SPELL_AURA_MOD_TARGET_RESISTANCE aura
         tmpvalue2 += (float)pCaster->GetTotalAuraModifierByMiscMask(SPELL_AURA_MOD_TARGET_RESISTANCE, schoolMask);
         // all pets receive 100% of owner's spell penetration
-        if (pCaster->GetTypeId() == TYPEID_UNIT && ((Creature*)pCaster)->isPet() && pCaster->GetOwner())
+        if (pCaster->GetTypeId() == TYPEID_UNIT && ((Creature*)pCaster)->IsPet() && pCaster->GetOwner())
             tmpvalue2 += float(pCaster->GetOwner()->GetTotalAuraModifierByMiscMask(SPELL_AURA_MOD_TARGET_RESISTANCE, schoolMask));
 
         tmpvalue2 *= (float)(0.15f / getLevel());
@@ -3272,7 +3272,7 @@ SpellMissInfo Unit::SpellHitResult(Unit *pVictim, SpellEntry const *spell, bool 
         spell->Id == 32592 || spell->Id == 39897))
     {
         // Check for immune
-        if (pVictim->IsImmunedToSpell(spell))
+        if (pVictim->IsImmuneToSpell(spell))
             return SPELL_MISS_IMMUNE;
 
         // All positive spells can`t miss
@@ -3281,7 +3281,7 @@ SpellMissInfo Unit::SpellHitResult(Unit *pVictim, SpellEntry const *spell, bool 
             return SPELL_MISS_NONE;
 
         // Check for immune
-        if (pVictim->IsImmunedToDamage(GetSpellSchoolMask(spell)))
+        if (pVictim->IsImmuneToDamage(GetSpellSchoolMask(spell)))
             return SPELL_MISS_IMMUNE;
     }
     else if (IsPositiveSpell(spell->Id) && IsFriendlyTo(pVictim))
@@ -4261,7 +4261,7 @@ bool Unit::AddSpellAuraHolder(SpellAuraHolder *holder)
         if (Aura *aur = holder->GetAuraByEffectIndex(SpellEffectIndex(i)))
         {
             AddAuraToModList(aur);
-            if (aurSpellInfo->AttributesEx4 & SPELL_ATTR_EX4_PET_SCALING_AURA && GetTypeId() == TYPEID_UNIT && ((Creature*)this)->isPet())
+            if (aurSpellInfo->AttributesEx4 & SPELL_ATTR_EX4_PET_SCALING_AURA && GetTypeId() == TYPEID_UNIT && ((Creature*)this)->IsPet())
                 ((Pet*)this)->m_scalingauras.push_back(aur);
         }
 
@@ -4909,7 +4909,7 @@ void Unit::RemoveAura(Aura *Aur, AuraRemoveMode mode)
     {
         m_modAuras[Aur->GetModifier()->m_auraname].remove(Aur);
     }
-    if (Aur->GetSpellProto()->AttributesEx4 & SPELL_ATTR_EX4_PET_SCALING_AURA && GetTypeId() == TYPEID_UNIT && ((Creature*)this)->isPet())
+    if (Aur->GetSpellProto()->AttributesEx4 & SPELL_ATTR_EX4_PET_SCALING_AURA && GetTypeId() == TYPEID_UNIT && ((Creature*)this)->IsPet())
     {
         ((Pet*)this)->m_scalingauras.remove(Aur);
     }
@@ -5779,7 +5779,7 @@ bool Unit::Attack(Unit *victim, bool meleeAttack)
         return false;
 
     // player (also npc?) cannot attack on vehicle
-    if(GetTypeId()==TYPEID_UNIT && ((Creature*)this)->isVehicle() && GetCharmerGUID())
+    if(GetTypeId()==TYPEID_UNIT && ((Creature*)this)->IsVehicle() && GetCharmerGUID())
         return false;
 
 
@@ -6380,7 +6380,7 @@ uint32 Unit::SpellDamageBonusDone(Unit *pVictim, SpellEntry const *spellProto, u
     // creature and pet bonus mods
     if (GetTypeId() == TYPEID_UNIT)
     {
-        if (!((Creature*)this)->isPet())
+        if (!((Creature*)this)->IsPet())
             DoneTotalMod *= ((Creature*)this)->GetSpellDamageMod(((Creature*)this)->GetCreatureInfo()->rank);
         else
             DoneTotalMod *= ((Pet*)this)->GetHappinessDamageMod();
@@ -7343,7 +7343,7 @@ int32 Unit::SpellBaseHealingBonusTaken(SpellSchoolMask schoolMask)
     return AdvertisedBenefit;
 }
 
-bool Unit::IsImmunedToDamage(SpellSchoolMask shoolMask)
+bool Unit::IsImmuneToDamage(SpellSchoolMask shoolMask)
 {
     //If m_immuneToSchool type contain this school type, IMMUNE damage.
     SpellImmuneList const& schoolList = m_spellImmune[IMMUNITY_SCHOOL];
@@ -7564,7 +7564,7 @@ uint32 Unit::MeleeDamageBonusDone(Unit *pVictim, uint32 pdamage,WeaponAttackType
         // creature and pet bonus mods
         if (GetTypeId() == TYPEID_UNIT)
         {
-            if (!((Creature*)this)->isPet())
+            if (!((Creature*)this)->IsPet())
                 DonePercent *= ((Creature*)this)->GetSpellDamageMod(((Creature*)this)->GetCreatureInfo()->rank);
             else
                 DonePercent *= ((Pet*)this)->GetHappinessDamageMod();
@@ -9065,7 +9065,7 @@ bool Unit::SelectHostileTarget()
     }
 
     // enter in evade mode in other case
-    if(!((Creature*)this)->isVehicle())
+    if(!((Creature*)this)->IsVehicle())
         ((Creature*)this)->AI()->EnterEvadeMode();
 
     if (InstanceData* mapInstance = GetInstanceData())
@@ -9084,7 +9084,7 @@ int32 Unit::CalculateSpellDamage(Unit const* target, SpellEntry const* spellProt
 
     if(GetTypeId() == TYPEID_PLAYER)
         unitPlayer = (Player*)this;
-    else if(((Creature*)this)->isVehicle())
+    else if(((Creature*)this)->IsVehicle())
         unitPlayer = (Player*)GetCharmer();
     else
         unitPlayer = NULL;
@@ -9148,7 +9148,7 @@ int32 Unit::CalculateSpellDamage(Unit const* target, SpellEntry const* spellProt
         value = int32(value*0.25f*exp(getLevel()*(70-spellProto->spellLevel)/1000.0f));
 
     if(spellProto->AttributesEx4 & SPELL_ATTR_EX4_PET_SCALING_AURA && GetTypeId() == TYPEID_UNIT &&
-        ((Creature*)this)->isPet())
+        ((Creature*)this)->IsPet())
         value += ((Pet*)this)->CalcScalingAuraBonus(spellProto, effect_index);
 
     // Frostbite trigger aura: if Fingers of Frost is active, it has saved a roll:
@@ -9171,7 +9171,7 @@ int32 Unit::CalculateSpellDuration(SpellEntry const* spellProto, SpellEffectInde
 
     if(GetTypeId() == TYPEID_PLAYER)
         unitPlayer = (Player*)this;
-    else if(((Creature*)this)->isVehicle())
+    else if(((Creature*)this)->IsVehicle())
         unitPlayer = (Player*)GetCharmer();
     else
         unitPlayer = NULL;
@@ -9671,7 +9671,7 @@ void Unit::SetPower(Powers power, uint32 val)
     {
         if((owner->GetTypeId() == TYPEID_PLAYER) && ((Player*)owner)->GetGroup())
             ((Player*)owner)->SetGroupUpdateFlag(GROUP_UPDATE_FLAG_PET_CUR_POWER);
-        if(((Creature*)this)->isPet())
+        if(((Creature*)this)->IsPet())
         {
             Pet *pet = ((Pet*)this);
             // Update the pet's character sheet with happiness damage bonus
