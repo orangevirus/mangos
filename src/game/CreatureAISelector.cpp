@@ -50,7 +50,7 @@ namespace FactorySelector
         if ((creature->isPet() && ((Pet*)creature)->isControlled() &&
             ((owner=creature->GetOwner()) && owner->GetTypeId()==TYPEID_PLAYER)) || (creature->isCharmed() && !creature->isVehicle()))
             ai_factory = ai_registry.GetRegistryItem("PetAI");
-        else if (creature->isTotem())
+        else if (creature->IsTotem())
             ai_factory = ai_registry.GetRegistryItem("TotemAI");
 
         // select by script name
