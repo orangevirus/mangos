@@ -9539,6 +9539,9 @@ void SpellAuraHolder::Update(uint32 diff)
         if (Aura *aura = m_auras[i])
             aura->UpdateAura(diff);
 
+    if(!GetTarget())
+        return;
+
     // Channeled aura required check distance from caster
     if(IsChanneledSpell(m_spellProto) && m_caster_guid != GetTarget()->GetGUID())
     {
