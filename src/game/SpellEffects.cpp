@@ -4286,8 +4286,17 @@ void Spell::EffectDispel(SpellEffectIndex eff_idx)
             }
             // Unholy Blight prevents dispel of diseases from target
             else if (holder->GetSpellProto()->Dispel == DISPEL_DISEASE)
+            {
                 if (unitTarget->HasAura(50536))
                     continue;
+            }
+            else if (holder->GetSpellProto()->Dispel == DISPEL_ENRAGE)
+            {
+                // make world boss enrages/frenzy/berserk not dispellable
+                if(unitTarget->GetTypeId() == TYPEID_UNIT)
+                    if(((Creature*)unitTarget)->IsWorldBoss())
+                        continue;
+            }
 
             dispel_list.push_back(std::pair<SpellAuraHolder* ,uint32>(holder, holder->GetStackAmount()));
         }
