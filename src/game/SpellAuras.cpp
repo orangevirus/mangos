@@ -538,9 +538,9 @@ PersistentAreaAura::~PersistentAreaAura()
 SingleEnemyTargetAura::SingleEnemyTargetAura(SpellEntry const* spellproto, SpellEffectIndex eff, int32 *currentBasePoints, SpellAuraHolder *holder, Unit *target,
 Unit *caster, Item* castItem, Spell* createdBySpell) : Aura(spellproto, eff, currentBasePoints, holder, target, caster, castItem)
 {
-    m_casters_target_guid = createdBySpell ? createdBySpell->GetTargetForPeriodicTriggerAura().GetRawValue() : 0;
-    if (!m_casters_target_guid)
-            m_casters_target_guid = target->GetGUID();
+    m_castersTargetGuid = createdBySpell ? createdBySpell->GetTargetForPeriodicTriggerAura().GetRawValue() : 0;
+    if (!m_castersTargetGuid.GetRawValue())
+            m_castersTargetGuid = target->GetGUID();
 }
 
 SingleEnemyTargetAura::~SingleEnemyTargetAura()
@@ -549,7 +549,7 @@ SingleEnemyTargetAura::~SingleEnemyTargetAura()
 
 Unit* SingleEnemyTargetAura::GetTriggerTarget() const
 {
-    return ObjectAccessor::GetUnit(*(m_spellAuraHolder->GetTarget()), m_casters_target_guid);
+    return ObjectAccessor::GetUnit(*(m_spellAuraHolder->GetTarget()), m_castersTargetGuid);
 }
 
 Aura* CreateAura(SpellEntry const* spellproto, SpellEffectIndex eff, int32 *currentBasePoints, SpellAuraHolder *holder, Unit *target, Unit *caster, Item* castItem, Spell* createdBySpell)
@@ -641,7 +641,7 @@ void Aura::Update(uint32 diff)
 void AreaAura::Update(uint32 diff)
 {
     // update for the caster of the aura
-    if(GetCasterGUID() == GetTarget()->GetGUID())
+    if(GetCasterGuid() == GetTarget()->GetObjectGuid())
     {
         Unit* caster = GetTarget();
 
@@ -1129,10 +1129,10 @@ void Aura::HandleAddModifier(bool apply, bool Real)
 
 void Aura::TriggerSpell()
 {
-    const uint64& casterGUID = GetCasterGUID();
+    ObjectGuid casterGUID = GetCasterGuid();
     Unit* triggerTarget = GetTriggerTarget();
 
-    if (!casterGUID || !triggerTarget)
+    if (casterGUID.IsEmpty() || !triggerTarget)
         return;
 
     // generic casting code with custom spells and target/caster customs
@@ -1867,7 +1867,7 @@ void Aura::TriggerSpell()
                 // 2) maybe aura must be replace by new with accumulative stat mods instead stacking
 
                 // prevent cast by triggered auras
-                if (casterGUID == triggerTarget->GetGUID())
+                if (casterGUID == triggerTarget->GetObjectGuid())
                     return;
 
                 // stop triggering after each affected stats lost > 90
@@ -2602,7 +2602,7 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                     return;
 
                 if (apply && GetTarget())
-                    ((Player*)caster)->SetSelection(GetTarget()->GetGUID());
+                    ((Player*)caster)->SetSelectionGuid(GetTarget()->GetGUID());
                 return;
             }
             // Pain and Suffering
@@ -3936,7 +3936,7 @@ void Aura::HandleAuraModStun(bool apply, bool Real)
             target->ModifyAuraState(AURA_STATE_FROZEN, apply);
 
         target->addUnitState(UNIT_STAT_STUNNED);
-        target->SetTargetGUID(0);
+        target->SetTargetGuid(ObjectGuid());
 
         target->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_STUNNED);
         target->CastStop(target->GetGUID() == GetCasterGUID() ? GetId() : 0);
@@ -4009,7 +4009,7 @@ void Aura::HandleAuraModStun(bool apply, bool Real)
         if(!target->hasUnitState(UNIT_STAT_ROOT | UNIT_STAT_ON_VEHICLE))         // prevent allow move if have also root effect
         {
             if(target->getVictim() && target->isAlive())
-                target->SetTargetGUID(target->getVictim()->GetGUID());
+                target->SetTargetGuid(target->getVictim()->GetObjectGuid());
 
             WorldPacket data(SMSG_FORCE_MOVE_UNROOT, 8+4);
             data << target->GetPackGUID();
@@ -4226,7 +4226,7 @@ void Aura::HandleAuraModRoot(bool apply, bool Real)
             target->ModifyAuraState(AURA_STATE_FROZEN, apply);
 
         target->addUnitState(UNIT_STAT_ROOT);
-        target->SetTargetGUID(0);
+        target->SetTargetGuid(ObjectGuid());
 
         //Save last orientation
         if( target->getVictim() )
@@ -4281,7 +4281,7 @@ void Aura::HandleAuraModRoot(bool apply, bool Real)
         if(!target->hasUnitState(UNIT_STAT_STUNNED | UNIT_STAT_ON_VEHICLE))      // prevent allow move if have also stun effect
         {
             if(target->getVictim() && target->isAlive())
-                target->SetTargetGUID(target->getVictim()->GetGUID());
+                target->SetTargetGuid(target->getVictim()->GetObjectGuid());
 
             if(target->GetTypeId() == TYPEID_PLAYER)
             {
@@ -6589,8 +6589,8 @@ void Aura::HandleAuraRetainComboPoints(bool apply, bool Real)
 
     // combo points was added in SPELL_EFFECT_ADD_COMBO_POINTS handler
     // remove only if aura expire by time (in case combo points amount change aura removed without combo points lost)
-    if( !apply && m_removeMode == AURA_REMOVE_BY_EXPIRE && target->GetComboTarget())
-        if(Unit* unit = ObjectAccessor::GetUnit(*GetTarget(),target->GetComboTarget()))
+    if (!apply && m_removeMode == AURA_REMOVE_BY_EXPIRE && !target->GetComboTargetGuid().IsEmpty())
+        if (Unit* unit = ObjectAccessor::GetUnit(*GetTarget(),target->GetComboTargetGuid()))
             target->AddComboPoints(unit, -m_modifier.m_amount);
 }
 
@@ -6973,8 +6973,8 @@ void Aura::PeriodicTick()
 
             target->CalculateDamageAbsorbAndResist(pCaster, GetSpellSchoolMask(spellProto), DOT, pdamage, &absorb, &resist, !(GetSpellProto()->AttributesEx2 & SPELL_ATTR_EX2_CANT_REFLECTED));
 
-            DETAIL_FILTER_LOG(LOG_FILTER_PERIODIC_AFFECTS, "PeriodicTick: %u (TypeId: %u) attacked %u (TypeId: %u) for %u dmg inflicted by %u abs is %u",
-                GUID_LOPART(GetCasterGUID()), GuidHigh2TypeId(GUID_HIPART(GetCasterGUID())), target->GetGUIDLow(), target->GetTypeId(), pdamage, GetId(),absorb);
+            DETAIL_FILTER_LOG(LOG_FILTER_PERIODIC_AFFECTS, "PeriodicTick: %s attacked %s for %u dmg inflicted by %u abs is %u",
+                GetCasterGuid().GetString().c_str(), target->GetObjectGuid().GetString().c_str(), pdamage, GetId(),absorb);
 
             pCaster->DealDamageMods(target, pdamage, &absorb);
 
@@ -7067,8 +7067,8 @@ void Aura::PeriodicTick()
             if(target->GetHealth() < pdamage)
                 pdamage = uint32(target->GetHealth());
 
-            DETAIL_FILTER_LOG(LOG_FILTER_PERIODIC_AFFECTS, "PeriodicTick: %u (TypeId: %u) health leech of %u (TypeId: %u) for %u dmg inflicted by %u abs is %u",
-                GUID_LOPART(GetCasterGUID()), GuidHigh2TypeId(GUID_HIPART(GetCasterGUID())), target->GetGUIDLow(), target->GetTypeId(), pdamage, GetId(),absorb);
+            DETAIL_FILTER_LOG(LOG_FILTER_PERIODIC_AFFECTS, "PeriodicTick: %s health leech of %s for %u dmg inflicted by %u abs is %u",
+                GetCasterGuid().GetString().c_str(), target->GetObjectGuid().GetString().c_str(), pdamage, GetId(),absorb);
 
             pCaster->DealDamageMods(target, pdamage, &absorb);
 
@@ -7158,8 +7158,8 @@ void Aura::PeriodicTick()
             pCaster->CalculateHealAbsorb(pdamage, &absorbHeal);
             pdamage -= absorbHeal;
 
-            DETAIL_FILTER_LOG(LOG_FILTER_PERIODIC_AFFECTS, "PeriodicTick: %u (TypeId: %u) heal of %u (TypeId: %u) for %u health  (absorbed %u) inflicted by %u",
-                GUID_LOPART(GetCasterGUID()), GuidHigh2TypeId(GUID_HIPART(GetCasterGUID())), target->GetGUIDLow(), target->GetTypeId(), pdamage, absorbHeal, GetId());
+            DETAIL_FILTER_LOG(LOG_FILTER_PERIODIC_AFFECTS, "PeriodicTick: %s heal of %s for %u health  (absorbed %u) inflicted by %u",
+                GetCasterGuid().GetString().c_str(), target->GetObjectGuid().GetString().c_str(), pdamage, absorbHeal, GetId());
 
             int32 gain = target->ModifyHealth(pdamage);
             SpellPeriodicAuraLogInfo pInfo(this, pdamage, (pdamage - uint32(gain)), absorbHeal, 0, 0.0f, isCrit);
@@ -7253,8 +7253,8 @@ void Aura::PeriodicTick()
                     pdamage = maxmana;
             }
 
-            DETAIL_FILTER_LOG(LOG_FILTER_PERIODIC_AFFECTS, "PeriodicTick: %u (TypeId: %u) power leech of %u (TypeId: %u) for %u dmg inflicted by %u",
-                GUID_LOPART(GetCasterGUID()), GuidHigh2TypeId(GUID_HIPART(GetCasterGUID())), target->GetGUIDLow(), target->GetTypeId(), pdamage, GetId());
+            DETAIL_FILTER_LOG(LOG_FILTER_PERIODIC_AFFECTS, "PeriodicTick: %s power leech of %s for %u dmg inflicted by %u",
+                GetCasterGuid().GetString().c_str(), target->GetObjectGuid().GetString().c_str(), pdamage, GetId());
 
             int32 drain_amount = target->GetPower(power) > pdamage ? pdamage : target->GetPower(power);
 
@@ -7309,8 +7309,9 @@ void Aura::PeriodicTick()
                 pdamage = uint32(target->GetMaxPower(power) * amount/100);
             else
                 pdamage = amount;
-            DETAIL_FILTER_LOG(LOG_FILTER_PERIODIC_AFFECTS, "PeriodicTick: %u (TypeId: %u) energize %u (TypeId: %u) for %u mana inflicted by %u",
-                GUID_LOPART(GetCasterGUID()), GuidHigh2TypeId(GUID_HIPART(GetCasterGUID())), target->GetGUIDLow(), target->GetTypeId(), pdamage, GetId());
+
+            DETAIL_FILTER_LOG(LOG_FILTER_PERIODIC_AFFECTS, "PeriodicTick: %s energize %s for %u dmg inflicted by %u",
+                GetCasterGuid().GetString().c_str(), target->GetObjectGuid().GetString().c_str(), pdamage, GetId());
 
             SpellPeriodicAuraLogInfo pInfo(this, pdamage, 0, 0, 0, 0.0f);
             target->SendPeriodicAuraLog(&pInfo);
@@ -9553,7 +9554,7 @@ void SpellAuraHolder::Update(uint32 diff)
         }
 
         // need check distance for channeled target only
-        if (caster->GetChannelObjectGUID() == GetTarget()->GetGUID())
+        if (caster->GetChannelObjectGuid() == m_target->GetObjectGuid())
         {
             // Get spell range
             float max_range = GetSpellMaxRange(sSpellRangeStore.LookupEntry(m_spellProto->rangeIndex));
