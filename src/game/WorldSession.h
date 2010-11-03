@@ -44,6 +44,7 @@ class QueryResult;
 class LoginQueryHolder;
 class CharacterHandler;
 class GMTicket;
+class MovementInfo;
 
 struct OpcodeHandler;
 
@@ -784,6 +785,7 @@ class MANGOS_DLL_SPEC WorldSession
     private:
         // private trade methods
         void moveItems(Item* myItems[], Item* hisItems[]);
+	void HandleMoverRelocation(MovementInfo&, Unit*, Player*);
 
         void ExecuteOpcode( OpcodeHandler const& opHandle, WorldPacket* packet );
 

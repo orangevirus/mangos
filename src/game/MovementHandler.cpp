@@ -1022,3 +1022,88 @@ void WorldSession::HandleSummonResponseOpcode(WorldPacket& recv_data)
 
     _player->SummonIfPossible(agree);
 }
+
+void WorldSession::HandleMoverRelocation(MovementInfo& movementInfo, Unit* mover, Player* plMover)
+{
+    movementInfo.UpdateTime(getMSTime());
+
+    if (plMover)
+    {
+        if (movementInfo.HasMovementFlag(MOVEFLAG_ONTRANSPORT))
+        {
+            if (!plMover->m_transport)
+            {
+                float trans_rad = movementInfo.GetTransportPos()->x*movementInfo.GetTransportPos()->x + movementInfo.GetTransportPos()->y*movementInfo.GetTransportPos()->y + movementInfo.GetTransportPos()->z*movementInfo.GetTransportPos()->z;
+                if (trans_rad > 3600.0f) // transport radius = 60 yards //cheater with on_transport_flag
+                {
+   return;
+                }
+                // elevators also cause the client to send MOVEFLAG_ONTRANSPORT - just unmount if the guid can be found in the transport list
+                for (MapManager::TransportSet::const_iterator iter = sMapMgr.m_Transports.begin(); iter != sMapMgr.m_Transports.end(); ++iter)
+                {
+                    if ((*iter)->GetObjectGuid() == movementInfo.GetTransportGuid())
+                    {
+                        plMover->m_transport = (*iter);
+                        (*iter)->AddPassenger(plMover);
+                        break;
+                    }
+                }
+            }
+        }
+        else if (plMover->m_transport) // if we were on a transport, leave
+        {
+            plMover->m_transport->RemovePassenger(plMover);
+            plMover->m_transport = NULL;
+            movementInfo.ClearTransportData();
+        }
+
+        if (movementInfo.HasMovementFlag(MOVEFLAG_SWIMMING) != plMover->IsInWater())
+        {
+            // now client not include swimming flag in case jumping under water
+            plMover->SetInWater( !plMover->IsInWater() || plMover->GetBaseMap()->IsUnderWater(movementInfo.GetPos()->x, movementInfo.GetPos()->y, movementInfo.GetPos()->z) );
+        }
+        if(plMover->GetBaseMap()->IsUnderWater(movementInfo.GetPos()->x, movementInfo.GetPos()->y, movementInfo.GetPos()->z-7.0f))
+        {
+            plMover->m_anti_BeginFallZ=INVALID_HEIGHT;
+        }
+
+        plMover->SetPosition(movementInfo.GetPos()->x, movementInfo.GetPos()->y, movementInfo.GetPos()->z, movementInfo.GetPos()->o);
+        plMover->m_movementInfo = movementInfo;
+
+        if(movementInfo.GetPos()->z < -500.0f)
+        {
+            if(plMover->InBattleGround()
+                && plMover->GetBattleGround()
+                && plMover->GetBattleGround()->HandlePlayerUnderMap(_player))
+            {
+                // do nothing, the handle already did if returned true
+            }
+            else
+            {
+                // NOTE: this is actually called many times while falling
+                // even after the player has been teleported away
+                // TODO: discard movement packets after the player is rooted
+                if(plMover->isAlive())
+                {
+                    plMover->EnvironmentalDamage(DAMAGE_FALL_TO_VOID, plMover->GetMaxHealth());
+                    // pl can be alive if GM/etc
+                    if(!plMover->isAlive())
+                    {
+                        // change the death state to CORPSE to prevent the death timer from
+                        // starting in the next player update
+                        plMover->KillPlayer();
+                        plMover->BuildPlayerRepop();
+                    }
+                }
+
+                // cancel the death timer here if started
+                plMover->RepopAtGraveyard();
+            }
+        }
+    }
+    else // creature charmed
+    {
+        if (mover->IsInWorld())
+            mover->GetMap()->CreatureRelocation((Creature*)mover, movementInfo.GetPos()->x, movementInfo.GetPos()->y, movementInfo.GetPos()->z, movementInfo.GetPos()->o);
+    }
+}
