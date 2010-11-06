@@ -1225,6 +1225,24 @@ void GameObject::Use(Unit* user)
                         player->RemoveGameObject(this,false);
                         SetOwnerGUID(player->GetGUID());
 
+						// Achievement 'The Lurker Below'
+						float posx = 40; /* postion of 'The Lurker Below' */
+						float posy = -417; 
+						float posz = -21;
+
+						if (skill >= 300 && subzone == 3607/* Serpentshrine Cavern */ && player->GetDistance(40, -417, -21) < 30/* Check if the player is near the spawnpoint */)
+						{ 
+							if (!urand(0, 9))
+							{
+								uint32 theLurkerBelowId = 21217;
+								if (!player->GetAchievementMgr().HasAchievement(144))
+								{
+									player->CompletedAchievement(144);
+									SummonCreature(theLurkerBelowId, posx, posy, posz, 0, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 1000000); // spawn 'The Lurker Below'
+								}
+							}
+						}
+
                         //fish catched
                         player->UpdateFishingSkill();
 
@@ -1243,33 +1261,8 @@ void GameObject::Use(Unit* user)
                         // fish escaped, can be deleted now
                         SetLootState(GO_JUST_DEACTIVATED);
 
-						// Achievement 'The Lurker Below'
-						float posx = 40; /* postion of 'The Lurker Below' */
-						float posy = -417; 
-						float posz = -21;
-
-						if (skill >= 300 && subzone == 3607/* Serpentshrine Cavern */ && player->GetDistance(40, -417, -21) < 30/* Check if the player is near the spawnpoint */)
-						{ 
-							if (!urand(0, 9))
-							{
-								uint32 theLurkerBelowId = 21217;
-								if (!player->GetAchievementMgr().HasAchievement(144))
-								{
-									player->CompletedAchievement(144);
-									SummonCreature(theLurkerBelowId, posx, posy, posz, 0, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 1000000); // spawn 'The Lurker Below'
-								}
-							}
-							else
-							{
-								WorldPacket data(SMSG_FISH_ESCAPED, 0);
-								player->GetSession()->SendPacket(&data);
-							}
-						}
-						else
-						{
-							WorldPacket data(SMSG_FISH_ESCAPED, 0);
-							player->GetSession()->SendPacket(&data);
-						}
+						WorldPacket data(SMSG_FISH_ESCAPED, 0);
+						player->GetSession()->SendPacket(&data);
                     }
                     break;
                 }
