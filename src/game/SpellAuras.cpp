@@ -4454,15 +4454,17 @@ void Aura::HandleAuraModIncreaseFlightSpeed(bool apply, bool Real)
         WorldPacket data;
         if(apply)
         {
-            ((Player*)GetTarget())->SetCanFly(true);
+            if (target->GetTypeId()==TYPEID_PLAYER)
+                ((Player*)target)->SetCanFly(true);
             data.Initialize(SMSG_MOVE_SET_CAN_FLY, 12);
         }
         else
         {
             data.Initialize(SMSG_MOVE_UNSET_CAN_FLY, 12);
-            ((Player*)target)->SetCanFly(false);
+            if (target->GetTypeId()==TYPEID_PLAYER)
+                ((Player*)target)->SetCanFly(false);
         }
-        //data.append(GetTarget()->GetPackGUID());
+        //data.append(target->GetPackGUID());
         data << target->GetPackGUID();
         data << uint32(0);                                      // unknown
         target->SendMessageToSet(&data, true);
@@ -6488,14 +6490,14 @@ void Aura::HandleAuraAllowFlight(bool apply, bool Real)
     WorldPacket data;
     if(apply)
     {
-        if (GetTarget()->GetTypeId() == TYPEID_PLAYER)
+        if (GetTarget()->GetTypeId()==TYPEID_PLAYER)
             ((Player*)GetTarget())->SetCanFly(true);
         data.Initialize(SMSG_MOVE_SET_CAN_FLY, 12);
     }
     else
     {
         data.Initialize(SMSG_MOVE_UNSET_CAN_FLY, 12);
-        if (GetTarget()->GetTypeId() == TYPEID_PLAYER)
+        if (GetTarget()->GetTypeId()==TYPEID_PLAYER)
             ((Player*)GetTarget())->SetCanFly(false);
     }
     data << GetTarget()->GetPackGUID();
@@ -6674,17 +6676,23 @@ void Aura::HandleSchoolAbsorb(bool apply, bool Real)
                     // Frost Ward, Fire Ward
                     if (spellProto->SpellFamilyFlags & UI64LIT(0x0000000000000108))
                         //+10% from +spell bonus
-                        DoneActualBenefit = caster->SpellBaseDamageBonusDone(GetSpellSchoolMask(spellProto)) * 0.1f;
+                        DoneActualBenefit = caster->SpellBaseDamageBonusDone(GetSpellSchoolMask(spellProto)) * 0.8068f;
                     // Ice Barrier
                     else if (spellProto->SpellFamilyFlags & UI64LIT(0x0000000100000000))
+                    {
                         //+80.67% from +spell bonus
                         DoneActualBenefit = caster->SpellBaseDamageBonusDone(GetSpellSchoolMask(spellProto)) * 0.8067f;
+                        //Glyph of Ice Barrier
+                        //-> ApplySpellMod adds 30% to the base value, not the complete absorb value
+                        if(caster->HasAura(63095))
+                           DoneActualBenefit *= 1.3f;
+                    }
                     break;
                 case SPELLFAMILY_WARLOCK:
                     // Shadow Ward
                     if (spellProto->SpellFamilyFlags2 & 0x00000040)
                         //+30% from +spell bonus
-                        DoneActualBenefit = caster->SpellBaseDamageBonusDone(GetSpellSchoolMask(spellProto)) * 0.30f;
+                        DoneActualBenefit = caster->SpellBaseDamageBonusDone(GetSpellSchoolMask(spellProto)) * 0.8068f;
                     break;
                 case SPELLFAMILY_PALADIN:
                     // Sacred Shield

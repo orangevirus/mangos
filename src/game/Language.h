@@ -983,8 +983,7 @@ enum MangosStrings
     LANG_BG_WG_RANK2                    = 10116,
 
     // Use for custom patches             11000-11999
-
-    LANG_ANNOUNCE_CHEAT                 = 11000
+    LANG_ANNOUNCE_CHEAT                 = 11000,
 
     // NOT RESERVED IDS                   12000-1999999999
     // `db_script_string` table index     2000000000-2000009999 (MIN_DB_SCRIPT_STRING_ID-MAX_DB_SCRIPT_STRING_ID)

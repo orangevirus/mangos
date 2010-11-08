@@ -34,6 +34,74 @@
 #include "World.h"
 #include "Language.h"
 
+//#define __ANTI_DEBUG__
+
+#ifdef __ANTI_DEBUG__
+#include "Chat.h"
+std::string FlagsToStr(const uint32 Flags)
+{
+    std::string Ret="";
+    if(Flags==0)
+    {
+        Ret="None";
+        return Ret;
+    }
+
+    if(Flags & MOVEMENTFLAG_FORWARD)
+    {   Ret+="FW "; }
+    if(Flags & MOVEMENTFLAG_BACKWARD)
+    {   Ret+="BW "; }
+    if(Flags & MOVEMENTFLAG_STRAFE_LEFT)
+    {   Ret+="STL ";    }
+    if(Flags & MOVEMENTFLAG_STRAFE_RIGHT)
+    {   Ret+="STR ";    }
+    if(Flags & MOVEMENTFLAG_LEFT)
+    {   Ret+="LF "; }
+    if(Flags & MOVEMENTFLAG_RIGHT)
+    {   Ret+="RI "; }
+    if(Flags & MOVEMENTFLAG_PITCH_UP)
+    {   Ret+="PTUP ";   }
+    if(Flags & MOVEMENTFLAG_PITCH_DOWN)
+    {   Ret+="PTDW ";   }
+    if(Flags & MOVEMENTFLAG_WALK_MODE)
+    {   Ret+="WALK ";   }
+    if(Flags & MOVEMENTFLAG_ONTRANSPORT)
+    {   Ret+="TRANS ";  }
+    if(Flags & MOVEMENTFLAG_LEVITATING)
+    {   Ret+="LEVI ";   }
+    if(Flags & MOVEMENTFLAG_FLY_UNK1)
+    {   Ret+="FLYUNK1 ";    }
+    if(Flags & MOVEMENTFLAG_JUMPING)
+    {   Ret+="JUMP ";   }
+    if(Flags & MOVEMENTFLAG_UNK4)
+    {   Ret+="UNK4 ";   }
+    if(Flags & MOVEMENTFLAG_FALLING)
+    {   Ret+="FALL ";   }
+    if(Flags & MOVEMENTFLAG_SWIMMING)
+    {   Ret+="SWIM ";   }
+    if(Flags & MOVEMENTFLAG_FLY_UP)
+    {   Ret+="FLYUP ";  }
+    if(Flags & MOVEMENTFLAG_CAN_FLY)
+    {   Ret+="CFLY ";   }
+    if(Flags & MOVEMENTFLAG_FLYING)
+    {   Ret+="FLY ";    }
+    if(Flags & MOVEMENTFLAG_FLYING2)
+    {   Ret+="FLY2 ";   }
+    if(Flags & MOVEMENTFLAG_WATERWALKING)
+    {   Ret+="WTWALK "; }
+    if(Flags & MOVEMENTFLAG_SAFE_FALL)
+    {   Ret+="SAFE ";   }
+   if(Flags & MOVEMENTFLAG_UNK3)
+    {   Ret+="UNK3 ";   }
+    if(Flags & MOVEMENTFLAG_SPLINE)
+    {   Ret+="SPLINE ";     }
+    if(Flags & MOVEMENTFLAG_SPLINE2)
+    {   Ret+="SPLINE2 ";    }
+
+    return Ret;
+}
+#endif // __ANTI_DEBUG__
+
 bool WorldSession::Anti__ReportCheat(const char* Reason,float Speed,const char* Op,float Val1,uint32 Val2)
 {
     if(!Reason)
@@ -100,7 +168,8 @@ bool WorldSession::Anti__ReportCheat(const char* Reason,float Speed,const char* 
     }
     if(sWorld.GetMvAnticheatBan() & 1)
     {
-        sWorld.BanAccount(BAN_CHARACTER,Player,sWorld.GetMvAnticheatBanTime(),"Cheat","Anticheat");
+        uint32 duration_secs = TimeStringToSecs(sWorld.GetMvAnticheatBanTime());
+        sWorld.BanAccount(BAN_CHARACTER,Player,duration_secs,(char*)"Cheat",(char*)"Anticheat");
     }
     if(sWorld.GetMvAnticheatBan() & 2)
     {
@@ -112,7 +181,8 @@ bool WorldSession::Anti__ReportCheat(const char* Reason,float Speed,const char* 
             std::string LastIP = fields[0].GetCppString();
             if(!LastIP.empty())
             {
-                sWorld.BanAccount(BAN_IP,LastIP,sWorld.GetMvAnticheatBanTime(),"Cheat","Anticheat");
+                uint32 duration_secs = TimeStringToSecs(sWorld.GetMvAnticheatBanTime());
+                sWorld.BanAccount(BAN_IP,LastIP,duration_secs,(char*)"Cheat",(char*)"Anticheat");
             }
             delete result;
         }
@@ -120,8 +190,7 @@ bool WorldSession::Anti__ReportCheat(const char* Reason,float Speed,const char* 
     return true;
 }
 
-bool WorldSession::Anti__CheatOccurred(uint32 CurTime,const char* Reason,float Speed,const char* Op,
-                                float Val1,uint32 Val2)
+bool WorldSession::Anti__CheatOccurred(uint32 CurTime,const char* Reason,float Speed,const char* Op, float Val1,uint32 Val2)
 {
     if(!Reason)
     {
@@ -135,8 +204,8 @@ bool WorldSession::Anti__CheatOccurred(uint32 CurTime,const char* Reason,float S
     if (GetPlayer()->m_anti_alarmcount > sWorld.GetMvAnticheatAlarmCount())
     {
         Anti__ReportCheat(Reason,Speed,Op,Val1,Val2);
-        if(sWorld.GetMvAnticheatAnnounce())
-           sWorld.SendWorldText(LANG_ANNOUNCE_CHEAT, GetPlayer()->GetName(), Reason);
+        if (sWorld.GetMvAnticheatAnnounce())
+            sWorld.SendWorldText(LANG_ANNOUNCE_CHEAT, GetPlayer()->GetName(), Reason);
         return true;
     }
     return false;
@@ -401,7 +470,7 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
         GetPlayer()->m_anti_MovedLen += delta;
 
         if (delta_t > 15000.0f)
-        { delta_t = 15000.0f; }
+            { delta_t = 15000.0f; }
 
         // Tangens of walking angel
         if (!(movementInfo.GetMovementFlags() & (MOVEFLAG_FLYING | MOVEFLAG_SWIMMING)))
@@ -911,6 +980,11 @@ void WorldSession::HandleMoverRelocation(MovementInfo& movementInfo, Unit* mover
         {
             if (!plMover->m_transport)
             {
+                float trans_rad = movementInfo.GetTransportPos()->x*movementInfo.GetTransportPos()->x + movementInfo.GetTransportPos()->y*movementInfo.GetTransportPos()->y + movementInfo.GetTransportPos()->z*movementInfo.GetTransportPos()->z;
+                if (trans_rad > 3600.0f) // transport radius = 60 yards //cheater with on_transport_flag
+                {
+   return;
+                }
                 // elevators also cause the client to send MOVEFLAG_ONTRANSPORT - just unmount if the guid can be found in the transport list
                 for (MapManager::TransportSet::const_iterator iter = sMapMgr.m_Transports.begin(); iter != sMapMgr.m_Transports.end(); ++iter)
                 {
@@ -923,7 +997,7 @@ void WorldSession::HandleMoverRelocation(MovementInfo& movementInfo, Unit* mover
                 }
             }
         }
-        else if (plMover->m_transport)               // if we were on a transport, leave
+        else if (plMover->m_transport) // if we were on a transport, leave
         {
             plMover->m_transport->RemovePassenger(plMover);
             plMover->m_transport = NULL;
@@ -934,6 +1008,12 @@ void WorldSession::HandleMoverRelocation(MovementInfo& movementInfo, Unit* mover
         {
             // now client not include swimming flag in case jumping under water
             plMover->SetInWater( !plMover->IsInWater() || plMover->GetBaseMap()->IsUnderWater(movementInfo.GetPos()->x, movementInfo.GetPos()->y, movementInfo.GetPos()->z) );
+        }
+            
+        // do not know if following "if" is right
+        if(plMover->GetBaseMap()->IsUnderWater(movementInfo.GetPos()->x, movementInfo.GetPos()->y, movementInfo.GetPos()->z-7.0f))
+        {
+            plMover->m_anti_BeginFallZ=INVALID_HEIGHT;
         }
 
         plMover->SetPosition(movementInfo.GetPos()->x, movementInfo.GetPos()->y, movementInfo.GetPos()->z, movementInfo.GetPos()->o);

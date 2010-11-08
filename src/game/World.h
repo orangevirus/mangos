@@ -583,7 +583,7 @@ class World
         inline uint32 GetMvAnticheatAlarmCount()       {return m_MvAnticheatAlarmCount;}
         inline uint32 GetMvAnticheatAlarmPeriod()      {return m_MvAnticheatAlarmPeriod;}
         inline unsigned char GetMvAnticheatBan()       {return m_MvAntiCheatBan;}
-        inline uint32 GetMvAnticheatBanTime()          {return m_MvAnticheatBanTime;}
+        inline std::string GetMvAnticheatBanTime()     {return m_MvAnticheatBanTime;}
         inline unsigned char GetMvAnticheatGmLevel()   {return m_MvAnticheatGmLevel;}
         inline bool GetMvAnticheatKill()               {return m_MvAnticheatKill;}
         inline float GetMvAnticheatMaxXYT()            {return m_MvAnticheatMaxXYT;}
@@ -593,6 +593,10 @@ class World
         inline bool GetMvAnticheatWaterCheck()         {return m_MvAnticheatWaterCheck;}
         inline bool GetMvAnticheatFlyCheck()           {return m_MvAnticheatFlyCheck;}
         inline bool GetMvAnticheatMountainCheck()      {return m_MvAnticheatMountainCheck;}
+        inline bool GetMvAnticheatJumpCheck()          {return m_MvAnticheatJumpCheck;}
+        inline bool GetMvAnticheatTeleportCheck()      {return m_MvAnticheatTeleportCheck;}
+        inline bool GetMvAnticheatTeleport2PlaneCheck()  {return m_MvAnticheatTeleport2PlaneCheck;}
+
 
         void ProcessCliCommands();
         void QueueCliCommand(CliCommandHolder* commandHolder) { cliCmdQueue.add(commandHolder); }
@@ -696,7 +700,7 @@ class World
         uint32 m_MvAnticheatAlarmCount;
         uint32 m_MvAnticheatAlarmPeriod;
         unsigned char m_MvAntiCheatBan;
-        uint32 m_MvAnticheatBanTime;
+        std::string m_MvAnticheatBanTime;
         unsigned char m_MvAnticheatGmLevel;
         bool m_MvAnticheatKill;
         float m_MvAnticheatMaxXYT;
@@ -705,6 +709,9 @@ class World
         bool m_MvAnticheatWaterCheck;
         bool m_MvAnticheatFlyCheck;
         bool m_MvAnticheatMountainCheck;
+        bool m_MvAnticheatJumpCheck;
+        bool m_MvAnticheatTeleportCheck;
+        bool m_MvAnticheatTeleport2PlaneCheck;
 
         // CLI command holder to be thread safe
         ACE_Based::LockedQueue<CliCommandHolder*,ACE_Thread_Mutex> cliCmdQueue;
