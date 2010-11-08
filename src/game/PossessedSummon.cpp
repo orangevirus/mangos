@@ -43,9 +43,9 @@ void PossessedSummon::Summon(Player* owner, uint32 spellId)
 {
     GetMap()->Add((Creature*)this);
 
-    SetCreatorGUID(owner->GetGUID());
-    SetOwnerGUID(owner->GetGUID());
-    SetCharmerGUID(owner->GetGUID());
+    SetCreatorGuid(owner->GetGUID());
+    SetOwnerGuid(owner->GetGUID());
+    SetCharmerGuid(owner->GetGUID());
 
     setFaction(owner->getFaction());
 
@@ -58,7 +58,7 @@ void PossessedSummon::Summon(Player* owner, uint32 spellId)
 
     // store old charm (maybe it in fact should not be possible, to have a charmed pet
     // and a PossesedSummon!?)
-    m_oldCharm = owner->GetCharmGUID();
+    m_oldCharm = owner->GetCharmGuid();
     owner->SetCharm(this);
 
     camera.SetView(this);

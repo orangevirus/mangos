@@ -107,7 +107,7 @@ void AggressorAI::EnterEvadeMode()
         //i_tracker.Reset(TIME_INTERVAL_LOOK);
     }
 
-    if (!m_creature->isCharmed() && !m_creature->GetVehicleGUID())
+    if (!m_creature->isCharmed() && m_creature->GetVehicleGuid().IsEmpty())
     {
         m_creature->RemoveAllAuras();
 

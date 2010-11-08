@@ -359,97 +359,26 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
     recv_data >> movementInfo;
     /*----------------*/
 
-    // ignore wrong guid (player attempt cheating own session for not own guid possible...)
-    if (guid != mover->GetObjectGuid())
+    if (!VerifyMovementInfo(movementInfo,guid,mover))
         return;
-
-    if (!MaNGOS::IsValidMapCoord(movementInfo.GetPos()->x, movementInfo.GetPos()->y, movementInfo.GetPos()->z, movementInfo.GetPos()->o))
-    {
-        recv_data.rpos(recv_data.wpos());                   // prevent warnings spam
-        return;
-    }
-
-    /* handle special cases */
-    if (movementInfo.HasMovementFlag(MOVEFLAG_ONTRANSPORT) && !mover->GetVehicleGUID())
-    {
-        // transports size limited
-        // (also received at zeppelin/lift leave by some reason with t_* as absolute in continent coordinates, can be safely skipped)
-        if( movementInfo.GetTransportPos()->x > 50 || movementInfo.GetTransportPos()->y > 50 || movementInfo.GetTransportPos()->z > 100 )
-        {
-            recv_data.rpos(recv_data.wpos());                   // prevent warnings spam
-            return;
-        }
-
-        if( !MaNGOS::IsValidMapCoord(movementInfo.GetPos()->x + movementInfo.GetTransportPos()->x, movementInfo.GetPos()->y + movementInfo.GetTransportPos()->y,
-            movementInfo.GetPos()->z + movementInfo.GetTransportPos()->z, movementInfo.GetPos()->o + movementInfo.GetTransportPos()->o) )
-        {
-            recv_data.rpos(recv_data.wpos());                   // prevent warnings spam
-            return;
-        }
-
-        // if we boarded a transport, add us to it
-        if (plMover && !plMover->m_transport)
-        {
-            float trans_rad = movementInfo.GetTransportPos()->x*movementInfo.GetTransportPos()->x + movementInfo.GetTransportPos()->y*movementInfo.GetTransportPos()->y + movementInfo.GetTransportPos()->z*movementInfo.GetTransportPos()->z;
-            if (trans_rad > 3600.0f) // transport radius = 60 yards //cheater with on_transport_flag
-            {
-	            return;
-            }
-            // elevators also cause the client to send MOVEFLAG_ONTRANSPORT - just unmount if the guid can be found in the transport list
-            for (MapManager::TransportSet::const_iterator iter = sMapMgr.m_Transports.begin(); iter != sMapMgr.m_Transports.end(); ++iter)
-            {
-                if ((*iter)->GetObjectGuid() == movementInfo.GetTransportGuid())
-                {
-                    plMover->m_transport = (*iter);
-                    (*iter)->AddPassenger(plMover);
-                    break;
-                }
-            }
-        }
-    }
-    else if (plMover && plMover->m_transport)               // if we were on a transport, leave
-    {
-        plMover->m_transport->RemovePassenger(plMover);
-        plMover->m_transport = NULL;
-        movementInfo.ClearTransportData();
-    }
 
     // fall damage generation (ignore in flight case that can be triggered also at lags in moment teleportation to another map).
     if (opcode == MSG_MOVE_FALL_LAND && plMover && !plMover->IsTaxiFlying())
         plMover->HandleFall(movementInfo);
 
-    if (plMover && (movementInfo.HasMovementFlag(MOVEFLAG_SWIMMING) != plMover->IsInWater()))
-    {
-        // now client not include swimming flag in case jumping under water
-        plMover->SetInWater( !plMover->IsInWater() || plMover->GetBaseMap()->IsUnderWater(movementInfo.GetPos()->x, movementInfo.GetPos()->y, movementInfo.GetPos()->z) );
-        if(plMover->GetBaseMap()->IsUnderWater(movementInfo.GetPos()->x, movementInfo.GetPos()->y, movementInfo.GetPos()->z-7.0f))
-        {
-            plMover->m_anti_BeginFallZ=INVALID_HEIGHT;
-        }
-    }
-
-    if (movementInfo.HasMovementFlag(MOVEFLAG_SWIMMING))
-    {
-        if(mover->GetTypeId() == TYPEID_UNIT)
-        {
-            if(((Creature*)mover)->IsVehicle() && !((Creature*)mover)->CanSwim())
-            {
-                // NOTE : we should enter evade mode here, but...
-                ((Vehicle*)mover)->SetSpawnDuration(1);
-            }
-        }
-    }
-
+    // do not know if this is working right now
     // ---- anti-cheat features -->>>
     uint32 Anti_TeleTimeDiff=plMover ? time(NULL) - plMover->Anti__GetLastTeleTime() : time(NULL);
     static const uint32 Anti_TeleTimeIgnoreDiff=sWorld.GetMvAnticheatIgnoreAfterTeleport();
     if (plMover && (plMover->m_transport == 0) && sWorld.GetMvAnticheatEnable() &&
         GetPlayer()->GetSession()->GetSecurity() <= sWorld.GetMvAnticheatGmLevel() &&
         GetPlayer()->GetMotionMaster()->GetCurrentMovementGeneratorType()!=FLIGHT_MOTION_TYPE &&
+        !GetPlayer()->IsTaxiFlying() &&
+        !GetPlayer()->HasMovementFlag(MOVEFLAG_ONTRANSPORT) &&
         Anti_TeleTimeDiff>Anti_TeleTimeIgnoreDiff)
-    {
+        {   
         const uint32 CurTime=getMSTime();
-        if(getMSTimeDiff(GetPlayer()->m_anti_lastalarmtime,CurTime) > sWorld.GetMvAnticheatAlarmPeriod())
+        if (getMSTimeDiff(GetPlayer()->m_anti_lastalarmtime,CurTime) > sWorld.GetMvAnticheatAlarmPeriod())
         {
             GetPlayer()->m_anti_alarmcount = 0;
         }
@@ -471,8 +400,8 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
         GetPlayer()->m_anti_lastmovetime = CurTime;
         GetPlayer()->m_anti_MovedLen += delta;
 
-        if(delta_t > 15000.0f)
-        {   delta_t = 15000.0f;   }
+        if (delta_t > 15000.0f)
+        { delta_t = 15000.0f; }
 
         // Tangens of walking angel
         if (!(movementInfo.GetMovementFlags() & (MOVEFLAG_FLYING | MOVEFLAG_SWIMMING)))
@@ -481,13 +410,13 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
         }
 
         //antiOFF fall-damage, MOVEMENTFLAG_UNK4 seted by client if player try movement when falling and unset in this case the MOVEMENTFLAG_FALLING flag.
-        if((GetPlayer()->m_anti_BeginFallZ == INVALID_HEIGHT) &&
-           (movementInfo.GetMovementFlags() & (MOVEFLAG_FALLING | MOVEFLAG_FALLINGFAR)) != 0)
+        if ((!GetPlayer()->CanFly() && GetPlayer()->m_anti_BeginFallZ == INVALID_HEIGHT) &&
+            (movementInfo.GetMovementFlags() & (MOVEFLAG_FALLING | MOVEFLAG_FALLINGFAR)) != 0)
         {
             GetPlayer()->m_anti_BeginFallZ=(float)(movementInfo.GetPos()->z);
         }
 
-        if(GetPlayer()->m_anti_NextLenCheck <= CurTime)
+        if (GetPlayer()->m_anti_NextLenCheck <= CurTime)
         {
             // Check every 500ms is a lot more advisable then 1000ms, because normal movment packet arrives every 500ms
             uint32 OldNextLenCheck=GetPlayer()->m_anti_NextLenCheck;
@@ -496,142 +425,126 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
             GetPlayer()->m_anti_MovedLen = 0.0f;
             static const float MaxDeltaXYT = sWorld.GetMvAnticheatMaxXYT();
 
-            if(delta_xyt > MaxDeltaXYT && delta<=100.0f && GetPlayer()->GetZoneId() != 2257)
+            if (delta_xyt > MaxDeltaXYT && delta<=100.0f)
             {
-                if(sWorld.GetMvAnticheatSpeedCheck())
-                   Anti__CheatOccurred(CurTime,"Speed hack",delta_xyt,LookupOpcodeName(opcode),
-                                    (float)(GetPlayer()->GetMotionMaster()->GetCurrentMovementGeneratorType()),
-                                    (float)(getMSTimeDiff(OldNextLenCheck-500,CurTime)));
+                if (sWorld.GetMvAnticheatSpeedCheck())
+                    Anti__CheatOccurred(CurTime,"Speed hack",delta_xyt,LookupOpcodeName(opcode),
+                    (float)(GetPlayer()->GetMotionMaster()->GetCurrentMovementGeneratorType()),
+                    (float)(getMSTimeDiff(OldNextLenCheck-500,CurTime)));
             }
         }
 
-        if(delta > 100.0f && GetPlayer()->GetZoneId() != 2257)
+        if (delta > 100.0f)
         {
-            Anti__ReportCheat("Tele hack",delta,LookupOpcodeName(opcode));
+            if (sWorld.GetMvAnticheatTeleportCheck())
+                Anti__ReportCheat("Tele hack",delta,LookupOpcodeName(opcode));
         }
 
         // Check for waterwalking . Fix new way of checking for waterwalking by Darky88
         if (movementInfo.HasMovementFlag(MOVEFLAG_WATERWALKING) &&
-           !(GetPlayer()->HasAuraType(SPELL_AURA_WATER_WALK) || GetPlayer()->HasAuraType(SPELL_AURA_GHOST)))
+            !(GetPlayer()->HasAuraType(SPELL_AURA_WATER_WALK) || GetPlayer()->HasAuraType(SPELL_AURA_GHOST)))
         {
             if(sWorld.GetMvAnticheatWaterCheck())
-              Anti__CheatOccurred(CurTime,"Water walking",0.0f,NULL,0.0f,(uint32)(movementInfo.GetMovementFlags()));
+                Anti__CheatOccurred(CurTime,"Water walking",0.0f,NULL,0.0f,(uint32)(movementInfo.GetMovementFlags()));
         }
 
         // Check for walking upwards a mountain while not beeing able to do that, New check by Darky88
-        if((delta_z < -2.3f) && (tg_z > 2.37f))
+        if ((delta_z < -2.3f) && (tg_z > 2.37f))
         {
-            if(sWorld.GetMvAnticheatMountainCheck())
-                 Anti__CheatOccurred(CurTime,"Mountain hack",tg_z,NULL,delta,delta_z);
+            if (sWorld.GetMvAnticheatMountainCheck())
+                Anti__CheatOccurred(CurTime,"Mountain hack",tg_z,NULL,delta,delta_z);
         }
-
 
         static const float DIFF_OVERGROUND = 10.0f;
         float Anti__GroundZ = GetPlayer()->GetMap()->GetHeight(GetPlayer()->GetPositionX(),GetPlayer()->GetPositionY(),MAX_HEIGHT);
-        float Anti__FloorZ  = GetPlayer()->GetMap()->GetHeight(GetPlayer()->GetPositionX(),GetPlayer()->GetPositionY(),GetPlayer()->GetPositionZ());
+        float Anti__FloorZ = GetPlayer()->GetMap()->GetHeight(GetPlayer()->GetPositionX(),GetPlayer()->GetPositionY(),GetPlayer()->GetPositionZ());
         float Anti__MapZ = ((Anti__FloorZ <= (INVALID_HEIGHT+5.0f)) ? Anti__GroundZ : Anti__FloorZ) + DIFF_OVERGROUND;
-
-        if(!GetPlayer()->CanFly() &&
-           !GetPlayer()->GetBaseMap()->IsUnderWater(movementInfo.GetPos()->x, movementInfo.GetPos()->y, movementInfo.GetPos()->z-7.0f) &&
-           Anti__MapZ < GetPlayer()->GetPositionZ() && Anti__MapZ > (INVALID_HEIGHT+DIFF_OVERGROUND + 5.0f))
+         
+        if (!GetPlayer()->CanFly() &&
+            !GetPlayer()->HasAuraType(SPELL_AURA_FEATHER_FALL) &&
+            !GetPlayer()->GetBaseMap()->IsUnderWater(movementInfo.GetPos()->x, movementInfo.GetPos()->y, movementInfo.GetPos()->z-7.0f) &&
+            Anti__MapZ < GetPlayer()->GetPositionZ() && Anti__MapZ > (INVALID_HEIGHT+DIFF_OVERGROUND + 5.0f))
         {
             static const float DIFF_AIRJUMP=25.0f; // 25 is realy high, but to many false positives...
 
             // Air-Jump-Detection definitively needs a better way to be detected...
-            if((movementInfo.GetMovementFlags() & (MOVEFLAG_CAN_FLY | MOVEFLAG_FLYING | MOVEFLAG_ROOT)) != 0) // Fly Hack
+            if ((movementInfo.GetMovementFlags() & (MOVEFLAG_CAN_FLY | MOVEFLAG_FLYING | MOVEFLAG_ROOT)) != 0) // Fly Hack
             {
-              // Fix Aura 55164 by KAPATEJIb
-              if (!GetPlayer()->HasAura(55164))
-                if(sWorld.GetMvAnticheatFlyCheck())
-                  Anti__CheatOccurred(CurTime,"Fly hack",
-                                    ((uint8)(GetPlayer()->HasAuraType(SPELL_AURA_FLY))) +
-                                    /*((uint8)(GetPlayer()->HasAuraType(SPELL_AURA_MOD_INCREASE_FLIGHT_SPEED))*2),*/
-                                    ((uint8)(GetPlayer()->HasAuraType(SPELL_AURA_MOD_FLIGHT_SPEED_MOUNTED))*2),
-                                    NULL,GetPlayer()->GetPositionZ()-Anti__MapZ);
+                // Fix Aura 55164
+                if (!GetPlayer()->HasAura(55164))
+                    if (sWorld.GetMvAnticheatFlyCheck())
+                        Anti__CheatOccurred(CurTime,"Fly hack",
+                            ((uint8)(GetPlayer()->HasAuraType(SPELL_AURA_FLY))) +
+                            ((uint8)(GetPlayer()->HasAuraType(SPELL_AURA_MOD_FLIGHT_SPEED_MOUNTED))*2),
+                            NULL,GetPlayer()->GetPositionZ()-Anti__MapZ);
             }
 
             // Need a better way to do that - currently a lot of fake alarms
-            else if((Anti__MapZ+DIFF_AIRJUMP < GetPlayer()->GetPositionZ() &&
-                (movementInfo.GetMovementFlags() & (MOVEFLAG_FALLING /*| MOVEMENTFLAG_UNK4*/))==0) ||
-                    (Anti__MapZ < GetPlayer()->GetPositionZ() &&
-                     opcode==MSG_MOVE_JUMP))
+            else if ((Anti__MapZ+DIFF_AIRJUMP < GetPlayer()->GetPositionZ() &&
+                    (movementInfo.GetMovementFlags() & (MOVEFLAG_FALLINGFAR | MOVEFLAG_PENDINGSTOP))==0) ||
+                    (Anti__MapZ < GetPlayer()->GetPositionZ() && opcode==MSG_MOVE_JUMP))
             {
-                 Anti__CheatOccurred(CurTime,"Possible Air Jump Hack",
-                     0.0f,LookupOpcodeName(opcode),0.0f,movementInfo.GetMovementFlags());
+                if (sWorld.GetMvAnticheatJumpCheck())
+                    Anti__CheatOccurred(CurTime,"Possible Air Jump Hack",0.0f,LookupOpcodeName(opcode),0.0f,movementInfo.GetMovementFlags());
             }
         }
 
-
         /*if(Anti__FloorZ < -199900.0f && Anti__GroundZ >= -199900.0f &&
-           GetPlayer()->GetPositionZ()+5.0f < Anti__GroundZ)
+        GetPlayer()->GetPositionZ()+5.0f < Anti__GroundZ)
         {
-            Anti__CheatOccurred(CurTime,"Teleport2Plane hack",
-                                GetPlayer()->GetPositionZ(),NULL,Anti__GroundZ);
+        Anti__CheatOccurred(CurTime,"Teleport2Plane hack",
+        GetPlayer()->GetPositionZ(),NULL,Anti__GroundZ);
         }*/
+
+        //Teleport To Plane checks
+        if (movementInfo.GetPos()->z < 0.0001f && movementInfo.GetPos()->z > -0.0001f && (!movementInfo.HasMovementFlag(MovementFlags(MOVEFLAG_SWIMMING | MOVEFLAG_CAN_FLY | MOVEFLAG_FLYING))))
+        {
+            if(sWorld.GetMvAnticheatTeleport2PlaneCheck())
+            {
+                // Prevent using TeleportToPlan.
+                Map *map = GetPlayer()->GetMap();
+                if (map)
+                {
+                    float plane_z = map->GetHeight(movementInfo.GetPos()->x, movementInfo.GetPos()->y, MAX_HEIGHT) - movementInfo.GetPos()->z;
+                    plane_z = (plane_z < -500.0f) ? 0 : plane_z; //check holes in heigth map
+                    if(plane_z > 0.1f || plane_z < -0.1f)
+                    {
+                        if(sWorld.GetMvAnticheatTeleport2PlaneCheck())
+                            Anti__CheatOccurred(CurTime,"Teleport2Plane hack",GetPlayer()->GetPositionZ(),NULL,plane_z);
+                    }
+                }
+            }
+        }
     }
     // <<---- anti-cheat features
 
     /* process position-change */
-    movementInfo.UpdateTime(getMSTime());
+    HandleMoverRelocation(movementInfo,mover,plMover);
 
-    WorldPacket data(opcode, recv_data.size());
-    data.appendPackGUID(mover->GetGUID());                  // write guid
-    movementInfo.Write(data);                               // write data
-    mover->SendMessageToSetExcept(&data, _player);
-
-    if(plMover)                                             // nothing is charmed, or player charmed
-    {
-        plMover->SetPosition(movementInfo.GetPos()->x, movementInfo.GetPos()->y, movementInfo.GetPos()->z, movementInfo.GetPos()->o);
-        plMover->m_movementInfo = movementInfo;
+    if (plMover)
         plMover->UpdateFallInformationIfNeed(movementInfo, opcode);
 
-        // after move info set
-        if ((opcode == MSG_MOVE_SET_WALK_MODE || opcode == MSG_MOVE_SET_RUN_MODE))
-            plMover->UpdateWalkMode(plMover, false);
-
-        if(plMover->isMovingOrTurning())
-            plMover->RemoveSpellsCausingAura(SPELL_AURA_FEIGN_DEATH);
-
-        if(movementInfo.GetPos()->z < -500.0f)
-        {
-            if(plMover->InBattleGround()
-                && plMover->GetBattleGround()
-                && plMover->GetBattleGround()->HandlePlayerUnderMap(_player))
-            {
-                // do nothing, the handle already did if returned true
-            }
-            else
-            {
-                // NOTE: this is actually called many times while falling
-                // even after the player has been teleported away
-                // TODO: discard movement packets after the player is rooted
-                if(plMover->isAlive())
-                {
-                    plMover->EnvironmentalDamage(DAMAGE_FALL_TO_VOID, plMover->GetMaxHealth());
-                    // pl can be alive if GM/etc
-                    if(!plMover->isAlive())
-                    {
-                        // change the death state to CORPSE to prevent the death timer from
-                        // starting in the next player update
-                        plMover->KillPlayer();
-                        plMover->BuildPlayerRepop();
-                    }
-                }
-
-                // cancel the death timer here if started
-                plMover->RepopAtGraveyard();
-            }
-        }
-    }
-    else                                                    // creature charmed
+    // not known if this is still needed for vehicle patch
+    if (movementInfo.HasMovementFlag(MOVEFLAG_SWIMMING))
     {
-        if(mover->IsInWorld())
+        if(mover->GetTypeId() == TYPEID_UNIT)
         {
-            mover->GetMap()->CreatureRelocation((Creature*)mover, movementInfo.GetPos()->x, movementInfo.GetPos()->y, movementInfo.GetPos()->z, movementInfo.GetPos()->o);
-            if(((Creature*)mover)->IsVehicle())
-                ((Vehicle*)mover)->RellocatePassengers(mover->GetMap());
+            if(((Creature*)mover)->IsVehicle() && !((Creature*)mover)->CanSwim())
+            {
+                // NOTE : we should enter evade mode here, but...
+                ((Vehicle*)mover)->SetSpawnDuration(1);
+            }
         }
     }
+
+    // after move info set
+    if (opcode == MSG_MOVE_SET_WALK_MODE || opcode == MSG_MOVE_SET_RUN_MODE)
+        mover->UpdateWalkMode(mover, false);
+
+    WorldPacket data(opcode, recv_data.size());
+    data << mover->GetPackGUID();             // write guid
+    movementInfo.Write(data);                               // write data
+    mover->SendMessageToSetExcept(&data, _player);
 }
 
 void WorldSession::HandleForceSpeedChangeAckOpcodes(WorldPacket &recv_data)
@@ -756,9 +669,9 @@ void WorldSession::HandleDismissControlledVehicle(WorldPacket &recv_data)
     recv_data >> guid.ReadAsPacked();
     recv_data >> mi;
 
-    uint64 vehicleGUID = _player->GetVehicleGUID();
+    ObjectGuid vehicleGUID = _player->GetVehicleGuid();
 
-    if(!vehicleGUID)                                        // something wrong here...
+    if (vehicleGUID.IsEmpty())                              // something wrong here...
         return;
 
     _player->m_movementInfo = mi;
@@ -777,9 +690,9 @@ void WorldSession::HandleRequestVehicleExit(WorldPacket &recv_data)
     sLog.outDebug("WORLD: Recvd CMSG_REQUEST_VEHICLE_EXIT");
     recv_data.hexlike();
 
-    uint64 vehicleGUID = _player->GetVehicleGUID();
+    ObjectGuid vehicleGUID = _player->GetVehicleGuid();
 
-    if(!vehicleGUID)                                        // something wrong here...
+    if(vehicleGUID.IsEmpty())                                        // something wrong here...
         return;
 
     if(Vehicle *vehicle = _player->GetMap()->GetVehicle(vehicleGUID))
@@ -793,9 +706,9 @@ void WorldSession::HandleRequestVehicleSwitchSeat(WorldPacket &recv_data)
     sLog.outDebug("WORLD: Recvd CMSG_REQUEST_VEHICLE_SWITCH_SEAT");
     recv_data.hexlike();
 
-    uint64 vehicleGUID = _player->GetVehicleGUID();
+    ObjectGuid vehicleGUID = _player->GetVehicleGuid();
 
-    if(!vehicleGUID)                                        // something wrong here...
+    if(vehicleGUID.IsEmpty())                                        // something wrong here...
         return;
 
     if(Vehicle *vehicle = _player->GetMap()->GetVehicle(vehicleGUID))
@@ -837,9 +750,9 @@ void WorldSession::HandleChangeSeatsOnControlledVehicle(WorldPacket &recv_data)
     sLog.outDebug("WORLD: Recvd CMSG_CHANGE_SEATS_ON_CONTROLLED_VEHICLE");
     recv_data.hexlike();
 
-    uint64 vehicleGUID = _player->GetVehicleGUID();
+    ObjectGuid vehicleGUID = _player->GetVehicleGuid();
 
-    if(!vehicleGUID)                                        // something wrong here...
+    if(vehicleGUID.IsEmpty())                                        // something wrong here...
         return;
 
     if(recv_data.GetOpcode() == CMSG_REQUEST_VEHICLE_PREV_SEAT)
@@ -891,12 +804,36 @@ void WorldSession::HandleMoveKnockBackAck( WorldPacket & recv_data )
 {
     DEBUG_LOG("CMSG_MOVE_KNOCK_BACK_ACK");
 
-    ObjectGuid guid;                                        // guid - unused
+    Unit *mover = _player->GetMover();
+    Player *plMover = mover->GetTypeId() == TYPEID_PLAYER ? (Player*)mover : NULL;
+
+    // ignore, waiting processing in WorldSession::HandleMoveWorldportAckOpcode and WorldSession::HandleMoveTeleportAck
+    if(plMover && plMover->IsBeingTeleported())
+    {
+        recv_data.rpos(recv_data.wpos());                   // prevent warnings spam
+        return;
+    }
+
+    ObjectGuid guid;
     MovementInfo movementInfo;
 
     recv_data >> guid.ReadAsPacked();
-    recv_data >> Unused<uint32>();                          // unk
+    recv_data >> Unused<uint32>();                          // knockback packets counter
     recv_data >> movementInfo;
+
+    if (!VerifyMovementInfo(movementInfo,guid,mover))
+        return;
+
+    HandleMoverRelocation(movementInfo, mover, plMover);
+
+    WorldPacket data(MSG_MOVE_KNOCK_BACK, recv_data.size() + 15);
+    data << mover->GetPackGUID();
+    data << movementInfo;
+    data << movementInfo.GetJumpInfo().sinAngle;
+    data << movementInfo.GetJumpInfo().cosAngle;
+    data << movementInfo.GetJumpInfo().xyspeed;
+    data << movementInfo.GetJumpInfo().velocity;
+    mover->SendMessageToSetExcept(&data, _player);
 }
 
 void WorldSession::HandleMoveHoverAck( WorldPacket& recv_data )
@@ -936,4 +873,106 @@ void WorldSession::HandleSummonResponseOpcode(WorldPacket& recv_data)
     recv_data >> agree;
 
     _player->SummonIfPossible(agree);
+}
+
+bool WorldSession::VerifyMovementInfo(MovementInfo& movementInfo, ObjectGuid& guid, Unit* mover) const
+{
+    // ignore wrong guid (player attempt cheating own session for not own guid possible...)
+    if (guid != mover->GetObjectGuid())
+        return false;
+
+    if (!MaNGOS::IsValidMapCoord(movementInfo.GetPos()->x, movementInfo.GetPos()->y, movementInfo.GetPos()->z, movementInfo.GetPos()->o))
+        return false;
+
+    if (movementInfo.HasMovementFlag(MOVEFLAG_ONTRANSPORT))
+    {
+        // transports size limited
+        // (also received at zeppelin/lift leave by some reason with t_* as absolute in continent coordinates, can be safely skipped)
+        if( movementInfo.GetTransportPos()->x > 50 || movementInfo.GetTransportPos()->y > 50 || movementInfo.GetTransportPos()->z > 100 )
+            return false;
+
+        if( !MaNGOS::IsValidMapCoord(movementInfo.GetPos()->x + movementInfo.GetTransportPos()->x, movementInfo.GetPos()->y + movementInfo.GetTransportPos()->y,
+            movementInfo.GetPos()->z + movementInfo.GetTransportPos()->z, movementInfo.GetPos()->o + movementInfo.GetTransportPos()->o) )
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+void WorldSession::HandleMoverRelocation(MovementInfo& movementInfo, Unit* mover, Player* plMover)
+{
+    movementInfo.UpdateTime(getMSTime());
+
+    if (plMover)
+    {                                                          // not known if this is right (vehicle patch)
+        if (movementInfo.HasMovementFlag(MOVEFLAG_ONTRANSPORT) /*&& !mover->GetVehicleGuid()*/)
+        {
+            if (!plMover->m_transport)
+            {
+                // elevators also cause the client to send MOVEFLAG_ONTRANSPORT - just unmount if the guid can be found in the transport list
+                for (MapManager::TransportSet::const_iterator iter = sMapMgr.m_Transports.begin(); iter != sMapMgr.m_Transports.end(); ++iter)
+                {
+                    if ((*iter)->GetObjectGuid() == movementInfo.GetTransportGuid())
+                    {
+                        plMover->m_transport = (*iter);
+                        (*iter)->AddPassenger(plMover);
+                        break;
+                    }
+                }
+            }
+        }
+        else if (plMover->m_transport)               // if we were on a transport, leave
+        {
+            plMover->m_transport->RemovePassenger(plMover);
+            plMover->m_transport = NULL;
+            movementInfo.ClearTransportData();
+        }
+
+        if (movementInfo.HasMovementFlag(MOVEFLAG_SWIMMING) != plMover->IsInWater())
+        {
+            // now client not include swimming flag in case jumping under water
+            plMover->SetInWater( !plMover->IsInWater() || plMover->GetBaseMap()->IsUnderWater(movementInfo.GetPos()->x, movementInfo.GetPos()->y, movementInfo.GetPos()->z) );
+        }
+
+        plMover->SetPosition(movementInfo.GetPos()->x, movementInfo.GetPos()->y, movementInfo.GetPos()->z, movementInfo.GetPos()->o);
+        plMover->m_movementInfo = movementInfo;
+
+        if(movementInfo.GetPos()->z < -500.0f)
+        {
+            if(plMover->InBattleGround()
+                && plMover->GetBattleGround()
+                && plMover->GetBattleGround()->HandlePlayerUnderMap(_player))
+            {
+                // do nothing, the handle already did if returned true
+            }
+            else
+            {
+                // NOTE: this is actually called many times while falling
+                // even after the player has been teleported away
+                // TODO: discard movement packets after the player is rooted
+                if(plMover->isAlive())
+                {
+                    plMover->EnvironmentalDamage(DAMAGE_FALL_TO_VOID, plMover->GetMaxHealth());
+                    // pl can be alive if GM/etc
+                    if(!plMover->isAlive())
+                    {
+                        // change the death state to CORPSE to prevent the death timer from
+                        // starting in the next player update
+                        plMover->KillPlayer();
+                        plMover->BuildPlayerRepop();
+                    }
+                }
+
+                // cancel the death timer here if started
+                plMover->RepopAtGraveyard();
+            }
+        }
+    }
+    else                                                    // creature charmed
+    {
+        if (mover->IsInWorld())
+            mover->GetMap()->CreatureRelocation((Creature*)mover, movementInfo.GetPos()->x, movementInfo.GetPos()->y, movementInfo.GetPos()->z, movementInfo.GetPos()->o);
+    }
 }

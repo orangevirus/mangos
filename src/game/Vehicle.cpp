@@ -390,7 +390,8 @@ void Vehicle::EmptySeatsCountChanged()
     else
         SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PLAYER_CONTROLLED);
 
-    if(uint64 vehicleGUID = GetVehicleGUID())
+    ObjectGuid vehicleGUID = GetVehicleGuid();
+    if(!vehicleGUID.IsEmpty())
     {
         if(Vehicle *vehicle = GetMap()->GetVehicle(vehicleGUID))
         {
@@ -461,7 +462,7 @@ void Vehicle::AddPassenger(Unit *unit, int8 seatId, bool force)
     if(seat == m_Seats.end())
         return;
 
-    unit->SetVehicleGUID(GetGUID());
+    unit->SetVehicleGuid(GetGUID());
     unit->m_movementInfo.AddMovementFlag(MOVEFLAG_ONTRANSPORT);
     unit->m_movementInfo.AddMovementFlag(MOVEFLAG_ROOT);
 
@@ -502,7 +503,7 @@ void Vehicle::AddPassenger(Unit *unit, int8 seatId, bool force)
         {
             GetMotionMaster()->Clear(false);
             GetMotionMaster()->MoveIdle();
-            SetCharmerGUID(unit->GetGUID());
+            SetCharmerGuid(unit->GetGUID());
             unit->SetUInt64Value(UNIT_FIELD_CHARM, GetGUID());
             if(CanFly() || HasAuraType(SPELL_AURA_FLY) || HasAuraType(SPELL_AURA_MOD_FLIGHT_SPEED))
             {
@@ -560,7 +561,8 @@ void Vehicle::RemovePassenger(Unit *unit)
     {
         if((seat->second.flags & (SEAT_FULL | SEAT_VEHICLE_FREE | SEAT_VEHICLE_FULL)) && seat->second.passenger == unit)
         {
-            unit->SetVehicleGUID(0);
+            // not known if this is good ?! probably need other way to set ObjectGuid = 0, NULL is not accepted here for any reason
+            unit->SetVehicleGuid(*(new ObjectGuid()));
             if(unit->GetTypeId() == TYPEID_PLAYER)
             {
                 ((Player*)unit)->SetMover(unit);
@@ -579,7 +581,8 @@ void Vehicle::RemovePassenger(Unit *unit)
                         ((Player*)unit)->SetGroupUpdateFlag(GROUP_UPDATE_VEHICLE);
                 }
                 unit->SetCharm(NULL);
-                SetCharmerGUID(NULL);
+                // not known if this is good ?! probably need other way to set ObjectGuid = 0, NULL is not accepted here for any reason
+                SetCharmerGuid(*(new ObjectGuid()));
                 setFaction(GetCreatureInfo()->faction_A);
             }
             if(GetVehicleFlags() & VF_NON_SELECTABLE)
