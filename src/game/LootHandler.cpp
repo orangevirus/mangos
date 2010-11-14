@@ -416,11 +416,9 @@ void WorldSession::DoLootRelease(ObjectGuid lguid)
             if (!pItem)
                 return;
 
-            ItemPrototype const* proto = pItem->GetProto();
-
-            // destroy only 5 items from stack in case prospecting and milling
             switch (pItem->loot.loot_type)
             {
+                // temporary loot in stacking items, clear loot state, no auto loot move
                 case LOOT_MILLING:
                 case LOOT_PROSPECTING:
                 {
@@ -430,9 +428,14 @@ void WorldSession::DoLootRelease(ObjectGuid lguid)
                     if(count > 5)
                         count = 5;
 
+                    // reset loot for allow repeat looting if stack > 5
+                    pItem->loot.clear();
+                    pItem->SetLootState(ITEM_LOOT_REMOVED);
+
                     player->DestroyItemCount(pItem, count, true);
                     break;
                 }
+                // temporary loot, auto loot move
                 case LOOT_DISENCHANTING:
                 {
                     if (!pItem->loot.isLooted())
@@ -442,11 +445,15 @@ void WorldSession::DoLootRelease(ObjectGuid lguid)
                     player->DestroyItem( pItem->GetBagSlot(),pItem->GetSlot(), true);
                     break;
                 }
+                // normal persistence loot
                 default:
                 {
                     // must be destroyed only if no loot 
                     if (pItem->loot.isLooted())
+                    {
+                        pItem->SetLootState(ITEM_LOOT_REMOVED);
                         player->DestroyItem( pItem->GetBagSlot(),pItem->GetSlot(), true);
+                    }
                     break;
                 }
             }
