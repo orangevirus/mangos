@@ -367,6 +367,7 @@ void Spell::EffectSchoolDMG(SpellEffectIndex effect_idx)
                     case 29142:                             // Eyesore Blaster
                     case 35139:                             // Throw Boom's Doom
                     case 49882:                             // Leviroth Self-Impale
+                    case 55269:                             // Deathly Stare
                     {
                         damage = damage * unitTarget->GetMaxHealth() / 100;
                         break;
@@ -1429,6 +1430,17 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     unitTarget->CastSpell(unitTarget,46798,true,m_CastItem,NULL,m_originalCasterGUID);
                     break;
                 }
+                case 47176:                                 // Infect Ice Troll
+                {
+                    // Spell has wrong areaGroupid, so it can not be casted where expected.
+                    // TODO: research if spells casted by NPC, having TARGET_SCRIPT, can have disabled area check
+                    if (!unitTarget)
+                        return;
+
+                    // Plague Effect Self
+                    unitTarget->CastSpell(unitTarget, 47178, true);
+                    return;
+                }
                 case 49357:                                 // Brewfest Mount Transformation
                 {
                     if (m_caster->GetTypeId() != TYPEID_PLAYER)
@@ -1548,6 +1560,29 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     else
                         m_caster->CastSpell(m_caster, 51345, true);
 
+                    return;
+                }
+                case 51420:                                 // Digging for Treasure Ping
+                {
+                    if (!unitTarget || unitTarget->GetTypeId() != TYPEID_UNIT)
+                        return;
+
+                    if (m_caster->GetTypeId() != TYPEID_PLAYER)
+                        return;
+
+                    // Not expecting any MINI_PET here, the ones used for related quests are
+                    // fighting "companions" (effMiscValueB 387). Needs to be corrected.
+                    Pet* pPet = ((Player*)m_caster)->GetMiniPet();
+
+                    if (!pPet)
+                        return;
+
+                    pPet->SetFacingToObject(unitTarget);
+
+                    // Digging for Treasure
+                    pPet->CastSpell(unitTarget, 51405, true);
+
+                    ((Creature*)unitTarget)->ForcedDespawn(1);
                     return;
                 }
                 case 51582:                                 // Rocket Boots Engaged (Rocket Boots Xtreme and Rocket Boots Xtreme Lite)
@@ -4161,6 +4196,9 @@ void Spell::EffectSummonType(SpellEffectIndex eff_idx)
                     break;
                 case SUMMON_PROP_TYPE_CRITTER:
                     DoSummonCritter(eff_idx, summon_prop->FactionId);
+                    // TODO: differenciate between regular 'critter' types and 'critter' that are fighting.
+                    // prop_id == 387 are expected to be fighting (but they have postfix 'companion').
+                    // Note: summon_prop->Slot==6 may be related to how selection are done for this type (need more research)
                     break;
                 case SUMMON_PROP_TYPE_PHASING:
                 case SUMMON_PROP_TYPE_LIGHTWELL:
@@ -4347,7 +4385,7 @@ void Spell::EffectDispel(SpellEffectIndex eff_idx)
     if (!unitTarget)
         return;
 
-    // Fill possible dispell list
+    // Fill possible dispel list
     std::list <std::pair<SpellAuraHolder* ,uint32> > dispel_list;
 
     // Create dispel mask by dispel type
@@ -4399,7 +4437,7 @@ void Spell::EffectDispel(SpellEffectIndex eff_idx)
         if(!damage)
             damage = 1;
 
-        // Dispell N = damage buffs (or while exist buffs for dispel)
+        // Dispel N = damage buffs (or while exist buffs for dispel)
         for (int32 count=0; count < damage && !dispel_list.empty(); ++count)
         {
             // Random select buff for dispel
@@ -4457,7 +4495,7 @@ void Spell::EffectDispel(SpellEffectIndex eff_idx)
             {
                 SpellAuraHolder* dispelledHolder = j->first;
                 data << uint32(dispelledHolder->GetId());   // Spell Id
-                data << uint8(0);                           // 0 - dispeled !=0 cleansed
+                data << uint8(0);                           // 0 - dispelled !=0 cleansed
                 unitTarget->RemoveAuraHolderDueToSpellByDispel(dispelledHolder->GetId(), j->second, dispelledHolder->GetCasterGUID(), m_caster);
             }
             m_caster->SendMessageToSet(&data, true);
@@ -4478,11 +4516,11 @@ void Spell::EffectDispel(SpellEffectIndex eff_idx)
         // Send fail log to client
         if (!fail_list.empty())
         {
-            // Failed to dispell
+            // Failed to dispel
             WorldPacket data(SMSG_DISPEL_FAILED, 8+8+4+4*fail_list.size());
             data << m_caster->GetObjectGuid();              // Caster GUID
             data << unitTarget->GetObjectGuid();            // Victim GUID
-            data << uint32(m_spellInfo->Id);                // Dispell spell id
+            data << uint32(m_spellInfo->Id);                // Dispel spell id
             for (std::list< uint32 >::iterator j = fail_list.begin(); j != fail_list.end(); ++j)
                 data << uint32(*j);                         // Spell Id
             m_caster->SendMessageToSet(&data, true);
@@ -5395,6 +5433,7 @@ void Spell::EffectWeaponDmg(SpellEffectIndex eff_idx)
     bool normalized = false;
 
     int32 spell_bonus = 0;                                  // bonus specific for spell
+
     switch(m_spellInfo->SpellFamilyName)
     {
         case SPELLFAMILY_DRUID:
@@ -8282,7 +8321,7 @@ void Spell::EffectTransmitted(SpellEffectIndex eff_idx)
     if(goinfo->type==GAMEOBJECT_TYPE_FISHINGNODE)
     {
         GridMapLiquidData liqData;
-        if ( !cMap->IsInWater(fx, fy, fz + 1.f/* -0.5f */, &liqData))             // Hack to prevent fishing bobber from failing to land on fishing hole
+        if ( !m_caster->GetTerrain()->IsInWater(fx, fy, fz + 1.f/* -0.5f */, &liqData))             // Hack to prevent fishing bobber from failing to land on fishing hole
         { // but this is not proper, we really need to ignore not materialized objects
             SendCastResult(SPELL_FAILED_NOT_HERE);
             SendChannelUpdate(0);
@@ -8693,7 +8732,7 @@ void Spell::EffectBind(SpellEffectIndex eff_idx)
         loc.coord_y     = st->target_Y;
         loc.coord_z     = st->target_Y;
         loc.orientation = st->target_Orientation;
-        area_id = sMapMgr.GetAreaId(loc.mapid, loc.coord_x, loc.coord_y, loc.coord_z);
+        area_id = sTerrainMgr.GetAreaId(loc.mapid, loc.coord_x, loc.coord_y, loc.coord_z);
     }
     else
     {
