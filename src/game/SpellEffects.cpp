@@ -7857,7 +7857,7 @@ void Spell::EffectLeapForward(SpellEffectIndex eff_idx)
         }
         if(unitTarget->GetTypeId() == TYPEID_PLAYER)
         {
-            fz = m_caster->GetBaseMap()->GetHeight(fx,fy,fz,true);
+            fz = m_caster->GetTerrain()->GetHeight(fx,fy,fz,true);
             if (fabs(fz-oz) > 4.0f)
             {
                 fx = ox;

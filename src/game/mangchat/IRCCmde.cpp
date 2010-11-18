@@ -1809,7 +1809,7 @@ void IRCCmd::Tele_Player(_CDATA *CD)
             else
             {
                 uint64 guid = sObjectMgr.GetPlayerGUIDByName(_PARAMS[0]);
-                Player::SavePositionInDB(mapid,pX,pY,pZ,pO,MapManager::Instance().GetZoneId(mapid,pX,pY,pZ),guid);
+                Player::SavePositionInDB(mapid,pX,pY,pZ,pO,TerrainManager::Instance().GetZoneId(mapid,pX,pY,pZ),guid);
                 sIRC.Send_IRC_Channel(ChanOrPM(CD), rMsg + " \0034*Offline Tele.* ", true, CD->TYPE);
             }
             //	}

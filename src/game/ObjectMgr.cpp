@@ -1516,8 +1516,8 @@ uint32 ObjectMgr::AddGOData(uint32 entry, uint32 mapId, float x, float y, float 
     if (!goinfo)
         return 0;
 
-    //Map* map = const_cast<Map*>(MapManager::Instance().CreateBaseMap(mapId));
-    Map * map = const_cast<Map*>(sMapMgr.CreateBaseMap(mapId));
+    // not sure if this or sTerrainMgr.LoadTerrain(mapId);
+    Map * map = const_cast<Map*>(sMapMgr.FindMap(mapId));
     if(!map)
         return 0;
 
@@ -1595,8 +1595,7 @@ uint32 ObjectMgr::AddCreData(uint32 entry, uint32 team, uint32 mapId, float x, f
     AddCreatureToGrid(guid, &data);
 
     // Spawn if necessary (loaded grids only)
-    //if(Map* map = const_cast<Map*>(MapManager::Instance().CreateBaseMap(mapId)))
-    if(Map * map = const_cast<Map*>(sMapMgr.CreateBaseMap(mapId)))
+    if(Map * map = const_cast<Map*>(sMapMgr.FindMap(mapId)))
     {
         // We use spawn coords to spawn
         if(!map->Instanceable() && !map->IsRemovalGrid(x, y))
