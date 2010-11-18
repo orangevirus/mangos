@@ -445,6 +445,26 @@
     <ClCompile Include="..\..\src\game\UnitAuraProcHandler.cpp">
       <Filter>World/Handlers</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\game\AuctionHouseBot.cpp" />
+    <ClCompile Include="..\..\src\game\ChatLexicsCutter.cpp" />
+    <ClCompile Include="..\..\src\game\ChatLog.cpp" />
+    <ClCompile Include="..\..\src\game\mangchat\IRCClient.cpp" />
+    <ClCompile Include="..\..\src\game\mangchat\IRCCmd.cpp" />
+    <ClCompile Include="..\..\src\game\mangchat\IRCCmde.cpp" />
+    <ClCompile Include="..\..\src\game\mangchat\IRCConf.cpp" />
+    <ClCompile Include="..\..\src\game\mangchat\IRCIO.cpp" />
+    <ClCompile Include="..\..\src\game\mangchat\IRCLog.cpp" />
+    <ClCompile Include="..\..\src\game\mangchat\IRCSock.cpp" />
+    <ClCompile Include="..\..\src\game\mangchat\MCS_OnlinePlayers.cpp" />
+    <ClCompile Include="..\..\src\game\OutdoorPvP.cpp" />
+    <ClCompile Include="..\..\src\game\OutdoorPvPEP.cpp" />
+    <ClCompile Include="..\..\src\game\OutdoorPvPGH.cpp" />
+    <ClCompile Include="..\..\src\game\OutdoorPvPHP.cpp" />
+    <ClCompile Include="..\..\src\game\OutdoorPvPMgr.cpp" />
+    <ClCompile Include="..\..\src\game\OutdoorPvPNA.cpp" />
+    <ClCompile Include="..\..\src\game\OutdoorPvPSI.cpp" />
+    <ClCompile Include="..\..\src\game\OutdoorPvPTF.cpp" />
+    <ClCompile Include="..\..\src\game\OutdoorPvPZM.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\game\AccountMgr.h">
@@ -835,5 +855,24 @@
     <ClInclude Include="..\..\src\game\Camera.h">
       <Filter>Object</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\game\AuctionHouseBot.h" />
+    <ClInclude Include="..\..\src\game\ChatLexicsCutter.h" />
+    <ClInclude Include="..\..\src\game\ChatLog.h" />
+    <ClInclude Include="..\..\src\game\mangchat\IRCClient.h" />
+    <ClInclude Include="..\..\src\game\mangchat\IRCCmd.h" />
+    <ClInclude Include="..\..\src\game\mangchat\IRCFunc.h" />
+    <ClInclude Include="..\..\src\game\mangchat\IRCLog.h" />
+    <ClInclude Include="..\..\src\game\mangchat\MCS_OnlinePlayers.h" />
+    <ClInclude Include="..\..\src\game\OutdoorPvP.h" />
+    <ClInclude Include="..\..\src\game\OutdoorPvPEP.h" />
+    <ClInclude Include="..\..\src\game\OutdoorPvPGH.h" />
+    <ClInclude Include="..\..\src\game\OutdoorPvPHP.h" />
+    <ClInclude Include="..\..\src\game\OutdoorPvPImpl.h" />
+    <ClInclude Include="..\..\src\game\OutdoorPvPMgr.h" />
+    <ClInclude Include="..\..\src\game\OutdoorPvPNA.h" />
+    <ClInclude Include="..\..\src\game\OutdoorPvPSI.h" />
+    <ClInclude Include="..\..\src\game\OutdoorPvPTF.h" />
+    <ClInclude Include="..\..\src\game\OutdoorPvPZM.h" />
+    <ClInclude Include="..\..\src\game\ZoneScript.h" />
   </ItemGroup>
 </Project>

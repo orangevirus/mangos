@@ -244,8 +244,8 @@ void OPvPCapturePointHP::ChangeState()
         break;
     }
 
-    GameObject * flag = ObjectAccessor::GetGameObjectInWorld(ObjectGuid(HIGHGUID_GAMEOBJECT, m_capturePointGUID));
-    GameObject * flag2 = ObjectAccessor::GetGameObjectInWorld(m_Objects[m_TowerType]);
+    GameObject* flag = ObjectAccessor::GetGameObjectInWorld(ObjectGuid(HIGHGUID_GAMEOBJECT, m_capturePointGUID));
+    GameObject* flag2 = ObjectAccessor::GetGameObjectInWorld(ObjectGuid(HIGHGUID_GAMEOBJECT, m_Objects[m_TowerType]));
     if(flag)
     {
         flag->SetGoArtKit(artkit);

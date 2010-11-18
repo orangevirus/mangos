@@ -73,6 +73,7 @@ class InstanceData;
 class ZoneScript;
 class Vehicle;
 class TerrainInfo;
+class ZoneScript;
 
 typedef UNORDERED_MAP<Player*, UpdateData> UpdateDataMapType;
 

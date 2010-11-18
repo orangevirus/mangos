@@ -1595,6 +1595,7 @@ uint32 ObjectMgr::AddCreData(uint32 entry, uint32 team, uint32 mapId, float x, f
     AddCreatureToGrid(guid, &data);
 
     // Spawn if necessary (loaded grids only)
+    //if(Map* map = const_cast<Map*>(MapManager::Instance().CreateBaseMap(mapId)))
     if(Map * map = const_cast<Map*>(sMapMgr.FindMap(mapId)))
     {
         // We use spawn coords to spawn

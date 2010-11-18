@@ -1529,6 +1529,9 @@ void Player::SetDeathState(DeathState s)
         // remove uncontrolled pets
         RemoveMiniPet();
 
+        // update outdoor pvp zone
+        sOutdoorPvPMgr.HandlePlayerLeaveZone(this, m_zoneUpdateId);
+
         // save value before aura remove in Unit::SetDeathState
         ressSpellId = GetUInt32Value(PLAYER_SELF_RES_SPELL);
 
@@ -8612,8 +8615,7 @@ static WorldStatePair TF_world_states[] =                   // Terokkar Forest
     { 0x9cd, 0x0 },                // 33 // 2509 locked time remaining minutes
     { 0x9cc, 0x0 },                // 34 // 2508 neutral locked time show
     { 0xad0, 0x0 },                // 35 // 2768 horde locked time show
-    { 0xacf, 0x1 },                // 36 // 2767 ally locked time show
-    { 0x0,   0x0 }
+    { 0xacf, 0x1 }                // 36 // 2767 ally locked time show
 };
 
 static WorldStatePair ZM_world_states[] =                   // Terokkar Forest
@@ -8643,8 +8645,7 @@ static WorldStatePair ZM_world_states[] =                   // Terokkar Forest
     { 0xa62, 0x0 },           // 32 // 2658
     { 0xa61, 0x1 },           // 33
     { 0xa60, 0x1 },           // 34
-    { 0xa5f, 0x0 },           // 35
-    { 0x0,   0x0 }
+    { 0xa5f, 0x0 }           // 35
 };
 
 void Player::SendInitWorldStates(uint32 zoneid, uint32 areaid)
@@ -8694,21 +8695,21 @@ void Player::SendInitWorldStates(uint32 zoneid, uint32 areaid)
         case 139: // EPL
             if(pvp && pvp->GetTypeId() == OUTDOOR_PVP_EP)
                 pvp->FillInitialWorldStates(data, count);
-                else
-                    FillInitialWorldState(data,count, EP_world_states);
+            else
+                FillInitialWorldState(data,count, EP_world_states);
             break;
         case 1377:                                          // Silithus
             {
                 if(pvp && pvp->GetTypeId() == OUTDOOR_PVP_SI)
-                        pvp->FillInitialWorldStates(data, count);
-                    else
-                    {
-                        FillInitialWorldState(data,count, SI_world_states);
-                    }
-                    FillInitialWorldState(data,count,2322, 0x0 ); // 10 sandworm N
-                    FillInitialWorldState(data,count,2323, 0x0 ); // 11 sandworm S
-                    FillInitialWorldState(data,count,2324, 0x0 ); // 12 sandworm SW
-                    FillInitialWorldState(data,count,2325, 0x0 ); // 13 sandworm E
+                    pvp->FillInitialWorldStates(data, count);
+                else
+                {
+                    FillInitialWorldState(data,count, SI_world_states);
+                }
+                FillInitialWorldState(data,count,2322, 0x0 ); // 10 sandworm N
+                FillInitialWorldState(data,count,2323, 0x0 ); // 11 sandworm S
+                FillInitialWorldState(data,count,2324, 0x0 ); // 12 sandworm SW
+                FillInitialWorldState(data,count,2325, 0x0 ); // 13 sandworm E
             }
             break;
         case 1519:
@@ -8737,6 +8738,8 @@ void Player::SendInitWorldStates(uint32 zoneid, uint32 areaid)
             if(pvp && pvp->GetTypeId() == OUTDOOR_PVP_HP)
                 FillInitialWorldState(data,count, HP_world_states);
             break;
+            if(pvp && pvp->GetTypeId() == OUTDOOR_PVP_TF)
+                FillInitialWorldState(data,count, TF_world_states);
         case 3521:                                          // Zangarmarsh
             if(pvp && pvp->GetTypeId() == OUTDOOR_PVP_ZM)
                 FillInitialWorldState(data,count, ZM_world_states);

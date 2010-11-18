@@ -88,8 +88,8 @@ void OPvPCapturePointEP_EWT::ChangeState()
             break;
         }
 
-        GameObject * flag = ObjectAccessor::GetGameObjectInWorld(ObjectGuid(HIGHGUID_GAMEOBJECT, m_capturePointGUID));
-        GameObject * flag2 = ObjectAccessor::GetGameObjectInWorld(m_Objects[EP_EWT_FLAGS]);
+        GameObject* flag = ObjectAccessor::GetGameObjectInWorld(ObjectGuid(HIGHGUID_GAMEOBJECT, m_capturePointGUID));
+        GameObject * flag2 = ObjectAccessor::GetGameObjectInWorld(ObjectGuid(HIGHGUID_GAMEOBJECT, m_Objects[EP_EWT_FLAGS]));
         if(flag)
         {
             flag->SetGoArtKit(artkit);
@@ -242,7 +242,7 @@ void OPvPCapturePointEP_NPT::ChangeState()
         }
 
         GameObject * flag = ObjectAccessor::GetGameObjectInWorld(ObjectGuid(HIGHGUID_GAMEOBJECT, m_capturePointGUID));
-        GameObject * flag2 = ObjectAccessor::GetGameObjectInWorld(m_Objects[EP_NPT_FLAGS]);
+        GameObject * flag2 = ObjectAccessor::GetGameObjectInWorld(ObjectGuid(HIGHGUID_GAMEOBJECT, m_Objects[EP_NPT_FLAGS]));
         if(flag)
         {
             flag->SetGoArtKit(artkit);
@@ -386,8 +386,8 @@ void OPvPCapturePointEP_CGT::ChangeState()
             break;
         }
 
-        GameObject * flag = ObjectAccessor::GetGameObjectInWorld(ObjectGuid(HIGHGUID_GAMEOBJECT, m_capturePointGUID));
-        GameObject * flag2 = ObjectAccessor::GetGameObjectInWorld(m_Objects[EP_CGT_FLAGS]);
+        GameObject* flag = ObjectAccessor::GetGameObjectInWorld(ObjectGuid(HIGHGUID_GAMEOBJECT, m_capturePointGUID));
+        GameObject* flag2 = ObjectAccessor::GetGameObjectInWorld(ObjectGuid(HIGHGUID_GAMEOBJECT,m_Objects[EP_CGT_FLAGS]));
         if(flag)
         {
             flag->SetGoArtKit(artkit);
@@ -530,8 +530,8 @@ void OPvPCapturePointEP_PWT::ChangeState()
             break;
         }
 
-        GameObject * flag = ObjectAccessor::GetGameObjectInWorld(ObjectGuid(HIGHGUID_GAMEOBJECT,m_capturePointGUID));
-        GameObject * flag2 = ObjectAccessor::GetGameObjectInWorld(m_Objects[EP_PWT_FLAGS]);
+        GameObject * flag = ObjectAccessor::GetGameObjectInWorld(ObjectGuid(HIGHGUID_GAMEOBJECT, m_capturePointGUID));
+        GameObject * flag2 = ObjectAccessor::GetGameObjectInWorld(ObjectGuid(HIGHGUID_GAMEOBJECT, m_Objects[EP_PWT_FLAGS]));
         if(flag)
         {
             flag->SetGoArtKit(artkit);

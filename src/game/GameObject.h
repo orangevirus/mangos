@@ -672,7 +672,6 @@ class MANGOS_DLL_SPEC GameObject : public WorldObject
         GOState GetGoState() const { return GOState(GetByteValue(GAMEOBJECT_BYTES_1, 0)); }
         void SetGoState(GOState state) { SetByteValue(GAMEOBJECT_BYTES_1, 0, state); }
         uint8 GetGoArtKit() const { return GetByteValue(GAMEOBJECT_BYTES_1, 2); }
-        //void SetGoArtKit(uint8 artkit) { SetByteValue(GAMEOBJECT_BYTES_1, 2, artkit); }
         void SetGoArtKit(uint8 artkit);
         static void SetGoArtKit(uint8 artkit, GameObject *go, uint32 lowguid = 0);
         uint8 GetGoAnimProgress() const { return GetByteValue(GAMEOBJECT_BYTES_1, 3); }

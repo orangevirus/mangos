@@ -36,8 +36,7 @@ enum OutdoorPvPTypes
     OUTDOOR_PVP_ZM,
     OUTDOOR_PVP_SI,
     OUTDOOR_PVP_EP,
-    OUTDOOR_PVP_WG,
-    OUTDOOR_PVP_NR,
+    OUTDOOR_PVP_GH,
 };
 
 const uint8 CapturePointArtKit[3] = {2, 1, 21};
@@ -129,8 +128,8 @@ public:
     uint32 m_capturePointGUID;
     GameObject *m_capturePoint;
 
-    void AddGO(uint32 type, uint32 guid, uint32 entry = 0);
-    void AddCre(uint32 type, uint32 guid, uint32 entry = 0);
+    void AddGO(uint32 type, uint64 guid, uint32 entry = 0);
+    void AddCre(uint32 type, uint64 guid, uint32 entry = 0);
     bool SetCapturePointData(uint32 entry, uint32 map, float x, float y, float z, float o = 0, float rotation0 = 0, float rotation1 = 0, float rotation2 = 0, float rotation3 = 0);
 
 protected:

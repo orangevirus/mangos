@@ -23,6 +23,7 @@
 #include "OutdoorPvPZM.h"
 #include "OutdoorPvPSI.h"
 #include "OutdoorPvPEP.h"
+#include "OutdoorPvPGH.h"
 #include "ObjectMgr.h"
 #include "Player.h"
 #include "Policies/SingletonImp.h"
@@ -130,6 +131,21 @@ void OutdoorPvPMgr::InitOutdoorPvP()
         m_OutdoorPvPSet.push_back(pOP);
         sLog.outString();
         sLog.outString("OutdoorPvP : EP successfully initiated.");
+        sLog.outString();
+    }
+
+    pOP = new OutdoorPvPGH;
+    // respawn, init variables
+    if(!pOP->SetupOutdoorPvP())
+    {
+        sLog.outDebug("OutdoorPvP : GH init failed.");
+        delete pOP;
+    }
+    else
+    {
+        m_OutdoorPvPSet.push_back(pOP);
+        sLog.outString();
+        sLog.outString("OutdoorPvP : GH successfully initiated.");
         sLog.outString();
     }
 }

@@ -2220,6 +2220,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         bool CanUseBattleGroundObject();
         bool isTotalImmune();
         bool CanCaptureTowerPoint();
+
         /*********************************************************/
         /***               OUTDOOR PVP SYSTEM                  ***/
         /*********************************************************/

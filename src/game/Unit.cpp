@@ -42,6 +42,7 @@
 #include "BattleGround.h"
 #include "OutdoorPvP.h"
 #include "InstanceData.h"
+#include "OutdoorPvP.h"
 #include "InstanceSaveMgr.h"
 #include "GridNotifiersImpl.h"
 #include "CellImpl.h"

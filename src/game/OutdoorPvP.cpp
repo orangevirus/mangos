@@ -20,6 +20,7 @@
 #include "OutdoorPvPImpl.h"
 #include "OutdoorPvPMgr.h"
 #include "ObjectAccessor.h"
+#include "ObjectGuid.h"
 #include "ObjectMgr.h"
 #include "Map.h"
 #include "MapManager.h"
@@ -82,7 +83,7 @@ void OPvPCapturePoint::SendChangePhase()
     SendUpdateWorldState(m_capturePoint->GetGOInfo()->capturePoint.worldstate3, m_neutralValuePct);
 }
 
-void OPvPCapturePoint::AddGO(uint32 type, uint32 guid, uint32 entry)
+void OPvPCapturePoint::AddGO(uint32 type, uint64 guid, uint32 entry)
 {
     if(!entry)
     {
@@ -91,11 +92,12 @@ void OPvPCapturePoint::AddGO(uint32 type, uint32 guid, uint32 entry)
             return;
         entry = data->id;
     }
-    m_Objects[type] = ObjectGuid(HIGHGUID_GAMEOBJECT, entry, guid).GetRawValue();
+    ObjectGuid object_data = ObjectGuid(HIGHGUID_GAMEOBJECT, guid, entry);
+    m_Objects[type] = object_data.GetHigh();
     m_ObjectTypes[m_Objects[type]]=type;
 }
 
-void OPvPCapturePoint::AddCre(uint32 type, uint32 guid, uint32 entry)
+void OPvPCapturePoint::AddCre(uint32 type, uint64 guid, uint32 entry)
 {
     if(!entry)
     {
@@ -104,7 +106,8 @@ void OPvPCapturePoint::AddCre(uint32 type, uint32 guid, uint32 entry)
             return;
         entry = data->id;
     }
-    m_Creatures[type] = ObjectGuid(HIGHGUID_UNIT, entry, guid).GetRawValue();
+    ObjectGuid creature_data = ObjectGuid(HIGHGUID_UNIT, guid, entry);
+    m_Creatures[type] = creature_data.GetHigh();
     m_CreatureTypes[m_Creatures[type]] = type;
 }
 
@@ -133,15 +136,13 @@ bool OPvPCapturePoint::AddObject(uint32 type, uint32 entry, uint32 mapId, float 
     data.phaseMask      = PHASEMASK_NORMAL;
     data.artKit         = goinfo->type == GAMEOBJECT_TYPE_CAPTURE_POINT ? 21 : 0;
     data.dbData = false;
-    // not sure if this or sTerrainMgr.LoadTerrain(mapId)
+
     Map * map = const_cast<Map*>(sMapMgr.FindMap(mapId));
     if(!map)
     {
         sLog.outError("Map (Id: %i) for AddObject cannot be initialized.", mapId);
         return false;
     }
-
-    //SetMap(newMap);
 
     sObjectMgr.AddGameobjectToGrid(guid, &data);
 
@@ -161,8 +162,8 @@ bool OPvPCapturePoint::AddObject(uint32 type, uint32 entry, uint32 mapId, float 
 
     sLog.outDebug("AddGOData: dbguid %u entry %u map %u x %f y %f z %f o %f", guid, entry, mapId, x, y, z, o);
 
-    //return guid;
- //   if(uint32 guid = sObjectMgr.AddGOData(entry, map, x, y, z, o, 0, rotation0, rotation1, rotation2, rotation3))
+    return guid;
+
     if(guid)
     {
         AddGO(type, guid, entry);
@@ -232,8 +233,8 @@ bool OPvPCapturePoint::DelCreature(uint32 type)
     // explicit removal from map
     // beats me why this is needed, but with the recent removal "cleanup" some creatures stay in the map if "properly" deleted
     // so this is a big fat workaround, if AddObjectToRemoveList and DoDelayedMovesAndRemoves worked correctly, this wouldn't be needed
-    //if(Map * map = MapManager::Instance().FindMap(cr->GetMapId()))
-    //    map->Remove(cr,false);
+    if(Map * map = MapManager::Instance().FindMap(cr->GetMapId()))
+        map->Remove(cr,false);
     // delete respawn time for this creature
     WorldDatabase.PExecute("DELETE FROM creature_respawn WHERE guid = '%u'", guid);
     cr->AddObjectToRemoveList();

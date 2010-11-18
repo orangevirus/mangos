@@ -900,7 +900,6 @@ enum MangosStrings
 
     // Use for not-in-offcial-sources patches
     //                                    10000-10999
-
     // opvp hp
     LANG_OPVP_HP_CAPTURE_OVERLOOK_H     = 10001,
     LANG_OPVP_HP_CAPTURE_OVERLOOK_A     = 10002,
@@ -957,12 +956,17 @@ enum MangosStrings
     // opvp si
     LANG_OPVP_SI_CAPTURE_H              = 10049,
     LANG_OPVP_SI_CAPTURE_A              = 10050,
+    // opvp gh
+    LANG_OPVP_GH_CAPTURE_H              = 10051,
+    LANG_OPVP_GH_CAPTURE_A              = 10052,
+    LANG_OPVP_GH_LOOSE_H                = 10053,
+    LANG_OPVP_GH_LOOSE_A                = 10054,
     // opvp gossips
-    LANG_OPVP_EP_FLIGHT_NPT             = 10051,
-    LANG_OPVP_EP_FLIGHT_EWT             = 10052,
-    LANG_OPVP_EP_FLIGHT_CGT             = 10053,
-    LANG_OPVP_ZM_GOSSIP_ALLIANCE        = 10054,
-    LANG_OPVP_ZM_GOSSIP_HORDE           = 10055,
+    LANG_OPVP_EP_FLIGHT_NPT             = 10056,
+    LANG_OPVP_EP_FLIGHT_EWT             = 10057,
+    LANG_OPVP_EP_FLIGHT_CGT             = 10058,
+    LANG_OPVP_ZM_GOSSIP_ALLIANCE        = 10059,
+    LANG_OPVP_ZM_GOSSIP_HORDE           = 10060,
     
     LANG_BG_WG_BATTLE_STARTS            = 10100,
     LANG_BG_WG_DEFENDED                 = 10101,
