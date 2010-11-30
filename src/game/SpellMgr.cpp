@@ -2029,6 +2029,10 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
             // Weakened Soul and Last Stand (multi-family check)
             if (spellInfo_1->Id == 6788 && spellInfo_2->Id == 12976)
                 return false;
+            // Mind Trauma and misc enrage effects
+            if (spellInfo_1->SpellIconID == 95 && spellInfo_2->SpellIconID == 95)
+                return false;
+
             break;
         case SPELLFAMILY_DRUID:
             if (spellInfo_2->SpellFamilyName == SPELLFAMILY_DRUID)
