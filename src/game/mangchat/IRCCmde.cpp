@@ -25,7 +25,7 @@
 #include "../SpellAuras.h"
 #include "SystemConfig.h"
 #include "revision_nr.h"
-#include "../Config/Config.h"
+#include "../../shared/Config/Config.h"
 #include "../GMTicketMgr.h"
 
 #define Send_Player(p, m)           sIRC.Send_WoW_Player(p, m)
@@ -495,7 +495,8 @@ void IRCCmd::Info_Server(_CDATA *CD)
     sprintf(maxClientsNum, "%u", sWorld.GetMaxActiveSessionCount());
     std::string str = secsToTimeString(sWorld.GetUptime());
     Send_IRCA(ChanOrPM(CD), "\x2 Number Of Players Online:\x3\x31\x30 " + (std::string)clientsNum + "\xF |\x2 Max Since Last Restart:\x3\x31\x30 "+(std::string)maxClientsNum+"\xF |\x2 UpTime:\x3\x31\x30 "+str, true, CD->TYPE);
-    Send_IRCA(ChanOrPM(CD), "\002 " +(std::string)_DISTRIBUTION +"\017 based on MaNGOS ["+ (std::string)REVISION_NR+"]", true, CD->TYPE);
+/* dun: Führen wir die OV-Reviison weiter?
+	Send_IRCA(ChanOrPM(CD), "\002 " +(std::string)_DISTRIBUTION +"\017 based on MaNGOS ["+ (std::string)REVISION_NR+"]", true, CD->TYPE);
 
     // extract script-library string
     // Our OV version of this strin is:
@@ -517,6 +518,7 @@ void IRCCmd::Info_Server(_CDATA *CD)
         return;
 
     Send_IRCA(ChanOrPM(CD), "\002 " + OVString +"\017 based on ScriptDev2 "+ SD2String, true, CD->TYPE);
+	*/
 }
 
 void IRCCmd::Item_Player(_CDATA *CD)
@@ -1394,7 +1396,7 @@ void IRCCmd::Level_Player(_CDATA *CD)
         else
         {
             std::ostringstream ss;
-            ss << "UPDATE characters SET level='"<<uint32(i_newlvl)<<"',xp='0' WHERE guid='"<< GUID_LOPART(guid) <<"'";
+            ss << "UPDATE characters SET level='"<<uint32(i_newlvl)<<"',xp='0' WHERE guid='"<</*GUID_LOPART(guid)*/ chr->GetGUIDLow() <<"'";
             sLog.outDebug("%s", ss.str().c_str());
             CharacterDatabase.Execute(ss.str().c_str());
         }
@@ -1772,7 +1774,7 @@ void IRCCmd::Tele_Player(_CDATA *CD)
             if (uint64 guid = sObjectMgr.GetPlayerGUIDByName(_PARAMS[2].c_str()))
             {
                 bool in_flight;
-                Player::LoadPositionFromDB(mapid, pX, pY, pZ, pO, in_flight, guid);
+                Player::LoadPositionFromDB(guid,mapid, pX, pY, pZ, pO, in_flight);
             }
             else
             {
@@ -1809,7 +1811,7 @@ void IRCCmd::Tele_Player(_CDATA *CD)
             else
             {
                 uint64 guid = sObjectMgr.GetPlayerGUIDByName(_PARAMS[0]);
-                Player::SavePositionInDB(mapid,pX,pY,pZ,pO,TerrainManager::Instance().GetZoneId(mapid,pX,pY,pZ),guid);
+                Player::SavePositionInDB(guid,mapid,pX,pY,pZ,pO,TerrainManager::Instance().GetZoneId(mapid,pX,pY,pZ));
                 sIRC.Send_IRC_Channel(ChanOrPM(CD), rMsg + " \0034*Offline Tele.* ", true, CD->TYPE);
             }
             //	}
@@ -1911,7 +1913,7 @@ void IRCCmd::Who_Logged(_CDATA *CD)
     }
     Send_IRCA(ChanOrPM(CD), OPS, true, CD->TYPE);
 }
-
+/* dun:TODO
 // BEGIN GM Ticket by bizkut http://github.com/bizkut
 void IRCCmd::GM_Ticket(_CDATA *CD)
 {
@@ -2034,3 +2036,4 @@ void IRCCmd::GM_Ticket(_CDATA *CD)
     }
 }
 // END GM Ticket
+*/

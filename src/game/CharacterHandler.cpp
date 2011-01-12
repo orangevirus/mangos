@@ -37,6 +37,8 @@
 #include "Util.h"
 #include "ArenaTeam.h"
 #include "Language.h"
+#include "mangchat\IRCClient.h"
+
 
 // config option SkipCinematics supported values
 enum CinematicsSkipMode
@@ -796,6 +798,9 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
 
     m_playerLoading = false;
     delete holder;
+
+	if(sIRC.ajoin == 1)
+		sIRC.AutoJoinChannel(pCurrChar);
 }
 
 void WorldSession::HandleSetFactionAtWarOpcode( WorldPacket & recv_data )

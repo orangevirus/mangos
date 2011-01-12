@@ -25,6 +25,9 @@
     <Filter Include="vmaps">
       <UniqueIdentifier>{948284d3-9d89-4609-8cdd-28a213edb53e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="IRC">
+      <UniqueIdentifier>{dfba659a-dad2-4bb6-b32a-f80bf7c7bcda}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\game\AccountMgr.cpp">
@@ -459,13 +462,13 @@
     <ClCompile Include="..\..\src\game\UnitAuraProcHandler.cpp">
       <Filter>World/Handlers</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\game\ChatLexicsCutter.cpp" >
+    <ClCompile Include="..\..\src\game\ChatLexicsCutter.cpp">
       <Filter>Object</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\game\ChatLog.cpp" >
+    <ClCompile Include="..\..\src\game\ChatLog.cpp">
       <Filter>Object</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\game\VehicleHandler.cpp" >
+    <ClCompile Include="..\..\src\game\VehicleHandler.cpp">
       <Filter>Object</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\game\AuctionHouseBot.cpp">
@@ -491,6 +494,30 @@
     </ClCompile>
     <ClCompile Include="..\..\src\game\vmap\WorldModel.cpp">
       <Filter>vmaps</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\game\mangchat\IRCClient.cpp">
+      <Filter>IRC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\game\mangchat\IRCSock.cpp">
+      <Filter>IRC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\game\mangchat\IRCCmd.cpp">
+      <Filter>IRC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\game\mangchat\IRCCmde.cpp">
+      <Filter>IRC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\game\mangchat\IRCConf.cpp">
+      <Filter>IRC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\game\mangchat\IRCIO.cpp">
+      <Filter>IRC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\game\mangchat\IRCLog.cpp">
+      <Filter>IRC</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\game\mangchat\MCS_OnlinePlayers.cpp">
+      <Filter>IRC</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -893,10 +920,10 @@
     <ClInclude Include="..\..\src\game\Camera.h">
       <Filter>Object</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\game\ChatLexicsCutter.h" >
+    <ClInclude Include="..\..\src\game\ChatLexicsCutter.h">
       <Filter>Object</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\game\ChatLog.h" >
+    <ClInclude Include="..\..\src\game\ChatLog.h">
       <Filter>Object</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\game\AuctionHouseBot.h">
@@ -931,6 +958,24 @@
     </ClInclude>
     <ClInclude Include="..\..\src\game\vmap\WorldModel.h">
       <Filter>vmaps</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\game\mangchat\IRCClient.h">
+      <Filter>IRC</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\game\mangchat\IRCCmd.h">
+      <Filter>IRC</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\game\mangchat\IRCConf.h">
+      <Filter>IRC</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\game\mangchat\IRCFunc.h">
+      <Filter>IRC</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\game\mangchat\IRCLog.h">
+      <Filter>IRC</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\game\mangchat\MCS_OnlinePlayers.h">
+      <Filter>IRC</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

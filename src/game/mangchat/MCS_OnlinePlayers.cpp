@@ -14,7 +14,7 @@
 
 #include "../MapManager.h"
 #include "../ObjectMgr.h"
-#include "../Config/Config.h"
+#include "../../shared/Config/Config.h"
 
 mcs_OnlinePlayers::mcs_OnlinePlayers() { CD = NULL; }
 
