@@ -359,7 +359,7 @@ AC_CONFIG_FILES([
    src/shared/SystemConfig.h
    src/game/Makefile
    src/game/vmap/Makefile
-   src/game/mangchate/Makefile
+   src/game/mangchat/Makefile
    src/game/mangchat/mangchat.conf.dist
    src/game/mangchat/IRCConf.h
    src/realmd/Makefile

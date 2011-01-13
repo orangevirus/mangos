@@ -33,7 +33,7 @@
 #include "InstanceSaveMgr.h"
 #include "Mail.h"
 #include "Util.h"
-#include "mangchat\IRCClient.h"
+#include "mangchat/IRCClient.h"
 #ifdef _DEBUG_VMAPS
 #include "VMapFactory.h"
 #endif

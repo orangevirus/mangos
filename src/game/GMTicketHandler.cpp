@@ -24,7 +24,7 @@
 #include "ObjectAccessor.h"
 #include "Player.h"
 #include "Chat.h"
-#include "mangchat\IRCClient.h"
+#include "mangchat/IRCClient.h"
 
 void WorldSession::SendGMTicketGetTicket(uint32 status, GMTicket *ticket /*= NULL*/)
 {

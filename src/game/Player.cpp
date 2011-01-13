@@ -61,7 +61,7 @@
 #include "AchievementMgr.h"
 #include "Mail.h"
 #include "AccountMgr.h"
-#include "mangchat\IRCClient.h"
+#include "mangchat/IRCClient.h"
 
 #include <cmath>
 

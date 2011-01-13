@@ -37,7 +37,7 @@
 #include "Util.h"
 #include "ArenaTeam.h"
 #include "Language.h"
-#include "mangchat\IRCClient.h"
+#include "mangchat/IRCClient.h"
 
 
 // config option SkipCinematics supported values

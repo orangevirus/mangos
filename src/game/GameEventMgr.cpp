@@ -29,7 +29,7 @@
 #include "MassMailMgr.h"
 #include "SpellMgr.h"
 #include "Policies/SingletonImp.h"
-#include "mangchat\IRCClient.h"
+#include "mangchat/IRCClient.h"
 
 INSTANTIATE_SINGLETON_1(GameEventMgr);
 
