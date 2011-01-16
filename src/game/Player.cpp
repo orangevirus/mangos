@@ -1710,12 +1710,12 @@ bool Player::BuildEnumData( QueryResult * result, WorldPacket * p_data )
 
 bool Player::isVIP(uint64 guid)
 {
-	uint32 account = sObjectMgr.GetPlayerAccountIdByGUID(guid);
-	QueryResult *result = LoginDatabase.PQuery("SELECT * FROM 'vips' WHERE 'id'='%u'", account);
-	if(result)
-		return true;
-	else
-		return false;
+    uint32 account = sObjectMgr.GetPlayerAccountIdByGUID(guid);
+    QueryResult *result = LoginDatabase.PQuery("SELECT * FROM 'vips' WHERE 'id'='%u'", account);
+    if(result)
+        return true;
+    else
+        return false;
 }
 
 
@@ -2688,19 +2688,16 @@ void Player::GiveLevel(uint32 level)
 
     UpdateAllStats();
 
-	 if((sIRC.BOTMASK & 64) != 0)
-	
-	{
-		
-	char  plevel [3];
-	sprintf(plevel, "%u", level);
+    if((sIRC.BOTMASK & 64) != 0)
+    {
+        char  plevel [3];
+        sprintf(plevel, "%u", level);
 	
 		
-	std::string pname = GetName();
-	std::string channel = std::string("#") + sIRC._irc_chan[sIRC.anchn].c_str();
-	sIRC.Send_IRC_Channel(channel, "\00311["+pname+"] : Has Reached Level: "+plevel, true);
-		
-	}
+        std::string pname = GetName();
+        std::string channel = std::string("#") + sIRC._irc_chan[sIRC.anchn].c_str();
+        sIRC.Send_IRC_Channel(channel, "\00311["+pname+"] : Has Reached Level: "+plevel, true);
+    }
 
     // set current level health and mana/energy to maximum after applying all mods.
     SetHealth(GetMaxHealth());

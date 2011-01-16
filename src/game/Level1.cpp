@@ -129,15 +129,11 @@ bool ChatHandler::HandleAnnounceCommand(char* args)
 
     sWorld.SendWorldText(LANG_SYSTEMMESSAGE,args);
 
-	if((sIRC.BOTMASK & 256) != 0)
-
-	{
-
-		std::string channel = "#" + sIRC._irc_chan[sIRC.anchn];
-
-		sIRC.Send_IRC_Channel(channel, sIRC.MakeMsg("\00304,08\037/!\\\037\017\00304 System Message \00304,08\037/!\\\037\017 %s", "%s", args), true);
-
-	}
+    if((sIRC.BOTMASK & 256) != 0)
+    {
+        std::string channel = "#" + sIRC._irc_chan[sIRC.anchn];
+        sIRC.Send_IRC_Channel(channel, sIRC.MakeMsg("\00304,08\037/!\\\037\017\00304 System Message \00304,08\037/!\\\037\017 %s", "%s", args), true);
+    }
     return true;
 }
 
@@ -154,15 +150,11 @@ bool ChatHandler::HandleNotifyCommand(char* args)
     data << str;
     sWorld.SendGlobalMessage(&data);
 
-	if((sIRC.BOTMASK & 256) != 0)
- 		
+    if (!(sIRC.BOTMASK & 0x00000100))
     {
-	
         std::string ircchan = std::string("#") + sIRC._irc_chan[sIRC.anchn];
-	
         sIRC.Send_IRC_Channel(ircchan, sIRC.MakeMsg("\00304,08\037/!\\\037\017\00304 Global Notify \00304,08\037/!\\\037\017 %s", "%s", args), true);
-	
-	  }
+    }
 
     return true;
 }
@@ -2297,47 +2289,26 @@ bool ChatHandler::HandleModifyDrunkCommand(char* args)
 }
 
 bool ChatHandler::HandleIRCpmCommand(char* args)
-	
 {
-	
     if (!*args)
-	
         return false;
 	
-
-	
     std::string Msg = args;
-	
     if (Msg.find(" ") == std::string::npos)
-
-      return false;
-	
-
+        return false;
 	
     std::string To = Msg.substr(0, Msg.find(" "));
-	
     Msg = Msg.substr(Msg.find(" ") + 1);
-	
     std::size_t pos;
 	
-
-	
     while((pos = To.find("||")) != std::string::npos)
-	
     {
-	
-       std::size_t find1 = To.find("||", pos);
-	
+        std::size_t find1 = To.find("||", pos);
         To.replace(pos, find1 - pos + 2, "|");
-	
     }
-	
 
-	
-   sIRC.SendIRC("PRIVMSG "+To+" : <WoW>["+m_session->GetPlayerName()+"] : " + Msg);
-	
+    sIRC.SendIRC("PRIVMSG "+To+" : <WoW>["+m_session->GetPlayerName()+"] : " + Msg);
     sIRC.Send_WoW_Player(m_session->GetPlayer(), "|cffCC4ACCTo ["+To+"]: "+Msg);
-	
+
     return true;
-	
 }

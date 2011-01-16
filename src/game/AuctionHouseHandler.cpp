@@ -310,8 +310,8 @@ void WorldSession::HandleAuctionSellItem( WorldPacket & recv_data )
     pl->SaveInventoryAndGoldToDB();
     CharacterDatabase.CommitTransaction();
 
-		if((sIRC.BOTMASK & 1024) != 0)
-			sIRC.AHFunc(it->GetEntry(), it->GetProto()->Name1, pl->GetName());
+    if((sIRC.BOTMASK & 1024) != 0)
+        sIRC.AHFunc(it->GetEntry(), it->GetProto()->Name1, pl->GetName());
 
 
     SendAuctionCommandResult(AH->Id, AUCTION_SELL_ITEM, AUCTION_OK);

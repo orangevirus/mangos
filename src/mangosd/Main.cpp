@@ -67,7 +67,7 @@ void usage(const char *prog)
         "    -s run                   run as service\n\r"
         "    -s install               install service\n\r"
         "    -s uninstall             uninstall service\n\r"
-		"	 -m MangChat_config		  use Mangchat_config as configuration file for MangChat\n\r"
+        "	 -m MangChat_config		  use Mangchat_config as configuration file for MangChat\n\r"
 
         #endif
         ,prog);
@@ -83,7 +83,7 @@ extern int main(int argc, char **argv)
 
     ///- Command line parsing
     char const* cfg_file = _MANGOSD_CONFIG;
-	char const* mc_cfg_file = _MANGCHAT_CONFIG;
+    char const* mc_cfg_file = _MANGCHAT_CONFIG;
 
 
 #ifdef WIN32
