@@ -23,6 +23,10 @@
 #define _PACKAGENAME "MaNGOS"
 #endif
 
+#ifndef _DISTRIBUTION
+#define _DISTRIBUTION "OVcore[136]"
+#endif
+
 #include "Platform/Define.h"
 
 #ifndef _VERSION
