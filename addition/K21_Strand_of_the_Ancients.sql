@@ -174,7 +174,7 @@ INSERT INTO `mangos_string` (`entry`, `content_default`, `content_loc1`, `conten
 (20022, '%s has seized the Relic of Titanium for %s minutes!', NULL, NULL, NULL, NULL, NULL, '¡La $s gana la segunda ronda! ¡La reliquia de Titán ha sido recuperada en %s minutes!', '¡La $s gana la segunda ronda! ¡La reliquia de Titán ha sido recuperada en %s minutes!', 'Второй раунд Ничья! Реликвия Титана не захвачена!');
 
 -- For SendWarningToAll(entry)
-DELETE FROM `mangos_string` WHERE `entry` IN (20024, 20025, 20026, 20027, 20028, 20029, 20030, 20031, 20032, 20033, 20034, 20035, 20036, 20037, 20038, 20039, 20040, 20041, 20042, 20043, 20044, 20045, 20046, 20047);
+DELETE FROM `mangos_string` WHERE `entry` IN (20024, 20025, 20026, 20027, 20028, 20029, 20030, 20031, 20032, 20033, 20034, 20035, 20036, 20037, 20038, 20039, 20040, 20041, 20042, 20043, 20044, 20045, 20046, 20047, 20048, 20049, 20050, 20051);
 INSERT INTO `mangos_string` (`entry`, `content_default`, `content_loc1`, `content_loc2`, `content_loc3`, `content_loc4`, `content_loc5`, `content_loc6`, `content_loc7`, `content_loc8`) VALUES
 (20024, '¡La Horda está tomando el Cementerio Oriental!', NULL, NULL, NULL, NULL, NULL, '¡La Horda está tomando el Cementerio Oriental!', '¡La Horda está tomando el Cementerio Oriental!', NULL),
 (20025, '¡La Horda está tomando el Cementerio Occidental!', NULL, NULL, NULL, NULL, NULL, '¡La Horda está tomando el Cementerio Occidental!', '¡La Horda está tomando el Cementerio Occidental!', NULL),
@@ -202,7 +202,12 @@ INSERT INTO `mangos_string` (`entry`, `content_default`, `content_loc1`, `conten
 (20044, '¡La puerta del Zafiro Azul ha sido dañada!', NULL, NULL, NULL, NULL, NULL, '¡La puerta del Zafiro Azul ha sido dañada!', '¡La puerta del Zafiro Azul ha sido dañada!', NULL),
 (20045, '¡La puerta de la Amatista Púrpura ha sido dañada!', NULL, NULL, NULL, NULL, NULL, '¡La puerta de la Amatista Púrpura ha sido dañada!', '¡La puerta de la Amatista Púrpura ha sido dañada!', NULL),
 (20046, '¡La puerta del Sol Rojo ha sido dañada!', NULL, NULL, NULL, NULL, NULL, '¡La puerta del Sol Rojo ha sido dañada!', '¡La puerta del Sol Rojo ha sido dañada!', NULL),
-(20047, '¡La puerta de la Luna Amarilla ha sido dañada!', NULL, NULL, NULL, NULL, NULL, '¡La puerta de la Luna Amarilla ha sido dañada!', '¡La puerta de la Luna Amarilla ha sido dañada!', NULL);
+(20047, '¡La puerta de la Luna Amarilla ha sido dañada!', NULL, NULL, NULL, NULL, NULL, '¡La puerta de la Luna Amarilla ha sido dañada!', '¡La puerta de la Luna Amarilla ha sido dañada!', NULL),
+
+(20048, 'Round 1 - Finished!', NULL, NULL, NULL, NULL, NULL, '¡Ronda 1 acabada!', '¡Ronda 1 acabada!', 'два один Завершенный!'),
+(20049, 'Round 1 - Finished!', NULL, NULL, NULL, NULL, NULL, '¡Ronda 1 acabada!', '¡Ronda 1 acabada!', 'два один Завершенный!'),
+(20050, 'Round 2 - Finished!', NULL, NULL, NULL, NULL, NULL, '¡Ronda 2 acabada!', '¡Ronda 2 acabada!', 'два два Завершенный!'),
+(20051, 'Round 2 - Finished!', NULL, NULL, NULL, NULL, NULL, '¡Ronda 2 acabada!', '¡Ronda 2 acabada!', 'два два Завершенный!');
 
 DELETE FROM `gameobject` WHERE `guid` in (300008,300009,300010,300011,300012,300013,300014,300015,300016,300017,300018,300019,300020,300021,300022,300023,300024,300025,300026,300027,300028);
 INSERT INTO `gameobject` (`guid`, `id`, `map`, `spawnMask`, `phaseMask`, `position_x`, `position_y`, `position_z`, `orientation`, `rotation0`, `rotation1`, `rotation2`, `rotation3`, `spawntimesecs`, `animprogress`, `state`) VALUES
