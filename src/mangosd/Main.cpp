@@ -87,9 +87,9 @@ extern int main(int argc, char **argv)
 
 
 #ifdef WIN32
-    char const *options = ":c:s:";
+    char const *options = ":c:m:s:";
 #else
-    char const *options = ":c:";
+    char const *options = ":c:m:";
 #endif
 
     ACE_Get_Opt cmd_opts(argc, argv, options);
@@ -103,9 +103,14 @@ extern int main(int argc, char **argv)
             case 'c':
                 cfg_file = cmd_opts.opt_arg();
                 break;
+			case 'm':
+				mc_cfg_file = cmd_opts.opt_arg();
+				break;
             case 'v':
                 printf("%s\n", _FULLVERSION(REVISION_DATE,REVISION_TIME,REVISION_NR,REVISION_ID));
                 return 0;
+			
+
 #ifdef WIN32
             case 's':
             {
@@ -154,6 +159,8 @@ extern int main(int argc, char **argv)
         Log::WaitBeforeContinueIfNeed();
         return 1;
     }
+
+	sIRC.SetCfg(mc_cfg_file);
 
     sLog.outString( "%s [world-daemon]", _FULLVERSION(REVISION_DATE,REVISION_TIME,REVISION_NR,REVISION_ID) );
     sLog.outString( "<Ctrl-C> to stop.\n\n" );

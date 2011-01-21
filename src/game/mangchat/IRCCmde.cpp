@@ -497,8 +497,11 @@ void IRCCmd::Info_Server(_CDATA *CD)
     Send_IRCA(ChanOrPM(CD), "\x2 Number Of Players Online:\x3\x31\x30 " + (std::string)clientsNum + "\xF |\x2 Max Since Last Restart:\x3\x31\x30 "+(std::string)maxClientsNum+"\xF |\x2 UpTime:\x3\x31\x30 "+str, true, CD->TYPE);
     /*  dun: Führen wir die OV-Reviison weiter?
         pas: Ja, würde ich sagen! :-P
+		
+	*/	
 	Send_IRCA(ChanOrPM(CD), "\002 " +(std::string)_DISTRIBUTION +"\017 based on MaNGOS ["+ (std::string)REVISION_NR+"]", true, CD->TYPE);
-
+	return;
+	/*
     // extract script-library string
     // Our OV version of this strin is:
     // scriptString = "OVscript [084] based on ScriptDev2 (for MaNGOS 986e5b76ae8758d8c895edce483c8cb84801c57d +) Revision [03de8f532e6e7a56e743b42709575ecefabb7eb2] 2010-07-18 23:59:08 (Win32)"

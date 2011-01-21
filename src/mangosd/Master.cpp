@@ -37,6 +37,7 @@
 #include "Util.h"
 #include "revision_sql.h"
 #include "MaNGOSsoap.h"
+#include "mangchat/IRCClient.h"
 #include "MassMailMgr.h"
 #include "DBCStores.h"
 
@@ -194,6 +195,10 @@ int Master::Run()
         return 1;
     }
 
+	//- Load Mangchat Config (MangChat needs DB for gm levels, AutoBroadcast uses world timers)
+	Sleep(15000);
+	sIRC.LoadConfig(sIRC.CfgFile);
+
     ///- Initialize the World
     sWorld.SetInitialWorldSettings();
 
@@ -287,6 +292,12 @@ int Master::Run()
 
     uint32 realCurrTime, realPrevTime;
     realCurrTime = realPrevTime = WorldTimer::getMSTime();
+
+	
+
+	//Start up MangChat
+	ACE_Based::Thread irc(new IRCClient);
+	irc.setPriority (ACE_Based::High);
 
     ///- Start up freeze catcher thread
     ACE_Based::Thread* freeze_thread = NULL;
