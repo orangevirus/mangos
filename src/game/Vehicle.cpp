@@ -310,7 +310,7 @@ void VehicleKit::RemovePassenger(Unit *passenger)
     if (m_pBase->GetTypeId() == TYPEID_UNIT)
     {
         if (((Creature*)m_pBase)->AI())
-            ((Creature*)m_pBase)->AI()->PassengerBoarded(passenger, seat->first, true);
+            ((Creature*)m_pBase)->AI()->PassengerBoarded(passenger, seat->first, false);
     }
 
 }
