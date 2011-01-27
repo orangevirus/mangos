@@ -591,6 +591,8 @@ Player::Player (WorldSession *session): Unit(), m_mover(this), m_camera(this), m
     m_GrantableLevelsCount = 0;
 
     m_anticheat = new AntiCheat(this);
+
+    SetPendingBind(NULL, 0);
 }
 
 Player::~Player ()
@@ -1474,6 +1476,17 @@ void Player::Update( uint32 update_diff, uint32 p_time )
 
         if (m_drunkTimer > 10*IN_MILLISECONDS)
             HandleSobering();
+    }
+
+    if (HasPendingBind())
+    {
+        if (_pendingBindTimer <= p_time)
+        {
+            BindToInstance();
+            SetPendingBind(NULL, 0);
+        }
+        else
+            _pendingBindTimer -= p_time;
     }
 
     // not auto-free ghost from body in instances
@@ -2624,7 +2637,24 @@ void Player::GiveXP(uint32 xp, Unit* victim)
         newXP -= nextLvlXP;
 
         if ( level < sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL) )
+        {
             GiveLevel(level + 1);
+            level = getLevel();
+            // Refer-A-Friend
+            if (GetAccountLinkedState() == STATE_REFERRAL || GetAccountLinkedState() == STATE_DUAL)
+            {
+                if (level < sWorld.getConfig(CONFIG_UINT32_RAF_MAXGRANTLEVEL))
+                {
+                    if (sWorld.getConfig(CONFIG_FLOAT_RATE_RAF_LEVELPERLEVEL) < 1.0f)
+                    {
+                        if ( level%uint8(1.0f/sWorld.getConfig(CONFIG_FLOAT_RATE_RAF_LEVELPERLEVEL)) == 0 )
+                            ChangeGrantableLevels(1);
+                    }
+                    else
+                        ChangeGrantableLevels(uint8(sWorld.getConfig(CONFIG_FLOAT_RATE_RAF_LEVELPERLEVEL)));
+                }
+            }
+        }
 
         level = getLevel();
         nextLvlXP = GetUInt32Value(PLAYER_NEXT_LEVEL_XP);
@@ -2719,20 +2749,6 @@ void Player::GiveLevel(uint32 level)
 
     GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_REACH_LEVEL);
 
-    // Refer-A-Friend
-    if (GetAccountLinkedState() == STATE_REFERRAL || GetAccountLinkedState() == STATE_DUAL)
-    {
-        if (level < sWorld.getConfig(CONFIG_UINT32_RAF_MAXGRANTLEVEL))
-        {
-            if (sWorld.getConfig(CONFIG_FLOAT_RATE_RAF_LEVELPERLEVEL) < 1.0f)
-            {
-                if (!(level%uint8(1/sWorld.getConfig(CONFIG_FLOAT_RATE_RAF_LEVELPERLEVEL))))
-                    ChangeGrantableLevels(1);
-            }
-            else
-                ChangeGrantableLevels(uint8(sWorld.getConfig(CONFIG_FLOAT_RATE_RAF_LEVELPERLEVEL)));
-        }
-    }
 }
 
 void Player::UpdateFreeTalentPoints(bool resetIfNeed)
@@ -6553,6 +6569,11 @@ int32 Player::CalculateReputationGain(ReputationSource source, int32 rep, int32 
             return 0;
 
         percent *= repRate;
+    }
+
+    if (CheckRAFConditions())
+    {
+        percent *= sWorld.getConfig(CONFIG_FLOAT_RATE_RAF_XP);
     }
 
     return int32(sWorld.getConfig(CONFIG_FLOAT_RATE_REPUTATION_GAIN)*rep*percent/100.0f);
@@ -17291,6 +17312,14 @@ InstanceSave* Player::GetBoundInstanceSaveForSelfOrGroup(uint32 mapid)
     return pSave;
 }
 
+void Player::BindToInstance()
+{
+    WorldPacket data(SMSG_INSTANCE_SAVE_CREATED, 4);
+    data << uint32(0);
+    GetSession()->SendPacket(&data);
+    BindToInstance(_pendingBind, true);
+}
+
 void Player::SendRaidInfo()
 {
     uint32 counter = 0;
@@ -23158,7 +23187,10 @@ ReferAFriendError Player::GetReferFriendError(Player * target, bool summon)
 void Player::ChangeGrantableLevels(uint8 increase) 
 {
     if (increase)
-        m_GrantableLevelsCount += increase;
+    {
+        if (m_GrantableLevelsCount <= uint32(sWorld.getConfig(CONFIG_UINT32_RAF_MAXGRANTLEVEL) * sWorld.getConfig(CONFIG_FLOAT_RATE_RAF_LEVELPERLEVEL)))
+            m_GrantableLevelsCount += increase;
+    }
     else
     {
         m_GrantableLevelsCount -= 1; 
