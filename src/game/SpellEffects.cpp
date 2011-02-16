@@ -5645,7 +5645,7 @@ void Spell::DoSummonPossessed(SpellEffectIndex eff_idx, uint32 forceFaction)
     PossessedSummon* pCreature = new PossessedSummon();
 
     Team p_team = p_caster->GetTeam();
-    if (!pCreature->Create(sObjectMgr.GenerateLowGuid(HIGHGUID_UNIT), p_caster->GetMap(), p_caster->GetPhaseMask(), creature_entry, p_team))
+    if (!pCreature->Create(p_caster->GetMap()->GenerateLocalLowGuid(HIGHGUID_UNIT), p_caster->GetMap(), p_caster->GetPhaseMask(), creature_entry, p_team))
     {
         delete pCreature;
         return;
