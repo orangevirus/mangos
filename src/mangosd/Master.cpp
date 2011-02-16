@@ -294,12 +294,6 @@ int Master::Run()
         soap_thread = new ACE_Based::Thread(runnable);
     }
 
-
-    uint32 realCurrTime, realPrevTime;
-    realCurrTime = realPrevTime = WorldTimer::getMSTime();
-
-	
-
 	//Start up MangChat
 	ACE_Based::Thread irc(new IRCClient);
 	irc.setPriority (ACE_Based::High);
