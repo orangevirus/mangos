@@ -15551,7 +15551,7 @@ bool Player::MinimalLoadFromDB(uint64 lowguid)
 
     Field *fields = result->Fetch();
 
-    Object::_Create(ObjectGuid(HIGHGUID_PLAYER, lowguid));
+    Object::_Create(ObjectGuid(HIGHGUID_PLAYER, uint32(lowguid)));
 
     sLog.outDebug("Player #%d minimal data loaded",lowguid);
 
@@ -21130,6 +21130,14 @@ void Player::RemoveItemDependentAurasAndCasts( Item * pItem )
         if(holder->IsPassive() ||  holder->GetCasterGUID()!=GetGUID())
         {
             ++itr;
+            continue;
+        }
+
+        // Remove spells triggered by equipped item auras
+        if (pItem->HasTriggeredByAuraSpell(spellInfo))
+        {
+            RemoveAurasDueToSpell(holder->GetId());
+            itr = auras.begin();
             continue;
         }
 
