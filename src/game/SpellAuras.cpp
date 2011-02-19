@@ -8973,11 +8973,11 @@ void SpellAuraHolder::_RemoveSpellAuraHolder()
                 ((Player*)caster)->SendCooldownEvent(GetSpellProto());
             }
             // send to controller, if unit is player-controlled
-            else if (caster->isCharmedOwnedByPlayerOrPlayer())
+            /*else if (caster->isCharmedOwnedByPlayerOrPlayer())
             {
                 Player* controller = (Player*)(caster->GetCharmerOrOwner());
                 controller->SendCooldownEvent(GetSpellProto(), 0, NULL, caster);
-            }
+            }*/
         }
     }
 }
