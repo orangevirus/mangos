@@ -9,8 +9,8 @@ UPDATE `creature_template` SET `npcflag` = '1', unit_flags = '4108', minhealth =
 -- remove forcefield at defenders spawn
 UPDATE `gameobject` SET `spawnMask` = '0' WHERE `guid` = 300086;
 
--- remove lock from titanium relic
-UPDATE `gameobject_template` SET `data0` = 0 WHERE `entry` = 192829;
+-- remove lock from titanium relic & make it selectable
+UPDATE `gameobject_template` SET `data0` = 0, `flags` = 0 WHERE `entry` = 192829;
 
 -- translate text to german
 UPDATE `mangos_string` SET `content_loc3` = 'Allianz' where entry = 650;
