@@ -9,6 +9,9 @@ UPDATE `creature_template` SET `npcflag` = '1', unit_flags = '4108', minhealth =
 -- remove forcefield at defenders spawn
 UPDATE `gameobject` SET `spawnMask` = '0' WHERE `guid` = 300086;
 
+-- remove lock from titanium relic
+UPDATE `gameobject_template` SET `data0` = 0 WHERE `entry` = 192829;
+
 -- translate text to german
 UPDATE `mangos_string` SET `content_loc3` = 'Allianz' where entry = 650;
 UPDATE `mangos_string` SET `content_loc3` = 'Horde' where entry = 651;
@@ -31,10 +34,10 @@ UPDATE `mangos_string` SET `content_loc3` = 'Östlicher Friedhof' where entry = 2
 UPDATE `mangos_string` SET `content_loc3` = 'Westlicher Friedhof' where entry = 20016;
 UPDATE `mangos_string` SET `content_loc3` = 'Südlicher Friedhof' where entry = 20017;
 UPDATE `mangos_string` SET `content_loc3` = '$n hat eine Zephyriumladung platziert!' where entry = 20018;
-UPDATE `mangos_string` SET `content_loc3` = '%s hat das Titanium Relikt für %s Minuten erobert!' where entry = 20019; -- also not sure about these four
-UPDATE `mangos_string` SET `content_loc3` = '%s hat das Titanium Relikt für %s Minuten erobert!' where entry = 20020;
-UPDATE `mangos_string` SET `content_loc3` = '%s hat das Titanium Relikt für %s Minuten erobert!' where entry = 20021;
-UPDATE `mangos_string` SET `content_loc3` = '%s hat das Titanium Relikt für %s Minuten erobert!' where entry = 20022;
+UPDATE `mangos_string` SET `content_loc3` = '%s hat das Titanium Relikt in %s Minuten erobert!' where entry = 20019; -- also not sure about these four
+UPDATE `mangos_string` SET `content_loc3` = '%s hat das Titanium Relikt in %s Minuten erobert!' where entry = 20020;
+UPDATE `mangos_string` SET `content_loc3` = '%s hat das Titanium Relikt in %s Minuten erobert!' where entry = 20021;
+UPDATE `mangos_string` SET `content_loc3` = '%s hat das Titanium Relikt in %s Minuten erobert!' where entry = 20022;
 UPDATE `mangos_string` SET `content_loc3` = 'Die Horde hat den östlichen Friedhof verloren!' where entry = 20024;
 UPDATE `mangos_string` SET `content_loc3` = 'Die Horde hat den westlichen Friedhof verloren!' where entry = 20025;
 UPDATE `mangos_string` SET `content_loc3` = 'Die Horde hat den südlichen Friedhof verloren!' where entry = 20026;
