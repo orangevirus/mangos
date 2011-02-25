@@ -1722,7 +1722,7 @@ bool Player::BuildEnumData( QueryResult * result, WorldPacket * p_data )
 bool Player::isVIP(uint64 guid)
 {
     uint32 account = sObjectMgr.GetPlayerAccountIdByGUID(guid);
-    QueryResult *result = LoginDatabase.PQuery("SELECT * FROM 'vips' WHERE 'id'='%u'", account);
+    QueryResult *result = LoginDatabase.PQuery("SELECT * FROM vips WHERE id = '%u'", account);
     if(result)
         return true;
     else
