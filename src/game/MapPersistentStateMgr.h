@@ -54,6 +54,8 @@ typedef UNORDERED_MAP<uint32/*cell_id*/,MapCellObjectGuids> MapCellObjectGuidsMa
 
 class MapPersistentStateManager;
 
+#define INSTANCE_RESET_SCHEDULE_START_TIME  1135717200
+
 class MapPersistentState
 {
     friend class MapPersistentStateManager;
