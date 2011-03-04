@@ -1,5 +1,8 @@
 -- strand of the ancients 
 
+-- decrease battleground minplayers for SOTA
+UPDATE `battleground_template` SET `MinPlayersPerTeam` = '10' WHERE `id` = 9;
+
 -- update to make vehicles work
 -- Demolisher
 UPDATE `creature_template` SET `npcflag` = '1', minhealth = '80000', maxhealth = '80000', unit_flags = 32768, dynamicflags = 8, spell1 = 52338, spell2 = 60206, mechanic_immune_mask = 67110928, `ScriptName` = 'npc_sa_demolisher' WHERE `entry` = '28781';
