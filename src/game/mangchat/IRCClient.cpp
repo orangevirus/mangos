@@ -24,12 +24,14 @@ INSTANTIATE_SINGLETON_1( IRCClient );
 #else
     #define Delay(x) sleep(x / 1000)
 #endif
+
 // IRCClient Constructor
 IRCClient::IRCClient()
 {
     for(int i = 0;i > 5;i++)
         sIRC.Script_Lock[i] = false;
 }
+
 // IRCClient Destructor
 IRCClient::~IRCClient(){}
 
@@ -49,15 +51,17 @@ void IRCClient::run()
         "***************************************");
     sLog.outString("****** MangChat: %s ********", sIRC._Mver.c_str());
     int cCount = 0;
+
     // Clean Up MySQL Tables
     sLog.outString("*** MangChat: Cleaning Up Inchan Table*");
     WorldDatabase.PExecute("DELETE FROM `IRC_Inchan`");
     sIRC._Max_Script_Inst = 0;
+
     // Create a loop to keep the thread running untill active is set to false
     while(sIRC.Active && !World::IsStopped())
     {
         // Initialize socket library
-        if(this->InitSock())
+        if (InitSock())
         {
             // Connect To The IRC Server
             sLog.outString("*** MangChat: Connecting to %s Try # %d ******", sIRC._Host.c_str(), cCount);
@@ -80,7 +84,7 @@ void IRCClient::run()
             // Increase the connection counter
             cCount++;
             // if MAX_CONNECT_ATTEMPT is reached stop trying
-            if(sIRC._MCA != 0 && cCount == sIRC._MCA)
+            if(sIRC._MCA && cCount == sIRC._MCA)
                 sIRC.Active = false;
             // If we need to reattempt a connection wait WAIT_CONNECT_TIME milli seconds before we try again
             if(sIRC.Active)
@@ -93,9 +97,5 @@ void IRCClient::run()
             sLog.outError("** MangChat: Could not initialize socket");
         }
     }
-    // we need to keep the thread alive or mangos will crash
-    // when sending chat or join/leave channels.
-    // even when we are not connected the functions must still
-    // be availlable where chat is sent to so we keep it running
-    // while(!World::IsStopped()){};
+    // thread stays alive for calls from other threads
 }

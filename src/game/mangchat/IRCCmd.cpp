@@ -69,7 +69,7 @@ bool IRCCmd::IsValid(std::string USER, std::string FROM, std::string CHAT, std::
         CDATA.PARAMS    = _PARAMS[1];
         if(CDATA.CMD == "LOGIN")
         {
-            if(FROM == sIRC._Nick)
+            if (FROM == *(sIRC.GetNick()))
             {
                 if(ParamsValid(&CDATA, 2))
                     Handle_Login(&CDATA);
@@ -84,10 +84,8 @@ bool IRCCmd::IsValid(std::string USER, std::string FROM, std::string CHAT, std::
         }
         else if(CDATA.CMD == "LOGOUT")
         {
-            if(FROM == sIRC._Nick)
-            {
+            if (FROM == *(sIRC.GetNick()))
                 Handle_Logout(&CDATA);
-            }
             else
                 sIRC.Send_IRC_Channel(USER, "\0034[ERROR] : Please Send A PM To Logout!", true, "ERROR");
             cValid = true;
@@ -392,8 +390,8 @@ bool IRCCmd::IsValid(std::string USER, std::string FROM, std::string CHAT, std::
             switch(ParamsValid(&CDATA, 0, sIRC.CRESTART))
             {
                 case E_OK:
-                    sIRC.Send_IRC_Channels("Reloading MangChat Config Options. (Command Disabled)");
-                    sIRC.LoadConfig(sIRC.CfgFile);
+                    sIRC.Send_IRC_Channels("Reloading MangChat Config Options. (Restart recommended)");
+                    sIRC.LoadConfig();
                     break;
                 case E_AUTH:
                     AuthValid = false;
@@ -564,12 +562,11 @@ bool IRCCmd::IsValid(std::string USER, std::string FROM, std::string CHAT, std::
 		*/
         if(!AuthValid && IsLoggedIn(USER))
             sIRC.Send_IRC_Channel(USER, "\0034[ERROR] : Access Denied! Your Security Level Is Too Low To Use This Command!", true, "ERROR");
-        if(cValid == false && (sIRC.BOTMASK & 4) != 0)
+        if (cValid == false && (sIRC.BOTMASK & 4))
             sIRC.Send_IRC_Channel(USER, "\0034[ERROR] : Unknown Command!", true, "ERROR");
-        if(cValid && dontlog)
-        {
+        if (cValid && dontlog)
             sIRC.iLog.WriteLog(" %s : [ %s(%d) ] Used Command: [ %s ] With Parameters: [ %s ]", sIRC.iLog.GetLogDateTimeStr().c_str(), CDATA.USER.c_str(), GetLevel(USER), CDATA.CMD.c_str(), CDATA.PARAMS.c_str());
-        }
+
         return cValid;
     }
     return false;
@@ -595,7 +592,7 @@ bool IRCCmd::CanUse(std::string USER, int nLevel)
 
 std::string IRCCmd::ChanOrPM(_CDATA *CD)
 {
-    if(CD->FROM == sIRC._Nick)
+    if (CD->FROM == *(sIRC.GetNick()))
         return CD->USER;
     else
         return CD->FROM;

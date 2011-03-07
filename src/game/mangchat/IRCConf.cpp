@@ -10,28 +10,32 @@
  * With Help And Support From The MaNGOS Project Community.
  * PLEASE RETAIN THE COPYRIGHT OF THE AUTHORS.
  */
+
 #include "IRCClient.h"
 #include "IRCCmd.h"
 #include "../../shared/Config/Config.h"
 #include "IRCConf.h"
+
 Config MCConfig;
-void IRCClient::SetCfg(char const* cfgfile)
+void IRCClient::SetCfgFile(char const* cfgfile)
 {
     sIRC.CfgFile = cfgfile;
 }
-bool IRCClient::LoadConfig(char const* cfgfile)
+
+bool IRCClient::LoadConfig()
 {
-    if (!MCConfig.SetSource(cfgfile))
-        sLog.outString("*** MangChat: Unable to open configuration file (%s), All default options are being used.", cfgfile);
+    if (!MCConfig.SetSource(CfgFile))
+        sLog.outString("*** MangChat: Unable to open configuration file (%s), All default options are being used.", CfgFile);
     else
-        sLog.outString("*** MangChat: Found the configuration file, %s", cfgfile);
+        sLog.outString("*** MangChat: Found the configuration file, %s", CfgFile);
 
     int ConfCnt = 0;
     sIRC._chan_count = 0;
-    if (MCConfig.GetIntDefault("irc.active", 1) == 1)
+    if (MCConfig.GetIntDefault("irc.active", 1))
         sIRC.Active = true;
     else
         sIRC.Active = false;
+
     sIRC._Host = MCConfig.GetStringDefault("irc.host", "irc.freenode.net");
     if (sIRC._Host.size() > 0)
         ConfCnt++;
@@ -68,6 +72,7 @@ bool IRCClient::LoadConfig(char const* cfgfile)
     sIRC.JoinMsg = MCConfig.GetStringDefault("irc.joinmsg", "Whhaaazzzzaaaa, MangChat $Ver Baby!!");
     sIRC.RstMsg  = MCConfig.GetStringDefault("irc.rstmsg", "MangChat Is Restarting, I Will Be Right Back!");
     sIRC.kikmsg = MCConfig.GetStringDefault("irc.kickmsg", "Do Not Kick Me Again, Severe Actions Will Be Taken!");
+
     // IRC LINES
     sIRC.ILINES[WOW_IRC] = MCConfig.GetStringDefault("chat.wow_irc", "\003<WoW>[\002$Name($Level)\002\003] $Msg");
     sIRC.ILINES[IRC_WOW] = MCConfig.GetStringDefault("chat.irc_wow", "\003<IRC>[$Name]: $Msg");
@@ -76,6 +81,7 @@ bool IRCClient::LoadConfig(char const* cfgfile)
     sIRC.ILINES[LEAVE_WOW] = MCConfig.GetStringDefault("chat.leave_wow", "\00312<<\00304 $Name \003Left The Channel!");
     sIRC.ILINES[LEAVE_IRC] = MCConfig.GetStringDefault("chat.leave_irc", "\003[$Name]: Has Left IRC!");
     sIRC.ILINES[CHANGE_NICK] = MCConfig.GetStringDefault("chat.change_nick", "\003<> $Name Is Now Known As $NewName!");
+
     // MangChat Options
     sIRC._MCA = MCConfig.GetIntDefault("irc.maxattempt", 10);
     sIRC._autojoinkick = MCConfig.GetIntDefault("irc.autojoin_kick", 1);

@@ -83,7 +83,7 @@ extern int main(int argc, char **argv)
 
     ///- Command line parsing
     char const* cfg_file = _MANGOSD_CONFIG;
-	char const* mc_cfg_file = _MANGCHAT_CONFIG;
+    char const* mc_cfg_file = _MANGCHAT_CONFIG;
 
 
 #ifdef WIN32
@@ -160,7 +160,7 @@ extern int main(int argc, char **argv)
         return 1;
     }
 
-	sIRC.SetCfg(mc_cfg_file);
+	sIRC.SetCfgFile(mc_cfg_file);
 
     sLog.outString( "%s [world-daemon]", _FULLVERSION(REVISION_DATE,REVISION_TIME,REVISION_NR,REVISION_ID) );
     sLog.outString( "<Ctrl-C> to stop.\n\n" );

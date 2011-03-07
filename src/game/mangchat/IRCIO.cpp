@@ -81,10 +81,10 @@ void IRCClient::Handle_IRC(std::string sData)
                         case 3:
                             SendIRC("PRIVMSG Q@CServe.quakenet.org :AUTH " + sIRC._Nick + " " + sIRC._Pass);
                             break;
-					    case 4:
+                        case 4:
                             SendIRC("PRIVMSG Q@CServe.quakenet.org :AUTH " + sIRC._Auth_Nick + " " + sIRC._Pass);
                             break;
-				    }
+                    }
                     // if we join a default channel leave this now.
                     if(sIRC._ldefc==1)
                         SendIRC("PART #" + sIRC._defchan);
@@ -111,7 +111,7 @@ void IRCClient::Handle_IRC(std::string sData)
                         // so we construct a message and send this to the clients.
                         // MangChat now uses Send_WoW_Channel to send to the client
                         // this makes MangChat handle the packets instead of previously the world.
-                        if((sIRC.BOTMASK & 2) != 0)
+                        if(sIRC.BOTMASK & 2)
                             Send_WoW_Channel(GetWoWChannel(CHAN).c_str(), IRCcol2WoW(MakeMsg(MakeMsg(GetChatLine(JOIN_IRC), "$Name", szUser), "$Channel", GetWoWChannel(CHAN))));
                     }
                 }
@@ -128,11 +128,11 @@ void IRCClient::Handle_IRC(std::string sData)
                         Command.Handle_Logout(&CDATA);
                     }
                     // Construct a message and inform the clients on the same channel.
-				    if((sIRC.BOTMASK & 2) != 0)
+				    if (sIRC.BOTMASK & 2)
                         Send_WoW_Channel(GetWoWChannel(CHAN).c_str(), IRCcol2WoW(MakeMsg(MakeMsg(GetChatLine(LEAVE_IRC), "$Name", szUser), "$Channel", GetWoWChannel(CHAN))));
                 }
                 // someone changed their nick
-			    if (CMD == "nick" && (sIRC.BOTMASK & 128) != 0)
+			    if (CMD == "nick" && (sIRC.BOTMASK & 128))
                 {
                     MakeMsg(MakeMsg(GetChatLine(CHANGE_NICK), "$Name", szUser), "$NewName", sData.substr(sData.find(":", p2) + 1, sData.size()- isCRTerminated(sData)));
 				    // If the user is logged in and changes their nick
@@ -202,7 +202,7 @@ void IRCClient::Handle_IRC(std::string sData)
                     {
                         if(CHAT.find("\001VERSION\001") < CHAT.size())
                         {
-                            Send_IRC_Channel(szUser, MakeMsg("\001VERSION MangChat %s ©2008 |Death|\001", "%s" , sIRC._Mver.c_str()), true, "NOTICE");
+                            Send_IRC_Channel(szUser, MakeMsg("\001VERSION MangChat %s Â©2008 |Death|\001", "%s" , sIRC._Mver.c_str()), true, "NOTICE");
                         }
                         // a pm is required for certain commands
                         // such as login. to validate the command
@@ -254,16 +254,16 @@ void IRCClient::Handle_IRC(std::string sData)
 void IRCClient::Handle_WoW_Channel(std::string Channel, Player *plr, int nAction)
 {
     // make sure that we are connected
-    if(sIRC.Connected && (sIRC.BOTMASK & 1)!= 0)
+    if (sIRC.Connected && (sIRC.BOTMASK & 1))
     {
         if(Channel_Valid(Channel))
         {
             std::string GMRank = "";
             std::string pname = plr->GetName();
             bool DoGMAnnounce = false;
-            if (plr->GetSession()->GetSecurity() > 0 && (sIRC.BOTMASK & 8)!= 0)
+            if (plr->GetSession()->GetSecurity() > 0 && (sIRC.BOTMASK & 8))
                 DoGMAnnounce = true;
-            if (plr->isGameMaster() && (sIRC.BOTMASK & 16)!= 0)
+            if (plr->isGameMaster() && (sIRC.BOTMASK & 16))
                 DoGMAnnounce = true;
             if(DoGMAnnounce)
             {
@@ -302,7 +302,7 @@ void IRCClient::Send_IRC_Channel(std::string sChannel, std::string sMsg, bool No
     std::string mType = "PRIVMSG";
 	if(Command.MakeUpper(nType.c_str()) == "NOTICE")
 		mType = "NOTICE";
-    if(Command.MakeUpper(nType.c_str()) == "ERROR" && (sIRC.BOTMASK & 32)!= 0)
+    if(Command.MakeUpper(nType.c_str()) == "ERROR" && (sIRC.BOTMASK & 32))
 		mType = "NOTICE";
     if(sIRC.Connected)
     {
@@ -353,11 +353,8 @@ void IRCClient::Send_WoW_Channel(const char *channel, std::string chat)
     if(!(strlen(channel) > 0))
         return;
 
-    #ifdef USE_UTF8
-        std::string chat2 = chat;
-        if(ConvertUTF8(chat2.c_str(), chat2))
-            chat = chat2;
-    #endif
+    // IRC-Protocol does not use a specific character encoding.
+    // TODO: Autoencode to UTF8 (as used in the wow client)
 
     HashMapHolder<Player>::MapType& m = ObjectAccessor::Instance().GetPlayers();
     for(HashMapHolder<Player>::MapType::iterator itr = m.begin(); itr != m.end(); ++itr)

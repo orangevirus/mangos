@@ -128,16 +128,11 @@ bool ChatHandler::HandleAnnounceCommand(char* args)
         return false;
 
     sWorld.SendWorldText(LANG_SYSTEMMESSAGE,args);
-
-	if((sIRC.BOTMASK & 256) != 0)
-
-	{
-
-		std::string channel = "#" + sIRC._irc_chan[sIRC.anchn];
-
-		sIRC.Send_IRC_Channel(channel, sIRC.MakeMsg("\00304,08\037/!\\\037\017\00304 System Message \00304,08\037/!\\\037\017 %s", "%s", args), true);
-
-	}
+    if (sIRC.BOTMASK & 256)
+    {
+        std::string channel = "#" + sIRC._irc_chan[sIRC.anchn];
+        sIRC.Send_IRC_Channel(channel, sIRC.MakeMsg("\00304,08\037/!\\\037\017\00304 System Message \00304,08\037/!\\\037\017 %s", "%s", args), true);
+    }
     return true;
 }
 
@@ -154,15 +149,11 @@ bool ChatHandler::HandleNotifyCommand(char* args)
     data << str;
     sWorld.SendGlobalMessage(&data);
 
-	if((sIRC.BOTMASK & 256) != 0)
-
+	if (sIRC.BOTMASK & 256)
     {
-
         std::string ircchan = std::string("#") + sIRC._irc_chan[sIRC.anchn];
-
         sIRC.Send_IRC_Channel(ircchan, sIRC.MakeMsg("\00304,08\037/!\\\037\017\00304 Global Notify \00304,08\037/!\\\037\017 %s", "%s", args), true);
-
-	  }
+    }
 
     return true;
 }

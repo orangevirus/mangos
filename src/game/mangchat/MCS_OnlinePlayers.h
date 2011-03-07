@@ -22,7 +22,7 @@
 // in order not to freeze the mangchat core with sleep
 // a new thread is spawned it will output the player data
 // evry "10 players" and pauzes to not spam irc
-// in addition the command is locked so i cannot be used
+// in addition the command is locked so it cannot be used
 // while active.
 
 class mcs_OnlinePlayers : public ACE_Based::Runnable

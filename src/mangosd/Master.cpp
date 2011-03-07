@@ -196,7 +196,7 @@ int Master::Run()
     }
 
 	//- Load Mangchat Config (MangChat needs DB for gm levels, AutoBroadcast uses world timers)
-	sIRC.LoadConfig(sIRC.CfgFile);
+	sIRC.LoadConfig();
 
     ///- Initialize the World
     sWorld.SetInitialWorldSettings();

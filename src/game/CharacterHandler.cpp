@@ -803,8 +803,8 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
 
     delete holder;
 
-	if(sIRC.ajoin == 1)
-		sIRC.AutoJoinChannel(pCurrChar);
+    if(sIRC.ajoin == 1)
+        sIRC.AutoJoinChannel(pCurrChar);
 }
 
 void WorldSession::HandleSetFactionAtWarOpcode( WorldPacket & recv_data )

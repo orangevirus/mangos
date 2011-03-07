@@ -22,11 +22,10 @@ using namespace std;
 // The maximum ammount of channels used, must be >= config option
 #define MAX_CONF_CHANNELS 10
 #define MAX_CHAT_LINES 10
-// time we need to wait before we try another connecton attempt
-// Default is 30 seconds
-#define MAX_SCRIPT_INST 10
+
 // let scripts know we have mangchat
 #define MANGCHAT_INSTALLED
+
 // CLINES is used for the default chatlines
 // By using the GetChatLine function its easier and faster
 // to receieve the line you need.
@@ -40,6 +39,7 @@ enum CLINES
     LEAVE_IRC = 5,
     CHANGE_NICK = 6
 };
+
 // CACTION is used by the Handle_WoW_Channel function
 // this function is called in channel.h when a player
 // joins or leave a channel inside the client.
@@ -58,26 +58,21 @@ enum script_Names
 class IRCClient : public ACE_Based::Runnable
 {
     public:
-        // IRCClient Constructor
         IRCClient();
-        // IRCClient Destructor
         ~IRCClient();
         // ZThread Entry
         void run();
-    public:
+
         // AH Function
         void AHFunc(uint64 itmid, std::string itmnme, std::string plname);
 
-		//NOTE: Removed "BeenToGMI" due to back overflows caused with new packet structure (Shinzon)
-		//bool BeenToGMI(float posx, float posy, std::string player, std::string from);
+        //NOTE: Removed "BeenToGMI" due to back overflows caused with new packet structure (Shinzon)
+        //bool BeenToGMI(float posx, float posy, std::string player, std::string from);
 
         // IRCClient active
         bool    Active;
         // Connected to IRC
         bool    Connected;
-        // Socket indentifier
-        int     SOCKET;
-        fd_set  sfdset;
         // Send data to IRC, in addition the endline is added \n
         bool    SendIRC(std::string data);
         // This function is called in ChatHandler.cpp and processes the chat from game to IRC
@@ -103,36 +98,14 @@ class IRCClient : public ACE_Based::Runnable
         // This function is called in Channel.cpp and processes Join/leave messages
         void    Handle_WoW_Channel(std::string Channel, Player *plr, int nAction);
         void ResetIRC();
-    public:
+
         void AutoJoinChannel(Player *plr);
 
-    public:
         bool Script_Lock[5];
         bool _AmiOp;
 
-    public:
         string _Mver;
-        // IRC Server host
-        string  _Host;
-        // IRC Server Port
-        int _Port;
-        // IRC Username
-        string  _User;
-        // IRC Password
-        string  _Pass;
-        // IRC Nickname
-        string  _Nick;
-        // Authentication type
-        int _Auth;
-        string _Auth_Nick;
-        // IRC Connect code
-        string  _ICC;
-        // IRC Default channel
-        string  _defchan;
-        // IRC Leave Default channel
-        int _ldefc;
-        // Wait Connect Time
-        int _wct;
+
         // BotMask Options
         int Botmask;
         // Status Channel
@@ -201,12 +174,7 @@ class IRCClient : public ACE_Based::Runnable
         string  _cmd_prefx;
         int _op_gm;
         int _op_gm_lev;
-        // Array that contains our chatlines from the conf file
-        // To increase this value change the MAX_CHAT_LINE define above
-        // Make sure the number of elements must match your items
-        // (remeber this starts at 0 so 0..9 is 10 items)
-        // and that you load the line in the LoadConfig function.
-        string  ILINES[MAX_CHAT_LINES];
+
         string  GetChatLine(int nItem);
 
         int _Max_Script_Inst;
@@ -214,14 +182,17 @@ class IRCClient : public ACE_Based::Runnable
 
         IRCLog iLog;
 
-    public:
         // Load MangChat configuration file
-        bool    LoadConfig(char const* cfgfile);
-        void    SetCfg(char const* cfgfile);
-        char const* CfgFile;
+        bool    LoadConfig();
+        void    SetCfgFile(char const* cfgfile);
+
+        std::string* GetNick() {return &_Nick; }
 
     private:
-        // Returns default chatline based on enum CLINES
+        // Socket indentifier
+        int     SOCKET;
+        fd_set  sfdset;
+
         // Initialize socket library
         bool    InitSock();
         // Connect to IRC Server
@@ -236,6 +207,25 @@ class IRCClient : public ACE_Based::Runnable
         void    Handle_IRC(std::string sData);
         // Receieves data from the socket.
         void    SockRecv();
+        // the mangchat configuration file
+        char const* CfgFile;
+        // Array that contains our chatlines from the conf file
+        string  ILINES[MAX_CHAT_LINES];
+
+
+        string  _Host;              // IRC Server host
+        int     _Port;              // IRC Server Port
+        string  _User;              // IRC Username
+        string  _Pass;              // IRC Password
+        string  _Nick;              // IRC Nickname
+
+        int _Auth;                  // Authentication type
+        string _Auth_Nick;
+        string  _ICC;               // IRC Connect code
+
+        string  _defchan;           // IRC Default channel
+        int _ldefc;                 // IRC Leave Default channel
+        int _wct;                   // Wait Connect Time
 };
 #endif
 #define sIRC MaNGOS::Singleton<IRCClient>::Instance()

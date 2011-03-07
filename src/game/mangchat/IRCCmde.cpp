@@ -32,9 +32,9 @@
 #define Send_IRCA(c, m, b, t)       sIRC.Send_IRC_Channel(c, m, b, t)
 
 #ifdef WIN32
-#define Delay(x) Sleep(x)
+    #define Delay(x) Sleep(x)
 #else
-#define Delay(x) sleep(x / 1000)
+    #define Delay(x) sleep(x / 1000)
 #endif
 
 void IRCCmd::Handle_Login(_CDATA *CD)
@@ -95,7 +95,7 @@ void IRCCmd::Handle_Logout(_CDATA *CD)
 void IRCCmd::Account_Player(_CDATA *CD)
 {
     std::string* _PARAMS = getArray(CD->PARAMS, 3);
-    if (AcctLevel(_PARAMS[0]) > GetLevel(CD->USER) && (sIRC.BOTMASK & 512)!= 0)
+    if (AcctLevel(_PARAMS[0]) > GetLevel(CD->USER) && (sIRC.BOTMASK & 512))
     {
         Send_IRCA(CD->USER, MakeMsg("\0034[ERROR] : Nice Try, This Player Has A Higher GM Level Than You! [ %i ]", AcctLevel(_PARAMS[0])), true, "ERROR");
         return;
@@ -154,7 +154,7 @@ void IRCCmd::Account_Player(_CDATA *CD)
 void IRCCmd::Ban_Player(_CDATA *CD)
 {
     std::string* _PARAMS = getArray(CD->PARAMS, 3);
-    if (AcctLevel(_PARAMS[0]) > GetLevel(CD->USER) && (sIRC.BOTMASK & 512)!= 0)
+    if (AcctLevel(_PARAMS[0]) > GetLevel(CD->USER) && (sIRC.BOTMASK & 512))
     {
         Send_IRCA(CD->USER, MakeMsg("\0034[ERROR] : Nice Try, This Player Has A Higher GM Level Than You! [ %i ]", AcctLevel(_PARAMS[0])), true, "ERROR");
         return;
@@ -220,7 +220,7 @@ void IRCCmd::Ban_Player(_CDATA *CD)
 void IRCCmd::Chan_Control(_CDATA *CD)
 {
     std::string* _PARAMS = getArray(CD->PARAMS, 2);
-    if (CD->FROM == sIRC._Nick)
+    if (CD->FROM == *(sIRC.GetNick()))
     {
         Send_IRCA(CD->USER, "\0034[ERROR] : You Cannot Use This Command Through A PM Yet.", true, "ERROR");
         return;
@@ -258,7 +258,7 @@ void IRCCmd::Chan_Control(_CDATA *CD)
 void IRCCmd::Char_Player(_CDATA *CD)
 {
     std::string* _PARAMS = getArray(CD->PARAMS, 5);
-    if (AcctLevel(_PARAMS[0]) > GetLevel(CD->USER) && (sIRC.BOTMASK & 512)!= 0)
+    if (AcctLevel(_PARAMS[0]) > GetLevel(CD->USER) && (sIRC.BOTMASK & 512))
     {
         Send_IRCA(CD->USER, MakeMsg("\0034[ERROR] : Nice Try, This Player Has A Higher GM Level Than You! [ %i ]", AcctLevel(_PARAMS[0])), true, "ERROR");
         return;
@@ -349,7 +349,7 @@ void IRCCmd::Char_Player(_CDATA *CD)
 void IRCCmd::Fun_Player(_CDATA *CD)
 {
     std::string* _PARAMS = getArray(CD->PARAMS, 3);
-    if (AcctLevel(_PARAMS[0]) > GetLevel(CD->USER) && (sIRC.BOTMASK & 512)!= 0)
+    if (AcctLevel(_PARAMS[0]) > GetLevel(CD->USER) && (sIRC.BOTMASK & 512))
     {
         Send_IRCA(CD->USER, MakeMsg("\0034[ERROR] : Nice Try, This Player Has A Higher GM Level Than You! [ %i ]", AcctLevel(_PARAMS[0])), true, "ERROR");
         return;
@@ -654,7 +654,7 @@ void IRCCmd::Jail_Player(_CDATA *CD)
     if (ValidParams(CD->PARAMS, 1))
     {
         std::string* _PARAMS = getArray(CD->PARAMS, 2);
-        if (AcctLevel(_PARAMS[0]) > GetLevel(CD->USER) && (sIRC.BOTMASK & 512)!= 0)
+        if (AcctLevel(_PARAMS[0]) > GetLevel(CD->USER) && (sIRC.BOTMASK & 512))
         {
             Send_IRCA(CD->USER, MakeMsg("\0034[ERROR] : Nice Try, This Player Has A Higher GM Level Than You! [ %i ]", AcctLevel(_PARAMS[0])), true, "ERROR");
             return;
@@ -708,7 +708,7 @@ void IRCCmd::Jail_Player(_CDATA *CD)
 void IRCCmd::Kick_Player(_CDATA *CD)
 {
     std::string* _PARAMS = getArray(CD->PARAMS, CD->PCOUNT);
-    if (AcctLevel(_PARAMS[0]) > GetLevel(CD->USER) && (sIRC.BOTMASK & 512)!= 0)
+    if (AcctLevel(_PARAMS[0]) > GetLevel(CD->USER) && (sIRC.BOTMASK & 512))
     {
         Send_IRCA(CD->USER, MakeMsg("\0034[ERROR] : Nice Try, This Player Has A Higher GM Level Than You! [ %i ]", AcctLevel(_PARAMS[0])), true, "ERROR");
         return;
@@ -727,7 +727,7 @@ void IRCCmd::Kick_Player(_CDATA *CD)
 void IRCCmd::Kill_Player(_CDATA *CD)
 {
     std::string* _PARAMS = getArray(CD->PARAMS, CD->PCOUNT);
-    if (AcctLevel(_PARAMS[0]) > GetLevel(CD->USER) && (sIRC.BOTMASK & 512)!= 0)
+    if (AcctLevel(_PARAMS[0]) > GetLevel(CD->USER) && (sIRC.BOTMASK & 512))
     {
         Send_IRCA(CD->USER, MakeMsg("\0034[ERROR] : Nice Try, This Player Has A Higher GM Level Than You! [ %i ]", AcctLevel(_PARAMS[0])), true, "ERROR");
         return;
@@ -1353,7 +1353,7 @@ void IRCCmd::Sysmsg_Server(_CDATA *CD)
 void IRCCmd::Level_Player(_CDATA *CD)
 {
     std::string* _PARAMS = getArray(CD->PARAMS, CD->PCOUNT);
-    if (AcctLevel(_PARAMS[0]) > GetLevel(CD->USER) && (sIRC.BOTMASK & 512)!= 0)
+    if (AcctLevel(_PARAMS[0]) > GetLevel(CD->USER) && (sIRC.BOTMASK & 512))
     {
         Send_IRCA(CD->USER, MakeMsg("\0034[ERROR] : Nice Try, This Player Has A Higher GM Level Than You! [ %i ]", AcctLevel(_PARAMS[0])), true, "ERROR");
         return;
@@ -1414,7 +1414,7 @@ void IRCCmd::Level_Player(_CDATA *CD)
 void IRCCmd::Money_Player(_CDATA *CD)
 {
     std::string* _PARAMS = getArray(CD->PARAMS, 2);
-    if (AcctLevel(_PARAMS[0]) > GetLevel(CD->USER) && (sIRC.BOTMASK & 512)!= 0)
+    if (AcctLevel(_PARAMS[0]) > GetLevel(CD->USER) && (sIRC.BOTMASK & 512))
     {
         Send_IRCA(CD->USER, MakeMsg("\0034[ERROR] : Nice Try, This Player Has A Higher GM Level Than You! [ %i ]", AcctLevel(_PARAMS[0])), true, "ERROR");
         return;
@@ -1497,7 +1497,7 @@ void IRCCmd::Money_Player(_CDATA *CD)
 void IRCCmd::Mute_Player(_CDATA *CD)
 {
     std::string* _PARAMS = getArray(CD->PARAMS, 3);
-    if (AcctLevel(_PARAMS[0]) > GetLevel(CD->USER) && (sIRC.BOTMASK & 512)!= 0)
+    if (AcctLevel(_PARAMS[0]) > GetLevel(CD->USER) && (sIRC.BOTMASK & 512))
     {
         Send_IRCA(CD->USER, MakeMsg("\0034[ERROR] : Nice Try, This Player Has A Higher GM Level Than You! [ %i ]", AcctLevel(_PARAMS[0])), true, "ERROR");
         return;
@@ -1614,7 +1614,7 @@ void IRCCmd::Shutdown_Mangos(_CDATA *CD)
 void IRCCmd::Spell_Player(_CDATA *CD)
 {
     std::string* _PARAMS = getArray(CD->PARAMS, 3);
-    if (AcctLevel(_PARAMS[0]) > GetLevel(CD->USER) && (sIRC.BOTMASK & 512)!= 0)
+    if (AcctLevel(_PARAMS[0]) > GetLevel(CD->USER) && (sIRC.BOTMASK & 512))
     {
         Send_IRCA(CD->USER, MakeMsg("\0034[ERROR] : Nice Try, This Player Has A Higher GM Level Than You! [ %i ]", AcctLevel(_PARAMS[0])), true, "ERROR");
         return;
@@ -1652,7 +1652,7 @@ void IRCCmd::Spell_Player(_CDATA *CD)
 void IRCCmd::Tele_Player(_CDATA *CD)
 {
     std::string* _PARAMS = getArray(CD->PARAMS, 4);
-    if (AcctLevel(_PARAMS[0]) > GetLevel(CD->USER) && (sIRC.BOTMASK & 512)!= 0)
+    if (AcctLevel(_PARAMS[0]) > GetLevel(CD->USER) && (sIRC.BOTMASK & 512))
     {
         Send_IRCA(CD->USER, MakeMsg("\0034[ERROR] : Nice Try, This Player Has A Higher GM Level Than You! [ %i ]", AcctLevel(_PARAMS[0])), true, "ERROR");
         return;
