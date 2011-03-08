@@ -1,16 +1,17 @@
 /*
- * MangChat By |Death| And Cybrax, And continued by Xeross
+ * MangChat for MaNGOS, the open source MMORPG-server
  *
- * This Program Is Free Software; You Can Redistribute It And/Or Modify It Under The Terms
- * Of The GNU General Public License
- * Written and Developed by Cybrax. cybraxvd@gmail.com
- * |Death| <death@hell360.net>, Lice <lice@yeuxverts.net>, Dj_baby & Sanaell, Tase
- * Conversion to MangChat version 1.7.2 for Mangos 7252 by Shinzon <shinzon@wowgollum.com>
- * Continued by Xeross
- * Continued by 3raZar3 for project Tiamat git://github.com/3raZar3/TiamaT.git
+ * This Program Is Free Software; You Can Redistribute It And/Or Modify It Under The
+ * Terms Of The GNU General Public License
+ *
+ * Written and Developed by Cybrax <cybraxvd@gmail.com>, |Death| <death@hell360.net>,
+ * Lice <lice@yeuxverts.net>, Dj_baby, Sanaell, Tase, Shinzon <shinzon@wowgollum.com>,
+ * Xeross, 3raZar3, the orangevirus team <www.orangevir.us>, ...
+ *
  * With Help And Support From The MaNGOS Project Community.
  * PLEASE RETAIN THE COPYRIGHT OF THE AUTHORS.
  */
+
 #include "IRCClient.h"
 #include "../World.h"
 #include "../ObjectMgr.h"
@@ -45,15 +46,13 @@ void IRCClient::run()
     sLog.outString("\n%s\n%s\n%s\n%s",
         "***************************************",
         "**   MangChat Threaded IRC Client    **",
-        "**     With Enhanced GM Control.     **",
-        "**      	Updated by 3raZar3	      **",
-        "**   http://clanice.game-host.org    **",
+        "**    for inferna & orangevirus      **",
         "***************************************");
-    sLog.outString("****** MangChat: %s ********", sIRC._Mver.c_str());
+    sLog.outString("MangChat: %s", sIRC._Mver.c_str());
     int cCount = 0;
 
     // Clean Up MySQL Tables
-    sLog.outString("*** MangChat: Cleaning Up Inchan Table*");
+    sLog.outString("MangChat: Cleaning Up Inchan Table");
     WorldDatabase.PExecute("DELETE FROM `IRC_Inchan`");
     sIRC._Max_Script_Inst = 0;
 
@@ -64,20 +63,20 @@ void IRCClient::run()
         if (InitSock())
         {
             // Connect To The IRC Server
-            sLog.outString("*** MangChat: Connecting to %s Try # %d ******", sIRC._Host.c_str(), cCount);
+            sLog.outString("MangChat: Connecting to %s Try # %d", sIRC._Host.c_str(), cCount);
             if(this->Connect(sIRC._Host.c_str(), sIRC._Port))
             {
                 // On connection success reset the connection counter
                 cCount = 0;
-                sLog.outString("*** MangChat: Connected And Logging In*");
+                sLog.outString("MangChat: Connected And Logging In");
                 // Login to the IRC server
                 if(this->Login(sIRC._Nick, sIRC._User, sIRC._Pass))
                 {
-                    sLog.outString("*** MangChat: Logged In And Running!! *");
+                    sLog.outString("MangChat: Logged In And Running!!");
                     // While we are connected to the irc server keep listening for data on the socket
                     while(sIRC.Connected && !World::IsStopped()){ sIRC.SockRecv(); }
                 }
-                sLog.outString("*** MangChat: Connection To IRC Server Lost! ***");
+                sLog.outString("MangChat: Connection To IRC Server Lost!");
             }
             // When an error occures or connection lost cleanup
             Disconnect();
@@ -94,7 +93,7 @@ void IRCClient::run()
         {
             // Socket could not initialize cancel
             sIRC.Active = false;
-            sLog.outError("** MangChat: Could not initialize socket");
+            sLog.outError("MangChat: Could not initialize socket");
         }
     }
     // thread stays alive for calls from other threads
