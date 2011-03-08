@@ -489,43 +489,54 @@ void IRCCmd::Inchan_Server(_CDATA *CD)
 void IRCCmd::Info_Server(_CDATA *CD)
 {
     std::string* _PARAMS = getArray(CD->PARAMS, 1);
+
+    // get currently active Players
     char clientsNum [50];
     sprintf(clientsNum, "%u", sWorld.GetActiveSessionCount());
+
+    // get max active Players since last restart
     char maxClientsNum [50];
     sprintf(maxClientsNum, "%u", sWorld.GetMaxActiveSessionCount());
-    std::string str = secsToTimeString(sWorld.GetUptime());
-    Send_IRCA(ChanOrPM(CD), "\x2 Number Of Players Online:\x3\x31\x30 " + (std::string)clientsNum + "\xF |\x2 Max Since Last Restart:\x3\x31\x30 "+(std::string)maxClientsNum+"\xF |\x2 UpTime:\x3\x31\x30 "+str, true, CD->TYPE);
 
-	//Send_IRCA(ChanOrPM(CD), "\002 " +(std::string)_DISTRIBUTION +"\017 based on MaNGOS ["+ (std::string)REVISION_NR+"]", true, CD->TYPE);
+    // get UpTime
+    std::string upTime = secsToTimeString(sWorld.GetUptime());
 
-	// extract script-library string
-    // Our OV version of this strin is:
-    // scriptString = "OVscript [084] based on ScriptDev2 (for MaNGOS 986e5b76ae8758d8c895edce483c8cb84801c57d +) Revision [03de8f532e6e7a56e743b42709575ecefabb7eb2] 2010-07-18 23:59:08 (Win32)"
-	char const* ver;
+    // Send Player and Uptime information to IRC
+    Send_IRCA(ChanOrPM(CD), "\x2 Number Of Players Online:\x3\x31\x30 " + (std::string)clientsNum + "\xF |\x2 Max Since Last Restart:\x3\x31\x30 "+(std::string)maxClientsNum+"\xF |\x2 UpTime:\x3\x31\x30 "+upTime, true, CD->TYPE);
+
+    // send core revision info to IRC
+    #ifdef _DISTRIBUTION
+        Send_IRCA(ChanOrPM(CD), " Core: \x2 " +(std::string)_DISTRIBUTION +" \x2 based on \x2 MaNGOS ["+ (std::string)REVISION_NR+"]", true, CD->TYPE);
+    #else
+        Send_IRCA(ChanOrPM(CD), " Core: \x2 MaNGOS ["+ (std::string)REVISION_NR+"]", true, CD->TYPE);
+    #endif
+
+
+	// send scripting library info to IRC
+	std::string scriptVersion;
 	if (sScriptMgr.IsScriptLibraryLoaded())
     {
-        ver = sScriptMgr.GetScriptLibraryVersion();
-        if (!ver || !*ver)
-            ver = "unknown scriptlibrary";
+        scriptVersion = sScriptMgr.GetScriptLibraryVersion();
+        if (scriptVersion.empty())
+            scriptVersion= "Unknown Script Library.";
+        // cut a bit, if it is too long
+        else if (scriptVersion.length() > 30)
+            scriptVersion = scriptVersion.substr(0,30) + "...";
     }
     else
-        ver = "no scriptlibrary";
+        scriptVersion = "No Script Library loaded!";
 
-	string scriptString(ver), scriptString2(ver), OVString, SD2String;
-    /*uint32 found[2];
+    Send_IRCA(ChanOrPM(CD), " Script Library: \x2"+scriptVersion, true, CD->TYPE);
 
-    found[0] = scriptString.find_first_of("]");
-    if (found[0] != string::npos)
-        OVString = scriptString.substr(0, found[0]+1);
 
-    found[1] = scriptString.find_first_of("]", found[0]+1);
-    found[0] = scriptString.find_last_of("[");
-    if (found[0] != string::npos && found[1] != string::npos)
-        SD2String = scriptString.substr(found[0], found[1]-found[0]+1);
+    // send DB info to IRC
+    std::string dbVersion(sWorld.GetDBVersion());
+    if (dbVersion.empty())
+        dbVersion = "Unknown DB Version.";
+    else if (dbVersion.length() > 30)
+        dbVersion = dbVersion.substr(0,30) + "...";
 
-	//TODO: extract OV-Version number
-	*/
-    Send_IRCA(ChanOrPM(CD), "\017 based on \002"+scriptString2, true, CD->TYPE);
+    Send_IRCA(ChanOrPM(CD), " Database: \x2"+dbVersion, true, CD->TYPE);
 }
 
 void IRCCmd::Item_Player(_CDATA *CD)
