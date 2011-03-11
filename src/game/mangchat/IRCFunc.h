@@ -32,20 +32,14 @@ bool isCRTerminated(std::string arg)
 std::string Delink(std::string msg)
 {
     std::size_t pos;
-    while((pos = msg.find("|Hitem")) != std::string::npos)
+
+    while((pos = msg.find("|cf")) != std::string::npos)
     {
-        std::size_t find1 = msg.find("|h", pos);
-		std::size_t find2 = msg.find("|h", find1 + 2);
-        msg.replace(pos, find1 - pos + 2, "\x2");
-        msg.replace(msg.find("|h", pos), 2, "\x2");
-    }
-    while((pos = msg.find("|Henchant")) != std::string::npos)
-    {
-        std::size_t find1 = msg.find("|h", pos);
-        std::size_t find2 = msg.find("|h", find1 + 2);
-        msg.replace(pos, find1 - pos + 2, "\x2");
-        msg.replace(msg.find("|h", pos), 2, "\x2");
-		//msg.replace(find2, 2, "\x2");
+        std::size_t find1 = msg.find("|h");
+        msg.replace(pos,(find1 - pos)+2 , "");
+        std::size_t find2 = msg.rfind("|h");
+        msg.replace(find2, 2 , "");
+        
     }
     return msg;
 }
