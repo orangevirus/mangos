@@ -21,10 +21,12 @@ std::string GetUser(std::string szU)
     return szU.substr(0, pos);
 }
 
+// determines weather a string is terminated by a Carriage Return or not
 bool isCRTerminated(std::string arg)
 {
     return (arg.end() != arg.begin() && (*--arg.end()) == 0x0D);
 }
+
 // Delink will remove anything considered "non chat" from a string
 // Linked items (items that players can click on to see a description)
 // contain extra characters wich the client filter out, this function
@@ -32,15 +34,17 @@ bool isCRTerminated(std::string arg)
 std::string Delink(std::string msg)
 {
     std::size_t pos;
+    const char delinkExpression[4][10] = {"|Hitem", "|Hquest", "|Henchant", "|Hspell"};
 
-    while((pos = msg.find("|cf")) != std::string::npos)
-    {
-        std::size_t find1 = msg.find("|h");
-        msg.replace(pos,(find1 - pos)+2 , "");
-        std::size_t find2 = msg.rfind("|h");
-        msg.replace(find2, 2 , "");
-        
-    }
+    for (uint8 i = 0; i < 4; ++i)
+        while((pos = msg.find(delinkExpression[i])) != std::string::npos)
+        {
+            std::size_t find1 = msg.find("|h", pos);
+            std::size_t find2 = msg.find("|h", find1 + 2);
+            msg.replace(pos, find1 - pos + 2, "\x2");
+            msg.replace(msg.find("|h", pos), 2, "\x2");
+        }
+
     return msg;
 }
 
@@ -48,9 +52,9 @@ std::string Delink(std::string msg)
 std::string WoWcol2IRC(std::string msg)
 {
     std::size_t pos;
-    char IRCCol[9][4] = { "\xF", "\xF", "\x3\x31\x34", "\x3\x30\x33", "\x3\x31\x32", "\x3\x30\x36", "\x3\x30\x37", "\x3\x30\x34", "\x3\x30\x37"};
-    char WoWCol[9][12] = { "|r", "|cffffffff", "|cff9d9d9d", "|cff1eff00", "|cff0070dd", "|cffa335ee", "|cffff8000", "|cffe6cc80", "|cffffd000"};
-    for (int i=0; i<=8; i++)
+    char IRCCol[15][4] = { "\xF", "\xF", "\x3\x31\x34", "\x3\x30\x33", "\x3\x31\x32", "\x3\x30\x36", "\x3\x30\x37", "\x3\x30\x34", "\x3\x30\x37", "\x3\x30\x38", "\x3\x31\x34", "\x3\x30\x33","\x3\x30\x34", "\x3\x30\x37", "\x3\x31\x31"};
+    char WoWCol[15][12] = { "|r", "|cffffffff", "|cff9d9d9d", "|cff1eff00", "|cff0070dd", "|cffa335ee", "|cffff8000", "|cffe6cc80", "|cffffd000", "|cffffff00", "|cff808080", "|cff40c040", "|cffff2020", "|cffff8040", "|cff71d5ff"};
+    for (int i=0; i<15; i++)
     {
         while ((pos = msg.find(WoWCol[i])) != std::string::npos)
         {
