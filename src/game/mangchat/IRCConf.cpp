@@ -32,7 +32,7 @@ bool IRCClient::LoadConfig()
 
     int ConfCnt = 0;
     sIRC._chan_count = 0;
-    if (MCConfig.GetIntDefault("irc.active", 1))
+    if (MCConfig.GetIntDefault("irc.active", 0))
         sIRC.Active = true;
     else
         sIRC.Active = false;
