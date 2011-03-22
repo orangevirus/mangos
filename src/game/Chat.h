@@ -168,6 +168,8 @@ class ChatHandler
         bool HandleCastTargetCommand(char* args);
 
         bool HandleCharacterAchievementsCommand(char* args);
+        bool HandleCharacterChangeFactionCommand(char* args);
+        bool HandleCharacterChangeRaceCommand(char* args);
         bool HandleCharacterCustomizeCommand(char* args);
         bool HandleCharacterDeletedDeleteCommand(char* args);
         bool HandleCharacterDeletedListCommand(char* args);
@@ -195,6 +197,7 @@ class ChatHandler
         bool HandleDebugSpellCoefsCommand(char* args);
         bool HandleDebugSpellModsCommand(char* args);
         bool HandleDebugUpdateWorldStateCommand(char* args);
+		bool HandleDebugEnterVehicleCommand(char* args);
         bool HandleDebugSendCalendarResultCommand(char* args);
 
         bool HandleDebugPlayCinematicCommand(char* args);

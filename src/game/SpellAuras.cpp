@@ -294,7 +294,7 @@ pAuraHandler AuraHandler[TOTAL_AURAS]=
     &Aura::HandleAuraModExpertise,                          //240 SPELL_AURA_MOD_EXPERTISE
     &Aura::HandleForceMoveForward,                          //241 Forces the caster to move forward
     &Aura::HandleUnused,                                    //242 SPELL_AURA_MOD_SPELL_DAMAGE_FROM_HEALING (only 2 test spels in 3.2.2a)
-    &Aura::HandleNULL,                                      //243 faction reaction override spells
+    &Aura::HandleAuraFactionChange,                         //243 faction change
     &Aura::HandleComprehendLanguage,                        //244 SPELL_AURA_COMPREHEND_LANGUAGE
     &Aura::HandleNoImmediateEffect,                         //245 SPELL_AURA_MOD_DURATION_OF_MAGIC_EFFECTS     implemented in Unit::CalculateSpellDuration
     &Aura::HandleNoImmediateEffect,                         //246 SPELL_AURA_MOD_DURATION_OF_EFFECTS_BY_DISPEL implemented in Unit::CalculateSpellDuration
@@ -1961,7 +1961,7 @@ void Aura::TriggerSpell()
 
     // All ok cast by default case
     if (triggeredSpellInfo)
-        caster->CastSpell(triggerTarget, triggeredSpellInfo, true, NULL, this, casterGUID);
+        target->CastSpell(triggerTarget, triggeredSpellInfo, true, NULL, this, casterGUID);
     else
     {
         if (triggerTarget->GetTypeId() != TYPEID_UNIT || !sScriptMgr.OnEffectDummy(caster, GetId(), GetEffIndex(), (Creature*)triggerTarget))
@@ -1972,16 +1972,16 @@ void Aura::TriggerSpell()
 void Aura::TriggerSpellWithValue()
 {
     ObjectGuid casterGuid = GetCasterGuid();
-    Unit* target = GetTriggerTarget();
+    Unit* triggerTarget = GetTriggerTarget();
 
-    if (casterGuid.IsEmpty() || !target)
+    if (!triggerTarget)
         return;
 
     // generic casting code with custom spells and target/caster customs
     uint32 trigger_spell_id = GetSpellProto()->EffectTriggerSpell[m_effIndex];
     int32  basepoints0 = GetModifier()->m_amount;
 
-    target->CastCustomSpell(target, trigger_spell_id, &basepoints0, NULL, NULL, true, NULL, this, casterGuid);
+    GetTarget()->CastCustomSpell(triggerTarget, trigger_spell_id, &basepoints0, NULL, NULL, true, NULL, this, casterGuid);
 }
 
 /*********************************************************/
@@ -2116,6 +2116,17 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                         target->CastSpell(target, 47189, true, NULL, this);
                         // allow script to process further (text)
                         break;
+                    case 47795:                             // Cold Cleanse
+                    {
+                        if (Unit* Caster = GetCaster())
+                        {
+                            Caster->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                            Caster->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_DISABLE_MOVE);
+                            Caster->DeleteThreatList();
+                            Caster->CombatStop(true);
+                        }
+                        return;
+                    } 
                     case 47977:                             // Magic Broom
                         Spell::SelectMountByAreaAndSkill(target, GetSpellProto(), 42680, 42683, 42667, 42668, 0);
                         return;
@@ -2221,9 +2232,9 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                         target->CastSpell(target, 41106, true, NULL, this);
 
                         // equipment
-                        target->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + 0, 32614);
-                        target->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + 1, 0);
-                        target->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + 2, 0);
+                        ((Creature*)target)->SetVirtualItem(VIRTUAL_ITEM_SLOT_0, 32614);
+                        ((Creature*)target)->SetVirtualItem(VIRTUAL_ITEM_SLOT_1, 0);
+                        ((Creature*)target)->SetVirtualItem(VIRTUAL_ITEM_SLOT_2, 0);
                         return;
                     }
                     case 41100:                             // Berserker Stance
@@ -2238,9 +2249,9 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                         target->CastSpell(target, 41107, true, NULL, this);
 
                         // equipment
-                        target->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + 0, 32614);
-                        target->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + 1, 0);
-                        target->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + 2, 0);
+                        ((Creature*)target)->SetVirtualItem(VIRTUAL_ITEM_SLOT_0, 32614);
+                        ((Creature*)target)->SetVirtualItem(VIRTUAL_ITEM_SLOT_1, 0);
+                        ((Creature*)target)->SetVirtualItem(VIRTUAL_ITEM_SLOT_2, 0);
                         return;
                     }
                     case 41101:                             // Defensive Stance
@@ -2255,9 +2266,9 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                         target->CastSpell(target, 41105, true, NULL, this);
 
                         // equipment
-                        target->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + 0, 32604);
-                        target->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + 1, 31467);
-                        target->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + 2, 0);
+                        ((Creature*)target)->SetVirtualItem(VIRTUAL_ITEM_SLOT_0, 32604);
+                        ((Creature*)target)->SetVirtualItem(VIRTUAL_ITEM_SLOT_1, 31467);
+                        ((Creature*)target)->SetVirtualItem(VIRTUAL_ITEM_SLOT_2, 0);
                         return;
                     }
                     case 53790:                             // Defensive Stance
@@ -2272,9 +2283,9 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                         target->CastSpell(target, 41105, true, NULL, this);
 
                         // equipment
-                        target->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + 0, 43625);
-                        target->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + 1, 39384);
-                        target->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + 2, 0);
+                        ((Creature*)target)->SetVirtualItem(VIRTUAL_ITEM_SLOT_0, 43625);
+                        ((Creature*)target)->SetVirtualItem(VIRTUAL_ITEM_SLOT_1, 39384);
+                        ((Creature*)target)->SetVirtualItem(VIRTUAL_ITEM_SLOT_2, 0);
                         return;
                     }
                     case 53791:                             // Berserker Stance
@@ -2289,9 +2300,9 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                         target->CastSpell(target, 41107, true, NULL, this);
 
                         // equipment
-                        target->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + 0, 43625);
-                        target->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + 1, 43625);
-                        target->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + 2, 0);
+                        ((Creature*)target)->SetVirtualItem(VIRTUAL_ITEM_SLOT_0, 43625);
+                        ((Creature*)target)->SetVirtualItem(VIRTUAL_ITEM_SLOT_1, 43625);
+                        ((Creature*)target)->SetVirtualItem(VIRTUAL_ITEM_SLOT_2, 0);
                         return;
                     }
                     case 53792:                             // Battle Stance
@@ -2306,9 +2317,9 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                         target->CastSpell(target, 41106, true, NULL, this);
 
                         // equipment
-                        target->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + 0, 43623);
-                        target->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + 1, 0);
-                        target->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + 2, 0);
+                        ((Creature*)target)->SetVirtualItem(VIRTUAL_ITEM_SLOT_0, 43623);
+                        ((Creature*)target)->SetVirtualItem(VIRTUAL_ITEM_SLOT_1, 0);
+                        ((Creature*)target)->SetVirtualItem(VIRTUAL_ITEM_SLOT_2, 0);
                         return;
                     }
                 }
@@ -2574,6 +2585,14 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
 
                 return;
             }
+            case 43969:                                     // Feathered Charm
+            {
+                // Steelfeather Quest Credit, Are there any requirements for this, like area?
+                if (m_removeMode == AURA_REMOVE_BY_EXPIRE)
+                    target->CastSpell(target, 43984, true);
+
+                return;
+            }
             case 44191:                                     // Flame Strike
             {
                 if (target->GetMap()->IsDungeon())
@@ -2596,6 +2615,62 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                 // casted only at creatures at spawn
                 target->CastSpell(target, 47287, true, NULL, this);
                 return;
+            }
+            case 47744:                                     // Rage of Jin'arrak
+            {
+                if(m_removeMode == AURA_REMOVE_BY_EXPIRE)
+                {
+                    Unit* caster = GetCaster();
+
+                    caster->CastSpell(caster, 61611, true);
+                    ((Player*)caster)->KilledMonsterCredit(26902);
+                    return;
+                }
+            }
+            case 47795:                                     // Cold Cleanse
+            {
+                if(m_removeMode == AURA_REMOVE_BY_EXPIRE)
+                {
+                    Unit* Caster = GetCaster();
+
+                    if(Caster->isAlive())
+                    {
+                        Caster->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_DISABLE_MOVE);
+                        Caster->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+
+                        Creature* pCreature = NULL;
+
+                        MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck creature_check(*Caster,  26591, true, 15.0f);
+                        MaNGOS::CreatureLastSearcher<MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck> searcher(pCreature, creature_check);
+
+                        Cell::VisitGridObjects(Caster, searcher, 15.0f);
+
+                        if(pCreature)
+                        {
+                            float fX, fY, fZ;
+
+                            fX = pCreature->GetPositionX();
+                            fY = pCreature->GetPositionY();
+                            fZ = pCreature->GetPositionZ();
+
+                            Caster->SetSpeedRate(MOVE_RUN, 0.7f);
+                            Caster->GetMotionMaster()->MovePoint(1, fX, fY, fZ);
+
+                            switch(urand(0,1))
+                            {
+                                case 0: Caster->MonsterSay("I could sleep forever, mon...", LANG_UNIVERSAL, 0); break;
+                                case 1: Caster->MonsterSay("Finally, I can be restin\'...", LANG_UNIVERSAL, 0); break;
+                            }
+
+                            //This should happen when Caster arive to dest place
+                            pCreature->CastSpell(pCreature, 47798, true);
+                            pCreature->CastSpell(pCreature, 48150, true);
+                            pCreature->ForcedDespawn(15000);
+                            ((Creature*)Caster)->ForcedDespawn(3000);
+                            return;
+                        }
+                    }
+                }
             }
             case 51405:                                     // Digging for Treasure
             {
@@ -2686,6 +2761,18 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                 target->CastSpell(target, 68846, true, NULL, this);
                 return;
             }
+            case 28059:
+				target->RemoveAurasDueToSpell(29659);
+				return;
+			case 39088:
+				target->RemoveAurasDueToSpell(39089);
+				return;
+			case 28084:
+				target->RemoveAurasDueToSpell(29660);
+				return;
+			case 39091:
+				target->RemoveAurasDueToSpell(39092);
+				return;
         }
 
         // Living Bomb
@@ -3220,6 +3307,7 @@ void Aura::HandleAuraModShapeshift(bool apply, bool Real)
 
     uint32 modelid = 0;
     uint32 curhealth = 0;
+    bool lifehack = false;
     Powers PowerType = POWER_MANA;
     ShapeshiftForm form = ShapeshiftForm(m_modifier.m_miscvalue);
 
@@ -3498,6 +3586,8 @@ void Aura::HandleAuraModShapeshift(bool apply, bool Real)
             // Nordrassil Harness - bonus
             case FORM_BEAR:
             case FORM_DIREBEAR:
+                // only use for forms which change health
+                lifehack = true;
             case FORM_CAT:
                 if(Aura* dummy = target->GetDummyAura(37315) )
                     target->CastSpell(target, 37316, true, NULL, dummy);
@@ -3531,7 +3621,17 @@ void Aura::HandleAuraModShapeshift(bool apply, bool Real)
     {
         // Set correct health of player
         // Bugs if druid has much life
-        target->SetHealth(target->GetMaxHealth() * curhealth / 100);
+        if (target->getClass() == CLASS_DRUID && lifehack)
+        {
+            target->SetHealth(target->GetMaxHealth() * curhealth / 100);
+        }
+        // Reset rage if warrior switchs Stances
+        if (target->getClass() == CLASS_WARRIOR)
+        {
+            // Exclude talent Tactical Mastery and Stance Mastery
+            if (target->HasSpell(12295) || target->HasSpell(12676) || target->HasSpell(12677) || target->HasSpell(12678))
+                target->ModifyPower(POWER_RAGE, 0);
+        }
     }
 
     target->UpdateSpeed(MOVE_RUN, true);
@@ -4637,9 +4737,13 @@ void Aura::HandleInvisibility(bool apply, bool Real)
 
         if (Real && target->GetTypeId()==TYPEID_PLAYER)
         {
-            // apply glow vision
-            target->SetByteFlag(PLAYER_FIELD_BYTES2, 3, PLAYER_FIELD_BYTE2_INVISIBILITY_GLOW);
-
+            Player * pl = (Player*)target;
+            // do not apply during arena preparation
+            if (!pl->GetMap()->IsBattleArena() || (!pl->GetBattleGround() || !(pl->GetBattleGround()->GetStatus() == STATUS_WAIT_JOIN)))
+            {
+                // apply glow vision
+                target->SetByteFlag(PLAYER_FIELD_BYTES2, 3, PLAYER_FIELD_BYTE2_INVISIBILITY_GLOW);
+            }
         }
 
         // apply only if not in GM invisibility and not stealth
@@ -5336,12 +5440,14 @@ void Aura::HandlePeriodicEnergize(bool apply, bool Real)
                 }
                 break;
             }
-            case 48391:                                     // Owlkin Frenzy 2% base mana
-                m_modifier.m_amount = target->GetCreateMana() * 2 / 100;
+            case 48391:                                     // Owlkin Frenzy (2% from base) mana
+                m_modifier.m_amount = target->GetCreateMana() * GetBasePoints() / 100;
                 break;
-            case 57669:                                     // Replenishment (0.2% from max)
-            case 61782:                                     // Infinite Replenishment
-                m_modifier.m_amount = target->GetMaxPower(POWER_MANA) * 2 / 1000;
+            case 57669:                                     // Replenishment (1% from max)
+                m_modifier.m_amount = target->GetMaxPower(POWER_MANA) * GetBasePoints() / 100;
+                break;
+            case 61782:                                     // Infinite Replenishment (0,25% from max)
+                m_modifier.m_amount = target->GetMaxPower(POWER_MANA) * 25 / 10000;
                 break;
             default:
                 break;
@@ -5592,6 +5698,10 @@ void Aura::HandlePeriodicDamage(bool apply, bool Real)
             target->CastSpell(target, 74607, true, NULL, NULL, GetCasterGUID());
         else if (spellProto->Id == 74792) // SPELL_SOUL_CONSUMPTION - Ruby sanctum boss Halion
             target->CastSpell(target, 74799, true, NULL, NULL, GetCasterGUID());
+        else if (spellProto->Id == 55053)
+            target->CastSpell(target, 55601, true);
+        else if (spellProto->Id == 29865)
+            target->CastSpell(target, 55594, true);
     }
 }
 
@@ -10073,7 +10183,7 @@ void SpellAuraHolder::HandleBoundUnit(bool apply)
 
                 if (!boundUnit)
                     return;
-                MANGOS_ASSERT((boundUnit->GetTypeId() == TYPEID_UNIT && ((Creature*)boundUnit)->isPossessedSummmon()));
+                MANGOS_ASSERT((boundUnit->GetTypeId() == TYPEID_UNIT && ((Creature*)boundUnit)->IsPossessedSummon()));
                 ((PossessedSummon*)boundUnit)->UnSummon();
                 return;
             }
@@ -10299,4 +10409,21 @@ void Aura::HandleAuraSetVehicle(bool apply, bool real)
         data.Initialize(SMSG_ON_CANCEL_EXPECTED_RIDE_VEHICLE_AURA, 0);
         ((Player*)target)->GetSession()->SendPacket(&data);
     }
+}
+
+void Aura::HandleAuraFactionChange(bool apply, bool real)
+{
+    if (!real)
+        return;
+
+    Unit* target = GetTarget();
+
+    if (!target || !target->IsInWorld())
+        return;
+
+    uint32 newFaction = apply ? GetMiscValue() : target->GetOriginalFaction();
+
+    if (newFaction && newFaction != target->getFaction())
+        target->setFaction(newFaction);
+
 }

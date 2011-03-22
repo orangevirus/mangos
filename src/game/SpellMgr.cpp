@@ -846,6 +846,13 @@ bool IsPositiveEffect(uint32 spellId, SpellEffectIndex effIndex)
                     if(spellproto->Id==42792)               // Recently Dropped Flag (prevent cancel)
                         return false;
                     break;
+                case SPELL_AURA_PHASE:
+                    if (spellproto->SpellIconID==2874)      // Some phasing Auras of Herald Volazj in Ahn'kahet
+                        return false;
+                    break;
+                case SPELL_AURA_MOD_DAMAGE_PERCENT_TAKEN:
+                    if (spellproto->Id == 56438)            // Arcane Overload (Malygos)
+                        return true;
                 default:
                     break;
             }
@@ -1924,6 +1931,10 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                         (spellInfo_2->Id == 8326 && spellInfo_1->Id == 20584))
                          return false;
 
+                    // Blood Fury and Rage of the Unraveller
+                    if (spellInfo_1->SpellIconID == 1662 && spellInfo_2->SpellIconID == 1662)
+                        return false;
+
                     // Kindred Spirits
                     if (spellInfo_1->SpellIconID == 3559 && spellInfo_2->SpellIconID == 3559)
                         return false;
@@ -2233,6 +2244,16 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                     ((spellInfo_1->Category == 44 && spellInfo_2->Category == 0) ||
                     (spellInfo_2->Category == 44 && spellInfo_1->Category == 0)))
                     return false;
+
+                // Sap & Stealth - Sap should remove Stealth aura
+                if ((spellInfo_2->SpellIconID == 250 && spellInfo_1->SpellIconID == 249))
+                    return true;
+            }
+            else if ( spellInfo_2->SpellFamilyName == SPELLFAMILY_DRUID ) 
+            {
+                // Sap & Prowl - Sap should remove Prowl aura
+                if ((spellInfo_2->SpellIconID == 103 && spellInfo_1->SpellIconID == 249))
+                    return true;
             }
             else if ( spellInfo_2->SpellFamilyName == SPELLFAMILY_GENERIC ) 
             {
