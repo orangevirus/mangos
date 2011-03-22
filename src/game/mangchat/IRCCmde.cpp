@@ -1933,8 +1933,8 @@ void IRCCmd::Who_Logged(_CDATA *CD)
     }
     Send_IRCA(ChanOrPM(CD), OPS, true, CD->TYPE);
 }
-/* dun:TODO
-// BEGIN GM Ticket by bizkut http://github.com/bizkut
+
+// GM Ticket by bizkut http://github.com/bizkut
 void IRCCmd::GM_Ticket(_CDATA *CD)
 {
     std::string* _PARAMS = getArray(CD->PARAMS, 3);
@@ -2001,15 +2001,15 @@ void IRCCmd::GM_Ticket(_CDATA *CD)
             return;
 		}
 		std::string CharName = _PARAMS[1].c_str();
-        uint64 guid = sObjectMgr.GetPlayerGUIDByName(CharName);
+        ObjectGuid guid = sObjectMgr.GetPlayerGUIDByName(CharName);
 
-        if (!guid)
+        if (guid.IsEmpty())
         {
             Send_IRCA(CD->USER, "\0034[ERROR] : Character not found. " ,true, "ERROR");
             return;
         }
 
-        GMTicket* ticket = sTicketMgr.GetGMTicket(GUID_LOPART(guid));
+        GMTicket* ticket = sTicketMgr.GetGMTicket(guid);
 
         if (!ticket)
         {
@@ -2041,19 +2041,17 @@ void IRCCmd::GM_Ticket(_CDATA *CD)
             return;
         }
         std::string CharName = _PARAMS[1].c_str();
-        uint64 guid = sObjectMgr.GetPlayerGUIDByName(CharName);
-        GMTicket* ticket = sTicketMgr.GetGMTicket(GUID_LOPART(guid));
+        ObjectGuid guid = sObjectMgr.GetPlayerGUIDByName(CharName);
+        GMTicket* ticket = sTicketMgr.GetGMTicket(guid);
         if (!ticket)
         {
             Send_IRCA(CD->USER, "\0034[ERROR] : Ticket not found." ,true, "ERROR");
             return;
         }
         sTicketMgr.Delete(guid);
-        if (Player* pl = sObjectMgr.GetPlayer(ObjectGuid(HIGHGUID_PLAYER, guid)))
+        if (Player* pl = sObjectMgr.GetPlayer(guid))
             pl->GetSession()->SendGMTicketGetTicket(0x0A, 0);
         std::string tptime = MakeMsg("\x2 Ticket [%s] Deleted\x3\x31\x30 ", CharName.c_str());
         Send_IRCA(ChanOrPM(CD), tptime, true, CD->TYPE);
     }
 }
-// END GM Ticket
-*/

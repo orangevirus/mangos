@@ -541,8 +541,7 @@ bool IRCCmd::IsValid(std::string USER, std::string FROM, std::string CHAT, std::
             cValid = true;
         }
 
-		/* dun:TODO :/
-		// BEGIN GM Ticket by bizkut http://github.com/bizkut
+		// GM Ticket by bizkut http://github.com/bizkut
 		else if(CDATA.CMD == "TICKET")
         {
             CDATA.PCOUNT = 1;
@@ -560,8 +559,6 @@ bool IRCCmd::IsValid(std::string USER, std::string FROM, std::string CHAT, std::
             }
             cValid = true;
         }
-		// END GM Ticket
-		*/
         if(!AuthValid && IsLoggedIn(USER))
             sIRC.Send_IRC_Channel(USER, "\0034[ERROR] : Access Denied! Your Security Level Is Too Low To Use This Command!", true, "ERROR");
         if (cValid == false && (sIRC.BOTMASK & 4))

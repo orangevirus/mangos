@@ -115,7 +115,7 @@ class IRCCmd
         void    Tele_Player(_CDATA *CD);
         void    Top_Player(_CDATA *CD);
         void    Who_Logged(_CDATA *CD);
-        //void    GM_Ticket(_CDATA *CD);
+        void    GM_Ticket(_CDATA *CD);
         bool    CanUse(std::string USER, int nLevel);
         bool    ValidParams(std::string PARAMS, int nCount = 1);
         bool    ParamsValid(_CDATA *CD, int pCnt);
