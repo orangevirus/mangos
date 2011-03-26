@@ -587,10 +587,9 @@ void Spell::FillTargetMap()
                     case TARGET_ALL_ENEMY_IN_AREA_CHANNELED:
                     case TARGET_ALL_FRIENDLY_UNITS_IN_AREA:
                     case TARGET_AREAEFFECT_GO_AROUND_DEST:
-                    case TARGET_RANDOM_NEARBY_DEST:
                         // triggered spells get dest point from default target set, ignore it
                         if (!(m_targets.m_targetMask & TARGET_FLAG_DEST_LOCATION) || m_IsTriggeredSpell)
-                            if (WorldObject* castObject = GetAffectiveCasterObject())
+                            if (WorldObject* castObject = GetCastingObject())
                                 m_targets.setDestination(castObject->GetPositionX(), castObject->GetPositionY(), castObject->GetPositionZ());
                         SetTargetMap(SpellEffectIndex(i), m_spellInfo->EffectImplicitTargetB[i], tmpUnitMap);
                         break;
@@ -610,6 +609,7 @@ void Spell::FillTargetMap()
                     case TARGET_POINT_AT_NW:
                     case TARGET_POINT_AT_SE:
                     case TARGET_POINT_AT_SW:
+                    case TARGET_RANDOM_NEARBY_DEST:
                         // need some target for processing
                         SetTargetMap(SpellEffectIndex(i), m_spellInfo->EffectImplicitTargetA[i], tmpUnitMap);
                         SetTargetMap(SpellEffectIndex(i), m_spellInfo->EffectImplicitTargetB[i], tmpUnitMap);
@@ -1642,6 +1642,8 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                 case 67297:
                 case 67298:
                 case 68950:                                 // Fear
+                case 72385:                                 // Boiling Blood (10N)
+                case 72442:                                 // Boiling Blood (10H)
                     unMaxTargets = 1;
                     break;
                 case 28542:                                 // Life Drain
@@ -1652,6 +1654,7 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                 case 28796:                                 // Poison Bolt Volley
                 case 29213:                                 // Curse of the Plaguebringer
                 case 31298:                                 // Sleep
+                case 39992:                                 // Needle Spine Targeting (Warlord Najentus)
                 case 51904:                                 // Limiting the count of Summoned Ghouls
                 case 54522:
                     unMaxTargets = 3;
@@ -1663,6 +1666,10 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                 case 67700:                                 // Penetrating Cold (25 man)
                 case 68510:                                 // Penetrating Cold (25 man, heroic)
                     unMaxTargets = 5;
+                    break;
+                case 72441:                                 // Boiling Blood (25N)
+                case 72443:                                 // Boiling Blood (25H)
+                    unMaxTargets = 6;
                     break;
                 case 54098:                                 // Poison Bolt Volley (h)
                 case 54835:                                 // Curse of the Plaguebringer (h)
