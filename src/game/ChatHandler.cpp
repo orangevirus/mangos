@@ -35,7 +35,6 @@
 #include "Util.h"
 #include "GridNotifiersImpl.h"
 #include "CellImpl.h"
-#include "mangchat/IRCClient.h"
 
 bool WorldSession::processChatmessageFurtherAfterSecurityChecks(std::string& msg, uint32 lang)
 {
@@ -470,7 +469,6 @@ void WorldSession::HandleMessagechatOpcode( WorldPacket & recv_data )
             if(msg.empty())
                 break;
 
-            sIRC.Send_WoW_IRC(_player, channel, msg);
             sChatLog.ChannelMsg(GetPlayer(), channel, msg);
 
             if(ChannelMgr* cMgr = channelMgr(_player->GetTeam()))
