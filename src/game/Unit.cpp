@@ -2814,7 +2814,7 @@ void Unit::CalculateHealAbsorb(const uint32 heal, uint32 *absorb)
 
 void Unit::AttackerStateUpdate (Unit *pVictim, WeaponAttackType attType, bool extra )
 {
-    if(hasUnitState(UNIT_STAT_CAN_NOT_REACT) || HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PACIFIED) )
+    if((hasUnitState(UNIT_STAT_CAN_NOT_REACT) || HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PACIFIED)) && (this->GetVehicle()->GetVehicleId() != 223) )
         return;
 
     if (!pVictim->isAlive())
@@ -6081,8 +6081,19 @@ bool Unit::Attack(Unit *victim, bool meleeAttack)
         return false;
 
     // player cannot attack while mounted or in vehicle
-    if(GetTypeId()==TYPEID_PLAYER && (IsMounted() || GetVehicle()))
+    if(GetTypeId()==TYPEID_PLAYER && IsMounted())
         return false;
+
+    if(GetTypeId()==TYPEID_PLAYER && GetVehicle())
+    {
+        switch(this->GetVehicle()->GetVehicleId())
+        {
+        case 223:
+            break;
+        default:
+            return false;
+        }
+    }
 
     // nobody can attack GM in GM-mode
     if(victim->GetTypeId()==TYPEID_PLAYER)
