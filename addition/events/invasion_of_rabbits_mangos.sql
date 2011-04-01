@@ -36,7 +36,7 @@
 DELETE FROM `game_event` WHERE `entry` = 105;
 INSERT INTO `game_event` 
 (`entry`, `start_time`,          `end_time`,           `occurence`, `length`, `Holiday`, `description`) VALUES 
-( 105,     '2009-04-15 19:00:00', '2020-12-31 05:00:00', 4800,        60,       0,        'Invasion of rabbits in Dalaran');
+( 105,     '2011-04-1 19:00:00', '2011-4-1 22:00:00', 4800,        60,       0,        'Invasion of rabbits in Dalaran');
 
 # Quest --------------------------------------------------------------------------
 DELETE FROM `quest_template` WHERE `entry` = 500002;
@@ -70,11 +70,11 @@ INSERT INTO `quest_template`
  0,      0,    0,    0, 0, 
  0,      1020, 4232, 1, 0, 
  0,      0,    0,    0, 0, 
- 0,      0,    0,    0, 'Dalaran Past', 
- 'Скорее! Некогда медлить! $N ты должен(а) нам помочь! В городе нашествие Кроликов! Они откуда не возмись появились и убивают жителей, нам нужна помощь!', 
- 'Убей 50 кроликов, после возвращайся к Капитану Дэлину.', 
- 'Спасибо за помощь! Эти грызуны долго еще не появяться в нашем городе.', 
- 'Не расслабляйся $N! Кроликов очень много, нужно убить их всех!', 
+ 0,      0,    0,    0, 'Invasion der Hasen', 
+ 'Helft uns! Die gesamt Stadt wird von Hasen überrant und unsere Wachen sind in der Violetten Festung beschäftigt! Tötet diese Grasfressenden Ungetüme und der Dank der Kirin Tor ist euch gewiss! ', 
+ 'Tötet 50 Hasen und kehrt dann zu Captain Daelin zurück.', 
+ 'Dalaran schuldet Euch Dank! Euer selbstloser Einsatz rettet zahlreichen unbezahlbaren Blumen das Leben!.', 
+ 'Seid auf der Hut $N! Hasen sind zähe Zeitgenossen!', 
  '', 
  '',     '', '',    '',     0, 
  0,      0,  0,     0,      0, 
@@ -100,7 +100,7 @@ REPLACE INTO game_event_quest VALUES (500002, 105);
 # QuestGiver ---------------------------------------------------------------------
 INSERT INTO `creature_template` 
 (`entry`, `modelid_1`, `modelid_2`, `modelid_3`, `modelid_4`, `name`,           `subname`,            `IconName`, `minlevel`, `maxlevel`, `minhealth`, `maxhealth`, `minmana`, `maxmana`, `armor`, `faction_A`, `faction_H`, `npcflag`, `speed_walk`, `speed_run`, `scale`, `rank`, `mindmg`, `maxdmg`, `dmgschool`, `attackpower`, `baseattacktime`, `rangeattacktime`, `unit_flags`, `dynamicflags`, `family`, `trainer_type`, `trainer_spell`, `trainer_class`, `trainer_race`, `minrangedmg`, `maxrangedmg`, `rangedattackpower`, `type`, `type_flags`, `lootid`, `pickpocketloot`, `skinloot`, `resistance1`, `resistance2`, `resistance3`, `resistance4`, `resistance5`, `resistance6`, `spell1`, `spell2`, `spell3`, `spell4`, `PetSpellDataId`, `mingold`, `maxgold`, `AIName`, `MovementType`, `InhabitType`, `unk16`, `unk17`, `RacialLeader`, `RegenHealth`, `equipment_id`, `mechanic_immune_mask`, `flags_extra`, `ScriptName`) VALUES 
-( 500025,  26908,       0,           26908,       0,          'Captain Daelin', 'Defender of Dalaran', '',         80,         80,         63000,       63000,       0,         0,         14500,   2007,        2007,        2,         1,            1.3,         1,       1,      637,      771,      0,           2111,          2000,             1500,              0,            0,              0,        0,              0,               0,               0,              0,             0,             0,                   7,      4096,         0,        0,                0,          0,             0,             0,             0,             0,             0,             0,        0,        0,        0,        0,                0,         0,         '',       1,              3,             5,       3,       0,              1,             902,            0,                      0,             '');
+( 500025,  26908,       0,           26908,       0,          'Captain Daelin', 'Verteidiger von Dalaran', '',         80,         80,         63000,       63000,       0,         0,         14500,   2007,        2007,        2,         1,            1.3,         1,       1,      637,      771,      0,           2111,          2000,             1500,              0,            0,              0,        0,              0,               0,               0,              0,             0,             0,                   7,      4096,         0,        0,                0,          0,             0,             0,             0,             0,             0,             0,        0,        0,        0,        0,                0,         0,         '',       1,              3,             5,       3,       0,              1,             902,            0,                      0,             '');
 INSERT INTO `creature_questrelation` (`id`, `quest`) VALUES (500025, 500002);
 INSERT INTO `creature_involvedrelation` (`id`, `quest`) VALUES (500025, 500002);
 INSERT INTO creature VALUES (500245,500025,571,1,1,0,902,5805.46,631.07,647.462,1.50648,900,6,0,63000,0,0,1);
@@ -109,7 +109,7 @@ INSERT INTO game_event_creature VALUES (500245	,105);
 # Rabbits ------------------------------------------------------------------------
 INSERT INTO `creature_template` 
 (`entry`, `modelid_1`, `modelid_2`, `modelid_3`, `modelid_4`, `name`,  `subname`, `IconName`, `minlevel`, `maxlevel`, `minhealth`, `maxhealth`, `minmana`, `maxmana`, `armor`, `faction_A`, `faction_H`, `npcflag`, `speed_walk`, `speed_run`, `scale`, `rank`, `mindmg`, `maxdmg`, `dmgschool`, `attackpower`, `baseattacktime`, `rangeattacktime`, `unit_flags`, `dynamicflags`, `family`, `trainer_type`, `trainer_spell`, `trainer_class`, `trainer_race`, `minrangedmg`, `maxrangedmg`, `rangedattackpower`, `type`, `type_flags`, `lootid`, `pickpocketloot`, `skinloot`, `resistance1`, `resistance2`, `resistance3`, `resistance4`, `resistance5`, `resistance6`, `spell1`, `spell2`, `spell3`, `spell4`, `PetSpellDataId`, `mingold`, `maxgold`, `AIName`, `MovementType`, `InhabitType`, `unk16`, `unk17`, `RacialLeader`, `RegenHealth`, `equipment_id`, `mechanic_immune_mask`, `flags_extra`, `ScriptName`) VALUES 
-( 500026,  328,         0,           328,         0,          'Rabbit', '',        '',         75,         80,         5000,        5000,        3000,      3000,      2500,    14,          14,          0,         2.26,         2.92,        2,       0,      200,      500,      0,           600,           2000,             1457,              0,            0,              1,        0,              0,               0,               0,              100,           120,           100,                 1,      2,            0,        0,                0,          0,             0,             0,             0,             0,             0,             43039,    42914,    42940,    42897,    12961,            10,        10000,     '',       0,              3,             1.2,     1,       0,              1,             0,              1,                      64,           'generic_creature');
+( 500026,  328,         0,           328,         0,          'Hase', '',        '',         75,         80,         5000,        5000,        3000,      3000,      2500,    14,          14,          0,         2.26,         2.92,        2,       0,      200,      500,      0,           600,           2000,             1457,              0,            0,              1,        0,              0,               0,               0,              100,           120,           100,                 1,      2,            0,        0,                0,          0,             0,             0,             0,             0,             0,             43039,    42914,    42940,    42897,    12961,            10,        10000,     '',       0,              3,             1.2,     1,       0,              1,             0,              1,                      64,           'generic_creature');
 INSERT INTO creature VALUES 
  (500250,500026,571,1,1,0,0,5782.99,661.825,646.911,2.7366,120,5,0,5000,3000,0,1),
  (500251,500026,571,1,1,0,0,5761.81,670.128,642.949,1.17758,120,5,0,5000,3000,0,1),
