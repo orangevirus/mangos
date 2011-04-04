@@ -2762,6 +2762,21 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
         {
             switch(GetId())
             {
+                case 6606:                                  // Self Visual - Sleep Until Cancelled (DND)
+                {
+                    if (apply)
+                    {
+                        target->SetStandState(UNIT_STAND_STATE_SLEEP);
+                        target->addUnitState(UNIT_STAT_ROOT);
+                    }
+                    else
+                    {
+                        target->clearUnitState(UNIT_STAT_ROOT);
+                        target->SetStandState(UNIT_STAND_STATE_STAND);
+                    }
+
+                    return;
+                }
                 case 11196:                                 // Recently Bandaged
                     target->ApplySpellImmune(GetId(), IMMUNITY_MECHANIC, GetMiscValue(), apply);
                     return;
@@ -3944,6 +3959,23 @@ void Aura::HandleForceReaction(bool apply, bool Real)
     // stop fighting if at apply forced rank friendly or at remove real rank friendly
     if ((apply && faction_rank >= REP_FRIENDLY) || (!apply && player->GetReputationRank(faction_id) >= REP_FRIENDLY))
         player->StopAttackFaction(faction_id);
+
+    // drop BG flag if player is carrying
+    if (SpellEntry const *spellInfo = GetSpellProto())
+    {
+        switch(spellInfo->Id)
+        {
+            case 1953:  // Blink
+            case 48020: // Demonic Circle
+            case 54861: // Nitro Boosts
+                if (player->InBattleGround() && (player->HasAura(23335) || player->HasAura(23333) || player->HasAura(34976)))
+                    if (Battleground *bg = player->GetBattleGround())
+                        bg->EventPlayerDroppedFlag(player);
+                break;
+            default:
+                break; 
+        }
+    }
 }
 
 void Aura::HandleAuraModSkill(bool apply, bool /*Real*/)
@@ -5461,6 +5493,25 @@ void Aura::HandleAuraPeriodicDummy(bool apply, bool Real)
         {
             switch(spell->Id)
             {
+                case 55093:                                   // Grip of Slad'ran
+                case 61474:                                   // Grip of Slad'ran (h)
+                {
+                    if (apply)
+                    {
+                        if (target->HasAura(55126) || target->HasAura(61476))
+                        {
+                            target->RemoveSpellAuraHolder(GetHolder());
+                            return;
+                        }
+
+                        if (GetHolder()->GetStackAmount() >= 5)
+                        {
+                            target->RemoveAura(this);
+                            target->CastSpell(target, (spell->Id == 55093) ? 55126 : 61476, true);
+                        }
+                    }
+                    break;
+                }
                 case 62717:                                   // Slag Pot (Ulduar: Ignis)
                 case 63477:
                 {
