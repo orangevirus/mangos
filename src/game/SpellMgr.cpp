@@ -2195,6 +2195,10 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                 if (((spellInfo_1->SpellFamilyFlags & UI64LIT(0x800000)) && (spellInfo_2->SpellFamilyFlags & UI64LIT(0x800000))) ||
                     ((spellInfo_2->SpellFamilyFlags & UI64LIT(0x800000)) && (spellInfo_1->SpellFamilyFlags & UI64LIT(0x800000))))
                     return true;
+
+                // Enrage and Wrecking Crew
+                if (spellInfo_1->SpellIconID == 95 && spellInfo_2->SpellIconID == 95)
+                    return true;
             }
 
             // Hamstring -> Improved Hamstring (multi-family check)
