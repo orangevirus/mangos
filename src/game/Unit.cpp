@@ -6165,7 +6165,8 @@ void Unit::AttackedBy(Unit *attacker)
         {
             for (GroupPetList::const_iterator itr = m_groupPets.begin(); itr != m_groupPets.end(); ++itr)
                 if (Pet* _pet = GetMap()->GetPet(*itr))
-                    _pet->AttackedBy(attacker);
+                    if (_pet)
+                        _pet->AttackedBy(attacker);
         }
     }
 }
