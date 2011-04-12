@@ -1450,14 +1450,6 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     m_caster->CastCustomSpell(unitTarget, 37675, &basepoints0, NULL, NULL, true);
                     return;
                 }
-                case 38194:                                 // Blink
-                {
-                    // Blink
-                    if (unitTarget)
-                        m_caster->CastSpell(unitTarget, 38203, true);
-
-                    return;
-                }
                 case 39189:                                 // Sha'tari Torch
                 {
                     if (!unitTarget || unitTarget->GetTypeId() != TYPEID_UNIT || m_caster->GetTypeId() != TYPEID_PLAYER)
@@ -2638,8 +2630,14 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     }
                     return;
                 }
+                case 38194:                                 // Blink
+                {
+                    // Blink
+                    if (unitTarget)
+                        m_caster->CastSpell(unitTarget, 38203, true);
 
-
+                    return;
+                }
             }
 
             // Conjure Mana Gem
@@ -2707,8 +2705,12 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                         }
                     }
                 }
-
-                m_caster->SetPower(POWER_RAGE,m_caster->GetPower(POWER_RAGE)-rage);
+                
+                int32 setrage = m_caster->GetPower(POWER_RAGE) - rage;
+                if (setrage < 0)
+                    setrage = 0;
+                
+                m_caster->SetPower(POWER_RAGE, setrage);
                 return;
             }
             // Slam
@@ -6570,6 +6572,11 @@ void Spell::EffectInterruptCast(SpellEffectIndex eff_idx)
         if (Spell* spell = unitTarget->GetCurrentSpell(CurrentSpellTypes(i)))
         {
             SpellEntry const* curSpellInfo = spell->m_spellInfo;
+            
+            // hack for Moorabi - Transformation must be interruptable
+            if (curSpellInfo->Id == 55098)
+                const_cast<SpellEntry*>(curSpellInfo)->InterruptFlags |= SPELL_INTERRUPT_FLAG_INTERRUPT;
+            
             // check if we can interrupt spell
             if ((curSpellInfo->InterruptFlags & SPELL_INTERRUPT_FLAG_INTERRUPT) && curSpellInfo->PreventionType == SPELL_PREVENTION_TYPE_SILENCE )
             {
