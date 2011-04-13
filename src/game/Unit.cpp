@@ -2811,14 +2811,8 @@ void Unit::CalculateHealAbsorb(const uint32 heal, uint32 *absorb)
 
 void Unit::AttackerStateUpdate (Unit *pVictim, WeaponAttackType attType, bool extra )
 {
-    if(this->GetVehicle())
-    {
-        if((hasUnitState(UNIT_STAT_CAN_NOT_REACT) || HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PACIFIED)) && (this->GetVehicle()->GetVehicleId() != 223) )
-            return;
-    }
-    else
-        if((hasUnitState(UNIT_STAT_CAN_NOT_REACT) || HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PACIFIED))
-            return;
+    if((hasUnitState(UNIT_STAT_CAN_NOT_REACT) || HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PACIFIED)) && (this->GetVehicle()->GetVehicleId() != 223) )
+        return;
 
     if (!pVictim->isAlive())
         return;
