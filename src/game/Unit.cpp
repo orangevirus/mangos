@@ -211,9 +211,6 @@ Unit::Unit()
 
     m_addDmgOnce = 0;
 
-    for(int i = 0; i < MAX_TOTEM_SLOT; ++i)
-        m_TotemSlot[i] = ObjectGuid();
-
     m_ObjectSlot[0] = m_ObjectSlot[1] = m_ObjectSlot[2] = m_ObjectSlot[3] = 0;
     //m_Aura = NULL;
     //m_AurasCheck = 2000;
@@ -2814,7 +2811,8 @@ void Unit::CalculateHealAbsorb(const uint32 heal, uint32 *absorb)
 
 void Unit::AttackerStateUpdate (Unit *pVictim, WeaponAttackType attType, bool extra )
 {
-    if((hasUnitState(UNIT_STAT_CAN_NOT_REACT) || HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PACIFIED)) && (this->GetVehicle()->GetVehicleId() != 223) )
+    if((hasUnitState(UNIT_STAT_CAN_NOT_REACT) || HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PACIFIED)) && 
+        (!this->GetVehicle() || this->GetVehicle()->GetVehicleId() != 223))
         return;
 
     if (!pVictim->isAlive())
@@ -3447,7 +3445,7 @@ SpellMissInfo Unit::MagicSpellHitResult(Unit *pVictim, SpellEntry const *spell)
     if (HitChance <  100) HitChance =  100;
     if (HitChance > 10000) HitChance = 10000;
 
-    int32 tmp = spell->AttributesEx3 & SPELL_ATTR_EX3_CANT_MISS ? 0 : 10000 - HitChance;
+    int32 tmp = spell->AttributesEx3 & SPELL_ATTR_EX3_CANT_MISS ? 0 : (10000 - HitChance);
 
     int32 rand = irand(0,10000);
 
@@ -6595,7 +6593,7 @@ void Unit::_RemoveTotem(Totem* totem)
     {
         if (m_TotemSlot[i] == totem->GetObjectGuid())
         {
-            m_TotemSlot[i] = ObjectGuid();
+            m_TotemSlot[i].Clear();
             break;
         }
     }
@@ -8382,7 +8380,7 @@ void Unit::Mount(uint32 mount, uint32 spellId, uint32 vehicleId, uint32 creature
                 GetVehicleKit()->Reset();
 
                 // Send others that we now have a vehicle
-                WorldPacket data(SMSG_PLAYER_VEHICLE_DATA, 8+4);
+                WorldPacket data(SMSG_SET_VEHICLE_REC_ID, 8+4);
                 data << GetPackGUID();
                 data << uint32(vehicleId);
                 SendMessageToSet(&data, true);
@@ -8429,7 +8427,7 @@ void Unit::Unmount(bool from_aura)
     if (GetTypeId() == TYPEID_PLAYER && GetVehicleKit())
     {
         // Send other players that we are no longer a vehicle
-        WorldPacket data(SMSG_PLAYER_VEHICLE_DATA, 8+4);
+        WorldPacket data(SMSG_SET_VEHICLE_REC_ID, 8+4);
         data << GetPackGUID();
         data << uint32(0);
         ((Player*)this)->SendMessageToSet(&data, true);
@@ -9548,7 +9546,7 @@ int32 Unit::CalculateAuraDuration(SpellEntry const* spellProto, uint32 effectMas
     int32 mechanicMod = 0;
     uint32 mechanicMask = GetSpellMechanicMask(spellProto, effectMask);
 
-    for(int32 mechanic = MECHANIC_CHARM; mechanic <= MECHANIC_ENRAGED; ++mechanic)
+    for(int32 mechanic = FIRST_MECHANIC; mechanic < MAX_MECHANIC; ++mechanic)
     {
         if (!(mechanicMask & (1 << (mechanic-1))))
             continue;
