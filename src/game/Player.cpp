@@ -24034,9 +24034,6 @@ uint8 Player::GetTalentsCount(uint8 tab)
     {
         PlayerTalent talent = (*iter).second;
 
-        if (talent.state == PLAYERSPELL_REMOVED)
-            continue;
-
         // skip another tab talents
         if(talent.m_talentEntry->TalentTab != talentTabId)
             continue;
