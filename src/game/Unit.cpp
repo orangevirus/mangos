@@ -2815,7 +2815,7 @@ void Unit::CalculateHealAbsorb(const uint32 heal, uint32 *absorb)
 void Unit::AttackerStateUpdate (Unit *pVictim, WeaponAttackType attType, bool extra )
 {
     if((hasUnitState(UNIT_STAT_CAN_NOT_REACT) || HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PACIFIED)) && 
-        (!this->GetVehicle() || this->GetVehicle()->GetVehicleId() != 223))
+        (!this->GetVehicle() || this->GetVehicleInfo()->GetEntry()->m_ID != 223))
         return;
 
     if (!pVictim->isAlive())
@@ -6087,12 +6087,12 @@ bool Unit::Attack(Unit *victim, bool meleeAttack)
 
     if(GetTypeId()==TYPEID_PLAYER && GetVehicle())
     {
-        switch(this->GetVehicle()->GetVehicleId())
+        switch(this->GetVehicleInfo()->GetEntry()->m_ID)
         {
-        case 223:
-            break;
-        default:
-            return false;
+            case 223:
+                break;
+            default:
+                return false;
         }
     }
 
@@ -11826,8 +11826,8 @@ void Unit::ExitVehicle()
 
     m_pVehicle->RemovePassenger(this);
 	
-	if((GetTypeId() == TYPEID_PLAYER) && (((Player*)this)->GetQuestStatus(12779) == QUEST_STATUS_INCOMPLETE) && (m_pVehicle->GetVehicleId() == 156))
-		((Player*)this)->CastSpell(((Player*)this), 74470, false);
+    if((GetTypeId() == TYPEID_PLAYER) && (((Player*)this)->GetQuestStatus(12779) == QUEST_STATUS_INCOMPLETE) && (this->GetVehicleInfo()->GetEntry()->m_ID == 156))
+        ((Player*)this)->CastSpell(((Player*)this), 74470, false);
 
     m_pVehicle = NULL;
 
