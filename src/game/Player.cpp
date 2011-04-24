@@ -26,7 +26,6 @@
 #include "WorldPacket.h"
 #include "WorldSession.h"
 #include "UpdateMask.h"
-#include "Vehicle.h"
 #include "SkillDiscovery.h"
 #include "QuestDef.h"
 #include "GossipDef.h"
@@ -18215,6 +18214,8 @@ void Player::_SaveInventory()
         if(!item || item->GetState() == ITEM_REMOVED) continue;
         Item *test = GetItemByPos( item->GetBagSlot(), item->GetSlot());
 
+        GetAntiCheat()->DoAntiCheatCheck(CHECK_ITEM_UPDATE,item,test);
+
         if (test == NULL)
         {
             sLog.outError("Player(GUID: %u Name: %s)::_SaveInventory - the bag(%d) and slot(%d) values for the item with guid %d are incorrect, the player doesn't have an item at that position!", GetGUIDLow(), GetName(), item->GetBagSlot(), item->GetSlot(), item->GetGUIDLow());
@@ -23163,7 +23164,7 @@ void Player::_SaveEquipmentSets()
                 stmt.addUInt64(eqset.Guid);
                 stmt.addUInt32(index);
                 stmt.addString(eqset.Name);
-				stmt.addString(eqset.IconName);
+                stmt.addString(eqset.IconName);
 
                 for (int i = 0; i < EQUIPMENT_SLOT_END; ++i)
                     stmt.addUInt32(eqset.Items[i]);
@@ -24034,11 +24035,14 @@ uint8 Player::GetTalentsCount(uint8 tab)
     {
         PlayerTalent talent = (*iter).second;
 
+        if (talent.state == PLAYERSPELL_REMOVED)
+            continue;
+
         // skip another tab talents
         if(talent.m_talentEntry->TalentTab != talentTabId)
             continue;
 
-        ++talentCount;
+        talentCount += talent.currentRank + 1;
     }
     return talentCount;
 }
