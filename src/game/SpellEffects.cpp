@@ -3967,6 +3967,13 @@ void Spell::EffectApplyAura(SpellEffectIndex eff_idx)
     if(!unitTarget)
         return;
 
+    //Engulf in Flames
+    if(m_spellInfo->Id == 56092)
+    {
+        m_caster->CastSpell(unitTarget, 61621, true, NULL, NULL, m_caster->GetObjectGuid());
+        return;
+    }
+
     // ghost spell check, allow apply any auras at player loading in ghost mode (will be cleanup after load)
     if ( (!unitTarget->isAlive() && !(IsDeathOnlySpell(m_spellInfo) || IsDeathPersistentSpell(m_spellInfo))) &&
         (unitTarget->GetTypeId() != TYPEID_PLAYER || !((Player*)unitTarget)->GetSession()->PlayerLoading()) )
@@ -7824,6 +7831,14 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
 
                     unitTarget->RemoveAurasDueToSpell(m_spellInfo->CalculateSimpleValue(eff_idx));
                     break;
+                }
+                case 56092:                                 //Engulf in Flames
+                {
+                    if(!unitTarget)
+                        return;
+
+                    unitTarget->CastSpell(unitTarget, 38353, true, NULL, NULL, m_caster->GetObjectGuid());
+                    return;
                 }
                 case 57337:                                 // Great Feast
                 {
