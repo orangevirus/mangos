@@ -3967,13 +3967,6 @@ void Spell::EffectApplyAura(SpellEffectIndex eff_idx)
     if(!unitTarget)
         return;
 
-    //Engulf in Flames
-    if(m_spellInfo->Id == 56092)
-    {
-        m_caster->CastSpell(unitTarget, 61621, true, NULL, NULL, m_caster->GetObjectGuid());
-        return;
-    }
-
     // ghost spell check, allow apply any auras at player loading in ghost mode (will be cleanup after load)
     if ( (!unitTarget->isAlive() && !(IsDeathOnlySpell(m_spellInfo) || IsDeathPersistentSpell(m_spellInfo))) &&
         (unitTarget->GetTypeId() != TYPEID_PLAYER || !((Player*)unitTarget)->GetSession()->PlayerLoading()) )
@@ -3996,6 +3989,23 @@ void Spell::EffectApplyAura(SpellEffectIndex eff_idx)
 
     // Now Reduce spell duration using data received at spell hit
     int32 duration = aur->GetAuraMaxDuration();
+
+    //Engulf in Flames
+    if (m_spellInfo->Id == 56092)
+    {
+        Player* pPlayer;
+        if (m_caster->IsVehicle())
+            pPlayer = (Player*) m_caster->GetVehicleKit()->GetPassenger(0);
+        else
+            pPlayer = (Player*)m_caster;
+
+        if (!pPlayer)
+            return;
+
+        uint8 comboPoints = pPlayer->GetComboPoints();
+
+        duration = 2000+(comboPoints*4000);
+    }
 
     // Mixology - increase effect and duration of alchemy spells which the caster has
     if(caster->GetTypeId() == TYPEID_PLAYER && aur->GetSpellProto()->SpellFamilyName == SPELLFAMILY_POTION
@@ -7831,14 +7841,6 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
 
                     unitTarget->RemoveAurasDueToSpell(m_spellInfo->CalculateSimpleValue(eff_idx));
                     break;
-                }
-                case 56092:                                 //Engulf in Flames
-                {
-                    if(!unitTarget)
-                        return;
-
-                    unitTarget->CastSpell(unitTarget, 38353, true, NULL, NULL, m_caster->GetObjectGuid());
-                    return;
                 }
                 case 57337:                                 // Great Feast
                 {
