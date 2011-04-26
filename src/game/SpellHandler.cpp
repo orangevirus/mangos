@@ -95,7 +95,7 @@ void WorldSession::HandleUseItemOpcode(WorldPacket& recvPacket)
         return;
     }
 
-    uint8 msg = pUser->CanUseItem(pItem);
+    InventoryResult msg = pUser->CanUseItem(pItem);
     if (msg != EQUIP_ERR_OK)
     {
         recvPacket.rpos(recvPacket.wpos());                 // prevent spam at not read packet tail
@@ -355,6 +355,10 @@ void WorldSession::HandleCastSpellOpcode(WorldPacket& recvPacket)
         recvPacket.rpos(recvPacket.wpos());                 // prevent spam at ignore packet
         return;
     }
+
+    // players should be able to open chests in Malygos encounter
+    if (spellId == 61437 && _player->GetVehicle() && _player->GetVehicle()->GetBase()->GetVehicleInfo()->GetEntry()->m_ID == 30161)
+        mover = _player;
 
     if (mover->GetTypeId()==TYPEID_PLAYER)
     {
