@@ -2895,6 +2895,8 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     Item *item = pCaster->GetWeaponForAttack(OFF_ATTACK);
                     if (!item)
                         return;
+                    
+                    pCaster->AddComboPoints(unitTarget, 1);
 
                     // all poison enchantments is temporary
                     uint32 enchant_id = item->GetEnchantmentId(TEMP_ENCHANTMENT_SLOT);
@@ -5662,13 +5664,6 @@ void Spell::DoSummonVehicle(SpellEffectIndex eff_idx, uint32 forceFaction)
         // Notify Summoner
         if (m_caster->GetTypeId() == TYPEID_UNIT && ((Creature*)m_caster)->AI())
             ((Creature*)m_caster)->AI()->JustSummoned(vehicle);
-
-        // TODO: this code needs to be moved to SD2 script - too hacky :/
-        if(m_caster->GetTypeId() == TYPEID_PLAYER && ((Player*)m_caster)->GetQuestStatus(12779) == QUEST_STATUS_INCOMPLETE && m_caster->GetVehicleInfo()->GetEntry()->m_ID == 156)
-        {
-            char * Text = "Vermeidet heranfliegende Pfeile und Speere des Scharlachroten Kreuzzugs,\nindem Ihr aus ihrer Reichweite bleibt!";
-            vehicle->MonsterTextEmote(Text, m_caster, true);
-        }
     }
     else
         sLog.outError("Vehicle (guidlow %d, entry %d) NOT summoned by undefined reason. ", vehicle->GetGUIDLow(), vehicle->GetEntry());

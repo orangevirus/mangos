@@ -5936,6 +5936,9 @@ bool Unit::IsHostileTo(Unit const* unit) const
 
 bool Unit::IsFriendlyTo(Unit const* unit) const
 {
+    if (!unit)
+        return true;
+
     // always friendly to self
     if(unit==this)
         return true;
@@ -11825,9 +11828,6 @@ void Unit::ExitVehicle()
         return;
 
     m_pVehicle->RemovePassenger(this);
-
-    if((GetTypeId() == TYPEID_PLAYER) && (((Player*)this)->GetQuestStatus(12779) == QUEST_STATUS_INCOMPLETE) && (this->GetVehicle()->GetBase()->GetVehicleInfo()->GetEntry()->m_ID == 156))
-        ((Player*)this)->CastSpell(((Player*)this), 74470, false);
 
     m_pVehicle = NULL;
 
