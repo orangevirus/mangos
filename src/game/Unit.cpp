@@ -7903,6 +7903,10 @@ bool Unit::IsImmuneToSpellEffect(SpellEntry const* spellInfo, SpellEffectIndex i
                 // Additional Bladestorm Immunity check (not immuned to disarm / bleed)
                 if ((*i)->GetId() == 46924 && (spellInfo->Mechanic == MECHANIC_DISARM || spellInfo->Mechanic == MECHANIC_BLEED || spellInfo->Mechanic == MECHANIC_INFECTED))
                     continue;
+                
+                // Additional check if Player has BG Preparation aura
+                if((*i)->GetId() == 44521 && (spellInfo->Mechanic == MECHANIC_MOUNT))
+                    continue;
 
                 return true;
                 }
