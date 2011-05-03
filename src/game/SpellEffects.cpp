@@ -1160,6 +1160,17 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     m_caster->CastSpell(m_caster, spell_id, true, NULL);
                     return;
                 }
+                case 17950:                                 // Shadow Portal
+                {
+                    if (!unitTarget)
+                        return;
+
+                    // Shadow Portal
+                    const uint32 spell_list[6] = {17863, 17939, 17943, 17944, 17946, 17948};
+
+                    m_caster->CastSpell(unitTarget, spell_list[urand(0, 5)], true);
+                    return;
+                }
                 case 19411:                                 // Lava Bomb
                 case 20474:                                 // Lava Bomb
                 {
@@ -1681,6 +1692,50 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
 
                     break;
                 }
+                case 45583:                                 // Throw Gnomish Grenade
+                {
+                    if (!unitTarget || m_caster->GetTypeId() != TYPEID_PLAYER)
+                        return;
+
+                    ((Player*)m_caster)->KilledMonsterCredit(unitTarget->GetEntry(), unitTarget->GetObjectGuid());
+
+                    // look for gameobject within max spell range of unitTarget, and respawn if found
+
+                    // big fire
+                    GameObject* pGo = NULL;
+
+                    float fMaxDist = GetSpellMaxRange(sSpellRangeStore.LookupEntry(m_spellInfo->rangeIndex));
+
+                    MaNGOS::NearestGameObjectEntryInPosRangeCheck go_check_big(*unitTarget, 187675, unitTarget->GetPositionX(), unitTarget->GetPositionY(), unitTarget->GetPositionZ(), fMaxDist);
+                    MaNGOS::GameObjectSearcher<MaNGOS::NearestGameObjectEntryInPosRangeCheck> checker1(pGo, go_check_big);
+
+                    Cell::VisitGridObjects(unitTarget, checker1, fMaxDist);
+
+                    if (pGo && !pGo->isSpawned())
+                    {
+                        pGo->SetRespawnTime(MINUTE/2);
+                        pGo->Refresh();
+                    }
+
+                    // small fire
+                    std::list<GameObject*> lList;
+
+                    MaNGOS::GameObjectEntryInPosRangeCheck go_check_small(*unitTarget, 187676, unitTarget->GetPositionX(), unitTarget->GetPositionY(), unitTarget->GetPositionZ(), fMaxDist);
+                    MaNGOS::GameObjectListSearcher<MaNGOS::GameObjectEntryInPosRangeCheck> checker2(lList, go_check_small);
+
+                    Cell::VisitGridObjects(unitTarget, checker2, fMaxDist);
+
+                    for(std::list<GameObject*>::iterator iter = lList.begin(); iter != lList.end(); ++iter)
+                    {
+                        if (!(*iter)->isSpawned())
+                        {
+                            (*iter)->SetRespawnTime(MINUTE/2);
+                            (*iter)->Refresh();
+                        }
+                    }
+
+                    return;
+                }
                 case 45958:                                 // Signal Alliance
                 {
                     m_caster->CastSpell(m_caster, m_spellInfo->CalculateSimpleValue(eff_idx), true);
@@ -1763,6 +1818,31 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     }
                     return;
                 }
+                case 46171:                                 // Scuttle Wrecked Flying Machine
+                {
+                    if (!unitTarget || m_caster->GetTypeId() != TYPEID_PLAYER)
+                        return;
+
+                    ((Player*)m_caster)->KilledMonsterCredit(unitTarget->GetEntry(), unitTarget->GetObjectGuid());
+
+                    // look for gameobject within max spell range of unitTarget, and respawn if found
+                    GameObject* pGo = NULL;
+
+                    float fMaxDist = GetSpellMaxRange(sSpellRangeStore.LookupEntry(m_spellInfo->rangeIndex));
+
+                    MaNGOS::NearestGameObjectEntryInPosRangeCheck go_check(*unitTarget, 187675, unitTarget->GetPositionX(), unitTarget->GetPositionY(), unitTarget->GetPositionZ(), fMaxDist);
+                    MaNGOS::GameObjectSearcher<MaNGOS::NearestGameObjectEntryInPosRangeCheck> checker(pGo, go_check);
+
+                    Cell::VisitGridObjects(unitTarget, checker, fMaxDist);
+
+                    if (pGo && !pGo->isSpawned())
+                    {
+                        pGo->SetRespawnTime(MINUTE/2);
+                        pGo->Refresh();
+                    }
+
+                    return;
+                }
                 case 46485:                                 // Greatmother's Soulcatcher
                 {
                     if (!unitTarget || unitTarget->GetTypeId() != TYPEID_UNIT)
@@ -1772,7 +1852,7 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     {
                         m_caster->CastSpell(unitTarget, pSpell, true);
 
-                        if (const SpellEntry *pSpellCredit = sSpellStore.LookupEntry(pSpell->EffectMiscValue[EFFECT_INDEX_0]))
+                        if (const SpellEntry *pSpellCredit = sSpellStore.LookupEntry(pSpell->EffectTriggerSpell[EFFECT_INDEX_0]))
                             ((Player*)m_caster)->KilledMonsterCredit(pSpellCredit->EffectMiscValue[EFFECT_INDEX_0]);
 
                         ((Creature*)unitTarget)->ForcedDespawn();
@@ -1792,12 +1872,14 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                 }
                 case 46797:                                 // Quest - Borean Tundra - Set Explosives Cart
                 {
-                    if (!unitTarget)
+                    if (!unitTarget || m_caster->GetTypeId() != TYPEID_PLAYER)
                         return;
 
+                    ((Player*)m_caster)->KilledMonsterCredit(unitTarget->GetEntry(), unitTarget->GetObjectGuid());
+
                     // Quest - Borean Tundra - Summon Explosives Cart
-                    unitTarget->CastSpell(unitTarget,46798,true,m_CastItem,NULL,m_originalCasterGUID);
-                    break;
+                    unitTarget->CastSpell(unitTarget, 46798, true);
+                    return;
                 }
                 case 47110:                                 // Summon Drakuru's Image
                 {
@@ -2220,6 +2302,36 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                         case EFFECT_INDEX_2:
                             return;
                     }
+                    return;
+                }
+                case 52369:                                 // Detonate Explosives
+                case 52371:                                 // Detonate Explosives
+                {
+                    if (!unitTarget)
+                        return;
+
+                    // Cosmetic - Explosion
+                    unitTarget->CastSpell(unitTarget, 46419, true);
+
+                    // look for gameobjects within max spell range of unitTarget, and respawn if found
+                    std::list<GameObject*> lList;
+
+                    float fMaxDist = GetSpellMaxRange(sSpellRangeStore.LookupEntry(m_spellInfo->rangeIndex));
+
+                    MaNGOS::GameObjectEntryInPosRangeCheck go_check(*unitTarget, 182071, unitTarget->GetPositionX(), unitTarget->GetPositionY(), unitTarget->GetPositionZ(), fMaxDist);
+                    MaNGOS::GameObjectListSearcher<MaNGOS::GameObjectEntryInPosRangeCheck> checker(lList, go_check);
+
+                    Cell::VisitGridObjects(unitTarget, checker, fMaxDist);
+
+                    for(std::list<GameObject*>::iterator iter = lList.begin(); iter != lList.end(); ++iter)
+                    {
+                        if (!(*iter)->isSpawned())
+                        {
+                            (*iter)->SetRespawnTime(MINUTE/2);
+                            (*iter)->Refresh();
+                        }
+                    }
+
                     return;
                 }
                 case 52759:                                 // Ancestral Awakening
@@ -6700,6 +6812,9 @@ void Spell::EffectSummonObjectWild(SpellEffectIndex eff_idx)
     }
 
     pGameObj->SummonLinkedTrapIfAny();
+
+    if (m_caster->GetTypeId() == TYPEID_UNIT && ((Creature*)m_caster)->AI())
+        ((Creature*)m_caster)->AI()->JustSummoned(pGameObj);
 }
 
 void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
@@ -8265,6 +8380,46 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     }
                     return;
                 }
+                case 72219:
+                case 72551:
+                case 72552:
+                case 72553:
+                {
+                    if (!unitTarget)
+                        return;
+
+                    if (SpellAuraHolder* pHolder = unitTarget->GetSpellAuraHolder(m_spellInfo->Id))
+                    {
+                        if (pHolder->GetStackAmount() + 1 >= m_spellInfo->StackAmount)
+                        {
+                            switch (m_spellInfo->Id)
+                            {
+                                case 72219:
+                                    unitTarget->CastSpell(unitTarget, 72227, true);
+                                    break;
+                                case 72551:
+                                    unitTarget->CastSpell(unitTarget, 72228, true);
+                                    break;
+                                case 72552:
+                                    unitTarget->CastSpell(unitTarget, 72229, true);
+                                    break;
+                                case 72553:
+                                    unitTarget->CastSpell(unitTarget, 72230, true);
+                                    break;
+                                default:
+                                    break;
+
+                                unitTarget->RemoveAurasDueToSpell(m_spellInfo->Id);
+                                unitTarget->RemoveAurasDueToSpell(72231);
+                                return;
+                            }
+                        }
+                    }
+
+                    unitTarget->CastSpell(unitTarget, 72231, true);
+
+                    break;
+                }
                 case 72864:                                 // Death plague
                 {
                     if (!unitTarget)
@@ -9342,78 +9497,27 @@ void Spell::EffectLeapForward(SpellEffectIndex eff_idx)
 
     if( m_spellInfo->rangeIndex == 1)                       //self range
     {
-        TerrainInfo const* map = unitTarget->GetTerrain();
         float dis = GetSpellRadius(sSpellRadiusStore.LookupEntry(m_spellInfo->EffectRadiusIndex[eff_idx]));
-        //For glyph of blink
-        if(m_caster->GetTypeId() == TYPEID_PLAYER)
-            ((Player*)m_caster)->ApplySpellMod(m_spellInfo->Id, SPELLMOD_RADIUS, dis, this);
 
-        // Start Info //
-        float cx,cy,cz;
-        float dx,dy,dz;
-        float angle = unitTarget->GetOrientation();
-        unitTarget->GetPosition(cx,cy,cz);
-          
-        //Check use of vmaps//
-        bool useVmap = false;
-        bool swapZone = true;
+        // before caster
+        float fx, fy, fz;
+        unitTarget->GetClosePoint(fx, fy, fz, unitTarget->GetObjectBoundingRadius(), dis);
+        float ox, oy, oz;
+        unitTarget->GetPosition(ox, oy, oz);
 
-        if (map->GetHeight(cx, cy, cz, false) < map->GetHeight(cx, cy, cz, true))
-            useVmap = true;
-
-        const int itr = int(dis/0.5f);
-        const float _dx = 0.5f * cos(angle);
-        const float _dy = 0.5f * sin(angle);
-        dx = cx;
-        dy = cy;
-
-        //Going foward 0.5f until max distance
-        for (float i=0.5f; i<dis; i+=0.5f)
+        float fx2, fy2, fz2;                                // getObjectHitPos overwrite last args in any result case
+        if(VMAP::VMapFactory::createOrGetVMapManager()->getObjectHitPos(unitTarget->GetMapId(), ox,oy,oz+0.5f, fx,fy,oz+0.5f,fx2,fy2,fz2, -0.5f))
         {
-            //unitTarget->GetNearPoint2D(dx,dy,i,angle);
-            dx += _dx;
-            dy += _dy;
-            MaNGOS::NormalizeMapCoord(dx);
-            MaNGOS::NormalizeMapCoord(dy);
-            dz = cz;
-             
-            //Prevent climbing and go around object maybe 2.0f is to small? use 3.0f?
-            if (map->IsNextZcoordOK(dx, dy, dz, 3.0f) && (unitTarget->IsWithinLOS(dx, dy, dz)))
-            {
-                //No climb, the z differenze between this and prev step is ok. Store this destination for future use or check.
-                cx = dx;
-                cy = dy;
-                unitTarget->UpdateGroundPositionZ(cx, cy, cz, 3.0f);
-            }
-            else
-            {
-                //Something wrong with los or z differenze... maybe we are going from outer world inside a building or viceversa
-                if(swapZone)
-                {
-                    //so... change use of vamp and go back 1 step backward and recheck again.
-                    swapZone = false;
-                    useVmap = !useVmap;
-                    //i-=0.5f;
-                    --i;
-                    dx -= _dx;
-                    dy -= _dy;
-                }
-                else
-                {
-                    //bad recheck result... so break this and use last good coord for teleport player...
-                    dz += 0.5f;
-                    break;
-                }
-            }
+            fx = fx2;
+            fy = fy2;
+            fz = fz2;
+            unitTarget->UpdateAllowedPositionZ(fx, fy, fz);
         }
 
         //Prevent Falling during swap building/outerspace
-        unitTarget->UpdateGroundPositionZ(cx, cy, cz);
+        unitTarget->UpdateGroundPositionZ(fx, fy, fz);
 
-        if(unitTarget->GetTypeId() == TYPEID_PLAYER)
-            ((Player*)unitTarget)->TeleportTo(map->GetMapId(), cx, cy, cz, unitTarget->GetOrientation(), TELE_TO_NOT_LEAVE_COMBAT | TELE_TO_NOT_UNSUMMON_PET | (unitTarget==m_caster ? TELE_TO_SPELL : 0));
-        else
-            unitTarget->GetMap()->CreatureRelocation((Creature*)unitTarget, cx, cy, cz, unitTarget->GetOrientation());
+        unitTarget->NearTeleportTo(fx, fy, fz, unitTarget->GetOrientation(), unitTarget == m_caster);
     }
 }
 
@@ -9544,7 +9648,7 @@ void Spell::EffectCharge(SpellEffectIndex /*eff_idx*/)
     unitTarget->GetContactPoint(m_caster, x, y, z, 3.666666f);
 
     // Try to normalize Z coord cuz GetContactPoint do nothing with Z axis
-    unitTarget->UpdateGroundPositionZ(x, y, z, 5.0f);
+    unitTarget->UpdateGroundPositionZ(x, y, z);
 
     if (unitTarget->GetTypeId() != TYPEID_PLAYER)
         ((Creature *)unitTarget)->StopMoving();
@@ -9579,7 +9683,7 @@ void Spell::EffectCharge2(SpellEffectIndex /*eff_idx*/)
         return;
 
     // Try to normalize Z coord cuz GetContactPoint do nothing with Z axis
-    unitTarget->UpdateGroundPositionZ(x, y, z, 5.0f);
+    unitTarget->UpdateGroundPositionZ(x, y, z);
 
     // Only send MOVEMENTFLAG_WALK_MODE, client has strange issues with other move flags
     m_caster->MonsterMove(x, y, z, 1);
@@ -10008,6 +10112,9 @@ void Spell::EffectTransmitted(SpellEffectIndex eff_idx)
         cMap->Add(pGameObj);
 
         pGameObj->SummonLinkedTrapIfAny();
+
+        if (m_caster->GetTypeId() == TYPEID_UNIT && ((Creature*)m_caster)->AI())
+            ((Creature*)m_caster)->AI()->JustSummoned(pGameObj);
     }
 }
 
