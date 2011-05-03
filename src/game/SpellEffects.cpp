@@ -9854,8 +9854,8 @@ void Spell::EffectModifyThreatPercent(SpellEffectIndex /*eff_idx*/)
 
 void Spell::EffectTransmitted(SpellEffectIndex eff_idx)
 {
-	if (m_spellInfo->Id == 52410 || m_spellInfo->Id == 66268 || m_spellInfo->Id == 66674)
-	{
+    if (m_spellInfo->Id == 52410 || m_spellInfo->Id == 66268 || m_spellInfo->Id == 66674)
+    {
         if (!((Player*)m_caster)->InBattleGround())
             return;
 
@@ -9889,125 +9889,125 @@ void Spell::EffectTransmitted(SpellEffectIndex eff_idx)
                 bg->EventSpawnGOSA(((Player*)m_caster),cBomb,fx,fy,fz);
             }
         }
-	}
+    }
     else
     {
-		uint32 name_id = m_spellInfo->EffectMiscValue[eff_idx];
+        uint32 name_id = m_spellInfo->EffectMiscValue[eff_idx];
 
-		GameObjectInfo const* goinfo = ObjectMgr::GetGameObjectInfo(name_id);
+        GameObjectInfo const* goinfo = ObjectMgr::GetGameObjectInfo(name_id);
 
-		if (!goinfo)
-		{
-			sLog.outErrorDb("Gameobject (Entry: %u) not exist and not created at spell (ID: %u) cast",name_id, m_spellInfo->Id);
-			return;
-		}
+        if (!goinfo)
+        {
+            sLog.outErrorDb("Gameobject (Entry: %u) not exist and not created at spell (ID: %u) cast",name_id, m_spellInfo->Id);
+            return;
+        }
 
-		float fx, fy, fz;
+        float fx, fy, fz;
 
-		if(m_targets.m_targetMask & TARGET_FLAG_DEST_LOCATION)
-		{
-			fx = m_targets.m_destX;
-			fy = m_targets.m_destY;
-			fz = m_targets.m_destZ;
-		}
-		//FIXME: this can be better check for most objects but still hack
-		else if(m_spellInfo->EffectRadiusIndex[eff_idx] && m_spellInfo->speed==0)
-		{
-			float dis = GetSpellRadius(sSpellRadiusStore.LookupEntry(m_spellInfo->EffectRadiusIndex[eff_idx]));
-			m_caster->GetClosePoint(fx, fy, fz, DEFAULT_WORLD_OBJECT_SIZE, dis);
-		}
-		else
-		{
-			float min_dis = GetSpellMinRange(sSpellRangeStore.LookupEntry(m_spellInfo->rangeIndex));
-			float max_dis = GetSpellMaxRange(sSpellRangeStore.LookupEntry(m_spellInfo->rangeIndex));
-			float dis = rand_norm_f() * (max_dis - min_dis) + min_dis;
+        if(m_targets.m_targetMask & TARGET_FLAG_DEST_LOCATION)
+        {
+            fx = m_targets.m_destX;
+            fy = m_targets.m_destY;
+            fz = m_targets.m_destZ;
+        }
+        //FIXME: this can be better check for most objects but still hack
+        else if(m_spellInfo->EffectRadiusIndex[eff_idx] && m_spellInfo->speed==0)
+        {
+            float dis = GetSpellRadius(sSpellRadiusStore.LookupEntry(m_spellInfo->EffectRadiusIndex[eff_idx]));
+            m_caster->GetClosePoint(fx, fy, fz, DEFAULT_WORLD_OBJECT_SIZE, dis);
+        }
+        else
+        {
+            float min_dis = GetSpellMinRange(sSpellRangeStore.LookupEntry(m_spellInfo->rangeIndex));
+            float max_dis = GetSpellMaxRange(sSpellRangeStore.LookupEntry(m_spellInfo->rangeIndex));
+            float dis = rand_norm_f() * (max_dis - min_dis) + min_dis;
 
-			m_caster->GetClosePoint(fx, fy, fz, DEFAULT_WORLD_OBJECT_SIZE, dis);
-		}
+            m_caster->GetClosePoint(fx, fy, fz, DEFAULT_WORLD_OBJECT_SIZE, dis);
+        }
 
-		Map *cMap = m_caster->GetMap();
+        Map *cMap = m_caster->GetMap();
 
-		if(goinfo->type==GAMEOBJECT_TYPE_FISHINGNODE)
-		{
-			GridMapLiquidData liqData;
-			if ( !m_caster->GetTerrain()->IsInWater(fx, fy, fz + 1.f/* -0.5f */, &liqData))             // Hack to prevent fishing bobber from failing to land on fishing hole
-			{ // but this is not proper, we really need to ignore not materialized objects
-				SendCastResult(SPELL_FAILED_NOT_HERE);
-				SendChannelUpdate(0);
-				return;
-			}
+        if(goinfo->type==GAMEOBJECT_TYPE_FISHINGNODE)
+        {
+            GridMapLiquidData liqData;
+            if ( !m_caster->GetTerrain()->IsInWater(fx, fy, fz + 1.f/* -0.5f */, &liqData))             // Hack to prevent fishing bobber from failing to land on fishing hole
+            { // but this is not proper, we really need to ignore not materialized objects
+                SendCastResult(SPELL_FAILED_NOT_HERE);
+                SendChannelUpdate(0);
+                return;
+            }
 
-			// replace by water level in this case
-			//fz = cMap->GetWaterLevel(fx, fy);
-			fz = liqData.level;
-		}
-		// if gameobject is summoning object, it should be spawned right on caster's position
-		else if(goinfo->type==GAMEOBJECT_TYPE_SUMMONING_RITUAL)
-		{
-			m_caster->GetPosition(fx, fy, fz);
-		}
+            // replace by water level in this case
+            //fz = cMap->GetWaterLevel(fx, fy);
+            fz = liqData.level;
+        }
+        // if gameobject is summoning object, it should be spawned right on caster's position
+        else if(goinfo->type==GAMEOBJECT_TYPE_SUMMONING_RITUAL)
+        {
+            m_caster->GetPosition(fx, fy, fz);
+        }
 
-		GameObject* pGameObj = new GameObject;
+        GameObject* pGameObj = new GameObject;
 
-		if(!pGameObj->Create(cMap->GenerateLocalLowGuid(HIGHGUID_GAMEOBJECT), name_id, cMap,
-			m_caster->GetPhaseMask(), fx, fy, fz, m_caster->GetOrientation(), 0.0f, 0.0f, 0.0f, 0.0f, GO_ANIMPROGRESS_DEFAULT, GO_STATE_READY))
-		{
-			delete pGameObj;
-			return;
-		}
+        if(!pGameObj->Create(cMap->GenerateLocalLowGuid(HIGHGUID_GAMEOBJECT), name_id, cMap,
+            m_caster->GetPhaseMask(), fx, fy, fz, m_caster->GetOrientation(), 0.0f, 0.0f, 0.0f, 0.0f, GO_ANIMPROGRESS_DEFAULT, GO_STATE_READY))
+        {
+            delete pGameObj;
+            return;
+        }
 
-		int32 duration = GetSpellDuration(m_spellInfo);
+        int32 duration = GetSpellDuration(m_spellInfo);
 
-		switch(goinfo->type)
-		{
-			case GAMEOBJECT_TYPE_FISHINGNODE:
-			{
-				m_caster->SetChannelObjectGuid(pGameObj->GetObjectGuid());
-				m_caster->AddGameObject(pGameObj);              // will removed at spell cancel
+        switch(goinfo->type)
+        {
+            case GAMEOBJECT_TYPE_FISHINGNODE:
+            {
+                m_caster->SetChannelObjectGuid(pGameObj->GetObjectGuid());
+                m_caster->AddGameObject(pGameObj);              // will removed at spell cancel
 
-				// end time of range when possible catch fish (FISHING_BOBBER_READY_TIME..GetDuration(m_spellInfo))
-				// start time == fish-FISHING_BOBBER_READY_TIME (0..GetDuration(m_spellInfo)-FISHING_BOBBER_READY_TIME)
-				int32 lastSec = 0;
-				switch(urand(0, 3))
-				{
-					case 0: lastSec =  3; break;
-					case 1: lastSec =  7; break;
-					case 2: lastSec = 13; break;
-					case 3: lastSec = 17; break;
-				}
+                // end time of range when possible catch fish (FISHING_BOBBER_READY_TIME..GetDuration(m_spellInfo))
+                // start time == fish-FISHING_BOBBER_READY_TIME (0..GetDuration(m_spellInfo)-FISHING_BOBBER_READY_TIME)
+                int32 lastSec = 0;
+                switch(urand(0, 3))
+                {
+                    case 0: lastSec =  3; break;
+                    case 1: lastSec =  7; break;
+                    case 2: lastSec = 13; break;
+                    case 3: lastSec = 17; break;
+                }
 
-				duration = duration - lastSec*IN_MILLISECONDS + FISHING_BOBBER_READY_TIME*IN_MILLISECONDS;
-				break;
-			}
-			case GAMEOBJECT_TYPE_SUMMONING_RITUAL:
-			{
-				if(m_caster->GetTypeId() == TYPEID_PLAYER)
-				{
-					pGameObj->AddUniqueUse((Player*)m_caster);
-					m_caster->AddGameObject(pGameObj);          // will removed at spell cancel
-				}
-				break;
-			}
-			case GAMEOBJECT_TYPE_FISHINGHOLE:
-			case GAMEOBJECT_TYPE_CHEST:
-			default:
-				break;
-		}
+                duration = duration - lastSec*IN_MILLISECONDS + FISHING_BOBBER_READY_TIME*IN_MILLISECONDS;
+                break;
+            }
+            case GAMEOBJECT_TYPE_SUMMONING_RITUAL:
+            {
+                if(m_caster->GetTypeId() == TYPEID_PLAYER)
+                {
+                    pGameObj->AddUniqueUse((Player*)m_caster);
+                    m_caster->AddGameObject(pGameObj);          // will removed at spell cancel
+                }
+                break;
+            }
+            case GAMEOBJECT_TYPE_FISHINGHOLE:
+            case GAMEOBJECT_TYPE_CHEST:
+            default:
+                break;
+        }
 
-		pGameObj->SetRespawnTime(duration > 0 ? duration/IN_MILLISECONDS : 0);
+        pGameObj->SetRespawnTime(duration > 0 ? duration/IN_MILLISECONDS : 0);
 
-		pGameObj->SetOwnerGuid(m_caster->GetObjectGuid());
+        pGameObj->SetOwnerGuid(m_caster->GetObjectGuid());
 
-		pGameObj->SetUInt32Value(GAMEOBJECT_LEVEL, m_caster->getLevel());
-		pGameObj->SetSpellId(m_spellInfo->Id);
+        pGameObj->SetUInt32Value(GAMEOBJECT_LEVEL, m_caster->getLevel());
+        pGameObj->SetSpellId(m_spellInfo->Id);
 
-		DEBUG_LOG("AddObject at SpellEfects.cpp EffectTransmitted");
-		//m_caster->AddGameObject(pGameObj);
-		//m_ObjToDel.push_back(pGameObj);
+        DEBUG_LOG("AddObject at SpellEfects.cpp EffectTransmitted");
+        //m_caster->AddGameObject(pGameObj);
+        //m_ObjToDel.push_back(pGameObj);
 
-		cMap->Add(pGameObj);
+        cMap->Add(pGameObj);
 
-		pGameObj->SummonLinkedTrapIfAny();
+        pGameObj->SummonLinkedTrapIfAny();
     }
 }
 
