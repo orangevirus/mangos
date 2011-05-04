@@ -37,6 +37,7 @@
 #include "BattleGround.h"
 #include "BattleGroundAB.h"
 #include "BattleGroundSA.h"
+#include "BattleGroundWS.h"
 #include "Map.h"
 #include "InstanceData.h"
 
@@ -935,11 +936,14 @@ void AchievementMgr::UpdateAchievementCriteria(AchievementCriteriaTypes type, ui
                 // AchievementMgr::UpdateAchievementCriteria might also be called on login - skip in this case
                 if (!miscvalue1)
                     continue;
+
                 if (achievementCriteria->win_bg.bgMapID != GetPlayer()->GetMapId())
                     continue;
 
                 if (achievementCriteria->win_bg.additionalRequirement1_type || achievementCriteria->win_bg.additionalRequirement2_type)
                 {
+                    if(achievementCriteria->referredAchievement == 204 && (GetPlayer()->GetBattleGround()->GetPlayerScore(GetPlayer(),SCORE_DEATHS) > 0))
+                        continue;
                     // those requirements couldn't be found in the dbc
                     AchievementCriteriaRequirementSet const* data = sAchievementMgr.GetCriteriaRequirementSet(achievementCriteria);
                     if (!data || !data->Meets(GetPlayer(),unit))
@@ -1597,6 +1601,27 @@ void AchievementMgr::UpdateAchievementCriteria(AchievementCriteriaTypes type, ui
                 if (!data->Meets(GetPlayer(),unit))
                     continue;
 
+                if(achievementCriteria->referredAchievement == 207)
+                {
+                    BattleGround* bg = GetPlayer()->GetBattleGround();
+                    if (!bg)
+                        continue;
+
+                    if (bg->GetTypeID(true) != BATTLEGROUND_WS)
+                        continue;
+                    switch(GetPlayer()->GetTeam())
+                    {
+                        case ALLIANCE:
+                            if (!(((BattleGroundWS*)bg)->GetFlagState(HORDE) == BG_WS_FLAG_STATE_ON_BASE))
+                                continue;
+                            break;
+                        case HORDE:
+                            if (!(((BattleGroundWS*)bg)->GetFlagState(ALLIANCE) == BG_WS_FLAG_STATE_ON_BASE))
+                                continue;
+                            break;
+                    }            
+                } 
+                
                 change = 1;
                 progressType = PROGRESS_ACCUMULATE;
                 break;
