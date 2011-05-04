@@ -38,3 +38,16 @@ VALUES
     ('5605','7','23333','0'),
     ('5606','6','4572','0'),
     ('5606','7','23335','0');
+
+-- Eye of the Storm
+
+DELETE FROM `achievement_criteria_requirement` WHERE `criteria_id` IN (418,441,442,443,444,3685);
+INSERT INTO `achievement_criteria_requirement`
+    (`criteria_id`, `type`, `value1`, `value2`)
+VALUES
+    ('418','6','3820','0'),
+    ('441','6','3870','0'),
+    ('442','6','3871','0'),
+    ('443','6','3872','0'),
+    ('444','6','3869','0'),
+    ('3685','7','34976','0');
