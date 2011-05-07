@@ -2814,8 +2814,7 @@ void Unit::CalculateHealAbsorb(const uint32 heal, uint32 *absorb)
 
 void Unit::AttackerStateUpdate (Unit *pVictim, WeaponAttackType attType, bool extra )
 {
-    if((hasUnitState(UNIT_STAT_CAN_NOT_REACT) || HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PACIFIED)) && 
-        (!this->GetVehicle() || this->GetVehicle()->GetBase()->GetVehicleInfo()->GetEntry()->m_ID != 223))
+    if(hasUnitState(UNIT_STAT_CAN_NOT_REACT) || HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PACIFIED) )
         return;
 
     if (!pVictim->isAlive())
@@ -6092,19 +6091,8 @@ bool Unit::Attack(Unit *victim, bool meleeAttack)
         return false;
 
     // player cannot attack while mounted or in vehicle
-    if(GetTypeId()==TYPEID_PLAYER && IsMounted())
+    if(GetTypeId()==TYPEID_PLAYER && (IsMounted() || GetVehicle()))
         return false;
-
-    if(GetTypeId()==TYPEID_PLAYER && GetVehicle())
-    {
-        switch(this->GetVehicle()->GetBase()->GetVehicleInfo()->GetEntry()->m_ID)
-        {
-            case 223:
-                break;
-            default:
-                return false;
-        }
-    }
 
     // nobody can attack GM in GM-mode
     if(victim->GetTypeId()==TYPEID_PLAYER)
@@ -10836,6 +10824,13 @@ void Unit::ProcDamageAndSpellFor( bool isVictim, Unit * pTarget, uint32 procFlag
         SpellProcEventEntry const* spellProcEvent = NULL;
         if(!IsTriggeredAtSpellProcEvent(pTarget, itr->second, procSpell, procFlag, procExtra, attType, isVictim, spellProcEvent))
            continue;
+
+        // Frost Nova: prevent to remove root effect on self damage
+        if (itr->second->GetCaster() == pTarget)
+           if (SpellEntry const* spellInfo = itr->second->GetSpellProto())
+              if (procSpell && spellInfo->SpellFamilyName == SPELLFAMILY_MAGE && spellInfo->SpellFamilyFlags & UI64LIT(0x000000000000000000000040)
+                 && procSpell->SpellFamilyName == SPELLFAMILY_MAGE && procSpell->SpellFamilyFlags & UI64LIT(0x000000000000000000000040))
+                    continue;
 
         itr->second->SetInUse(true);                        // prevent holder deletion
         procTriggered.push_back( ProcTriggeredData(spellProcEvent, itr->second) );

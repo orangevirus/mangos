@@ -77,6 +77,15 @@ LFGRoleMask LFGPlayerState::GetRoles()
     return rolesMask;
 };
 
+bool LFGPlayerState::IsSingleRole()
+{
+    if (   LFGRoleMask(rolesMask & ~LFG_ROLE_MASK_TANK   & ~LFG_ROLE_MASK_LEADER) == LFG_ROLE_MASK_NONE
+        || LFGRoleMask(rolesMask & ~LFG_ROLE_MASK_HEALER & ~LFG_ROLE_MASK_LEADER) == LFG_ROLE_MASK_NONE
+        || LFGRoleMask(rolesMask & ~LFG_ROLE_MASK_TANK   & ~LFG_ROLE_MASK_LEADER) == LFG_ROLE_MASK_NONE)
+        return true;
+    return false;
+}
+
 void LFGPlayerState::SetComment(std::string comment)
 {
     m_comment.clear();
@@ -100,7 +109,7 @@ void LFGGroupState::Clear()
 {
     queued = false;
     update = true;
-    status = LFG_STATUS_NOT_SAVED;
+    m_status = LFG_STATUS_NOT_SAVED;
     dungeonEntry = 0;
     m_votesNeeded = 3;
     m_kicksLeft = 5;
@@ -146,8 +155,46 @@ void LFGGroupState::StartRoleCheck()
 
 bool LFGGroupState::IsRoleCheckActive()
 {
-    if (GetRoleCheckState() != LFG_ROLECHECK_NONE && m_roleCheckCancelTime && QueryRoleCheckTime())
+    if (GetRoleCheckState() != LFG_ROLECHECK_NONE && m_roleCheckCancelTime)
         return true;
 
     return false;
 }
+
+LFGType LFGGroupState::GetType()
+{
+    if (m_DungeonsList.empty())
+        return LFG_TYPE_NONE;
+    else
+        return LFGType((*m_DungeonsList.begin())->type);
+};
+
+LFGQueueInfo::LFGQueueInfo(ObjectGuid _guid)
+{
+    guid = _guid;
+    MANGOS_ASSERT(!guid.IsEmpty());
+
+    tanks = LFG_TANKS_NEEDED;
+    healers = LFG_HEALERS_NEEDED;
+    dps = LFG_DPS_NEEDED;
+    joinTime = time_t(time(NULL));
+
+    if (!guid.IsGroup())
+        m_dungeons = sObjectMgr.GetPlayer(guid)->GetLFGState()->GetDungeons();
+    else if (guid.IsPlayer())
+        m_dungeons = sObjectMgr.GetGroup(guid)->GetLFGState()->GetDungeons();
+
+};
+
+LFGType LFGQueueInfo::GetDungeonType()
+{
+    if (!GetDungeons() || GetDungeons()->empty())
+        return LFG_TYPE_NONE;
+
+    LFGDungeonEntry const* dungeon = *GetDungeons()->begin();
+
+    if (!dungeon)
+        return LFG_TYPE_NONE;
+
+    return LFGType(dungeon->type);
+};

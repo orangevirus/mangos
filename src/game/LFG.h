@@ -244,6 +244,7 @@ struct LFGPlayerState
     void SetRoles(uint8 roles);
     void AddRole(LFGRoles role) { rolesMask = LFGRoleMask( rolesMask | (1 << role)); };
     void RemoveRole(LFGRoles role) { rolesMask = LFGRoleMask( rolesMask & ~(1 << role)); };
+    bool IsSingleRole();
 
     uint32         GetFlags()                { return m_flags;};
     void           AddFlags(uint32 flags)    { m_flags = m_flags | flags;};
@@ -279,13 +280,16 @@ struct LFGGroupState
     void Update(bool _update = true) { update = _update; };
     LFGDungeonSet* GetDungeons()   { return &m_DungeonsList; };
 
-    void SetState(LFGState _state) { m_state = _state; };
-    LFGState GetState() { return m_state; };
+    void          SetState(LFGState _state) { m_state = _state; };
+    LFGState      GetState() { return m_state; };
 
-    LFGProposal*   GetProposal()   { return m_proposal; };
-    void           SetProposal(LFGProposal* proposal)   { m_proposal = proposal; };
+    void          SetStatus(LFGDungeonStatus _status) { m_status = _status; };
+    LFGDungeonStatus      GetStatus() { return m_status; };
 
-    uint32* GetFlags()  { return &m_flags;};
+    LFGProposal*  GetProposal()   { return m_proposal; };
+    void          SetProposal(LFGProposal* proposal)   { m_proposal = proposal; };
+
+    uint32*       GetFlags()  { return &m_flags;};
     LFGType       GetType();
     uint8         GetRoles(LFGRoles role);
 
@@ -310,7 +314,7 @@ struct LFGGroupState
     uint8         m_kicksLeft;                                 // Number of kicks left
     bool          kickActive;
     LFGState      m_state;
-    LFGDungeonStatus     status;
+    LFGDungeonStatus     m_status;
     LFGDungeonSet    m_DungeonsList;                           // Dungeons the group have applied for
     LFGProposal*  m_proposal;
     time_t        m_roleCheckCancelTime;                       // Time when the rolecheck will fail

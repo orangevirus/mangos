@@ -190,6 +190,17 @@ void BattleGroundAB::RemovePlayer(Player * /*plr*/, ObjectGuid /*guid*/)
 
 }
 
+void BattleGroundAB::HandleKillPlayer(Player *player, Player *killer)
+{
+    if (GetStatus() != STATUS_IN_PROGRESS)
+        return;
+
+    if (killer->GetAreaId() == player->GetAreaId()) 
+        killer->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HONORABLE_KILL_AT_AREA);
+    
+    BattleGround::HandleKillPlayer(player, killer);
+}
+
 void BattleGroundAB::HandleAreaTrigger(Player *Source, uint32 Trigger)
 {
     switch(Trigger)
@@ -547,9 +558,11 @@ void BattleGroundAB::UpdatePlayerScore(Player *Source, uint32 type, uint32 value
     {
         case SCORE_BASES_ASSAULTED:
             ((BattleGroundABScore*)itr->second)->BasesAssaulted += value;
+            Source->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_BG_OBJECTIVE_CAPTURE, AB_OBJECTIVE_ASSAULT_BASE);
             break;
         case SCORE_BASES_DEFENDED:
             ((BattleGroundABScore*)itr->second)->BasesDefended += value;
+            Source->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_BG_OBJECTIVE_CAPTURE, AB_OBJECTIVE_DEFEND_BASE);
             break;
         default:
             BattleGround::UpdatePlayerScore(Source,type,value);

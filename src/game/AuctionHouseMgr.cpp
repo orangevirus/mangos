@@ -155,8 +155,8 @@ void AuctionHouseMgr::SendAuctionWonMail(AuctionEntry *auction)
             // FIXME: for offline player need also
             bidder->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_WON_AUCTIONS, 1);
         }
-        else
-            RemoveAItem(pItem->GetGUIDLow());               // we have to remove the item, before we delete it !!
+
+        RemoveAItem(pItem->GetGUIDLow());               // we have to remove the item from auction, before we delete it !!
 
         // will delete item or place to receiver mail list
         MailDraft(msgAuctionWonSubject.str(), msgAuctionWonBody.str())
@@ -374,8 +374,6 @@ void AuctionHouseMgr::LoadAuctions()
 
     barGoLink bar(AuctionCount);
 
-    AuctionEntry *auction;
-
     typedef std::map<uint32, std::wstring> PlayerNames;
     PlayerNames playerNames;                                // caching for load time
 
@@ -385,7 +383,7 @@ void AuctionHouseMgr::LoadAuctions()
 
         bar.step();
 
-        auction = new AuctionEntry;
+        AuctionEntry *auction = new AuctionEntry;
         auction->Id = fields[0].GetUInt32();
         uint32 houseid  = fields[1].GetUInt32();
         auction->itemGuidLow = fields[2].GetUInt32();
@@ -488,8 +486,11 @@ void AuctionHouseMgr::ClearRemovedAItems()
     WriteGuard guard(i_lock);
     while(!m_deletedItems.empty())
     {
-        delete m_deletedItems.front();
-//        m_deletedItems.pop();
+        Item* item = m_deletedItems.front();
+        m_deletedItems.pop();
+
+        if (item)
+            delete item;
     }
 }
 
