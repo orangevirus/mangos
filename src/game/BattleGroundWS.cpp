@@ -122,7 +122,7 @@ void BattleGroundWS::Update(uint32 diff)
             else
             {
                 // if 0 => tie
-                EndBattleGround(m_LastCapturedFlagTeam);
+                EndBattleGround(m_FirstCapturedFlagTeam);
             }
         }
         else
@@ -214,6 +214,9 @@ void BattleGroundWS::EventPlayerCapturedFlag(Player *Source)
         return;
 
     m_LastCapturedFlagTeam = Source->GetTeam();
+
+    if(m_FirstCapturedFlagTeam == TEAM_NONE)
+        m_FirstCapturedFlagTeam = Source->GetTeam();
 
     Team winner = TEAM_NONE;
 
@@ -386,6 +389,7 @@ void BattleGroundWS::EventPlayerClickedOnFlag(Player *Source, GameObject* target
         UpdateFlagState(HORDE, BG_WS_FLAG_STATE_ON_PLAYER);
         UpdateWorldState(BG_WS_FLAG_UNK_ALLIANCE, 1);
         Source->CastSpell(Source, BG_WS_SPELL_SILVERWING_FLAG, true);
+        Source->GetAchievementMgr().StartTimedAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_CAST_SPELL, BG_WS_SPELL_SILVERWING_FLAG_PICKED);
     }
 
     //horde flag picked up from base
@@ -402,6 +406,7 @@ void BattleGroundWS::EventPlayerClickedOnFlag(Player *Source, GameObject* target
         UpdateFlagState(ALLIANCE, BG_WS_FLAG_STATE_ON_PLAYER);
         UpdateWorldState(BG_WS_FLAG_UNK_HORDE, 1);
         Source->CastSpell(Source, BG_WS_SPELL_WARSONG_FLAG, true);
+        Source->GetAchievementMgr().StartTimedAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_CAST_SPELL, BG_WS_SPELL_WARSONG_FLAG_PICKED);
     }
 
     //Alliance flag on ground(not in base) (returned or picked up again from ground!)
@@ -581,6 +586,7 @@ void BattleGroundWS::Reset()
 
     m_EndTimer = BG_WS_TIME_LIMIT;
     m_LastCapturedFlagTeam = TEAM_NONE;
+    m_FirstCapturedFlagTeam = TEAM_NONE;
 }
 
 void BattleGroundWS::EndBattleGround(Team winner)
@@ -618,9 +624,11 @@ void BattleGroundWS::UpdatePlayerScore(Player *Source, uint32 type, uint32 value
     {
         case SCORE_FLAG_CAPTURES:                           // flags captured
             ((BattleGroundWGScore*)itr->second)->FlagCaptures += value;
+            Source->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_BG_OBJECTIVE_CAPTURE, WS_OBJECTIVE_CAPTURE_FLAG);
             break;
         case SCORE_FLAG_RETURNS:                            // flags returned
             ((BattleGroundWGScore*)itr->second)->FlagReturns += value;
+            Source->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_BG_OBJECTIVE_CAPTURE, WS_OBJECTIVE_RETURN_FLAG);
             break;
         default:
             BattleGround::UpdatePlayerScore(Source, type, value);

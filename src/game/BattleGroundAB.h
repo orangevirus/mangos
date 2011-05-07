@@ -85,6 +85,11 @@ enum BG_AB_ObjectType
     BG_AB_OBJECT_MAX                     = 16,
 };
 
+enum BG_AB_Objectives
+{
+    AB_OBJECTIVE_ASSAULT_BASE = 122,
+    AB_OBJECTIVE_DEFEND_BASE = 123
+};
 
 /* node events */
 // node-events are just event1=BG_AB_Nodes, event2=BG_AB_NodeStatus
@@ -185,6 +190,7 @@ class BattleGroundAB : public BattleGround
         virtual void StartingEventCloseDoors();
         virtual void StartingEventOpenDoors();
         void RemovePlayer(Player *plr, ObjectGuid guid);
+        void HandleKillPlayer(Player* player, Player *killer);
         void HandleAreaTrigger(Player *Source, uint32 Trigger);
         virtual bool SetupBattleGround();
         virtual void Reset();

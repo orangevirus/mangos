@@ -2833,6 +2833,7 @@ void Player::UpdateFreeTalentPoints(bool resetIfNeed)
         else
             SetFreeTalentPoints(talentPointsForLevel-m_usedTalentCount);
     }
+    ResetTalentsCount();
 }
 
 void Player::InitTalentForLevel()
@@ -11544,6 +11545,7 @@ Item* Player::StoreNewItem(ItemPosCountVec const& dest, uint32 item, bool update
     Item *pItem = Item::CreateItem( item, count, this );
     if( pItem )
     {
+        ResetEquipGearScore();
         ItemAddedQuestCheck( item, count );
         GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_RECEIVE_EPIC_ITEM, item, count);
         if(randomPropertyId)
@@ -11705,6 +11707,7 @@ Item* Player::EquipNewItem( uint16 pos, uint32 item, bool update )
 {
     if (Item *pItem = Item::CreateItem( item, 1, this ))
     {
+        ResetEquipGearScore();
         ItemAddedQuestCheck( item, 1 );
         GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_RECEIVE_EPIC_ITEM, item, 1);
         return EquipItem( pos, pItem, update );
@@ -13635,22 +13638,6 @@ void Player::PrepareGossipMenu(WorldObject *pSource, uint32 menuId)
                 case GOSSIP_OPTION_TABARDDESIGNER:
                 case GOSSIP_OPTION_AUCTIONEER:
                     break;                                  // no checks
-                case GOSSIP_OPTION_BOT:
-                {
-                    if (sWorld.getConfig(CONFIG_BOOL_PLAYERBOT_DISABLE) && !pCreature->isInnkeeper())
-                    {
-                        ChatHandler(this).PSendSysMessage("|cffff0000Playerbot system is currently disabled!");
-                        hasMenuItem = false;
-                        break;
-                    }
-
-                    std::string reqQuestIds = sConfig.GetStringDefault("PlayerbotAI.BotguyQuests","");
-                    uint32 cost = sWorld.getConfig(CONFIG_UINT32_PLAYERBOT_BOTGUYCOST);
-                    if((reqQuestIds == "" || requiredQuests(reqQuestIds.c_str())) && !pCreature->isInnkeeper() && this->GetMoney() >= cost)
-                        pCreature->LoadBotMenu(this);
-                    hasMenuItem = false;
-                    break;
-                }
                 default:
                     sLog.outErrorDb("Creature entry %u have unknown gossip option %u for menu %u", pCreature->GetEntry(), itr->second.option_id, itr->second.menu_id);
                     hasMenuItem = false;
@@ -13798,12 +13785,12 @@ void Player::OnGossipSelect(WorldObject* pSource, uint32 gossipListId, uint32 me
         }
     }
 
+    GossipMenuItemData pMenuData = gossipmenu.GetItemData(gossipListId);
+
     switch(gossipOptionId)
     {
         case GOSSIP_OPTION_GOSSIP:
         {
-            GossipMenuItemData pMenuData = gossipmenu.GetItemData(gossipListId);
-
             if (pMenuData.m_gAction_poi)
                 PlayerTalkClass->SendPointOfInterest(pMenuData.m_gAction_poi);
 
@@ -13891,59 +13878,6 @@ void Player::OnGossipSelect(WorldObject* pSource, uint32 gossipListId, uint32 me
             }
 
             GetSession()->SendBattlegGroundList(guid, bgTypeId);
-            break;
-        }
-        case GOSSIP_OPTION_BOT:
-        {
-            // DEBUG_LOG("GOSSIP_OPTION_BOT");
-            PlayerTalkClass->CloseGossip();
-            uint32 guidlo = PlayerTalkClass->GossipOptionSender(gossipListId);
-            uint32 cost = sWorld.getConfig(CONFIG_UINT32_PLAYERBOT_BOTGUYCOST);
-
-            if (!GetPlayerbotMgr())
-                SetPlayerbotMgr(new PlayerbotMgr(this));
-
-            if(GetPlayerbotMgr()->GetPlayerBot(guidlo) != NULL)
-            {
-                GetPlayerbotMgr()->LogoutPlayerBot(guidlo);
-            }
-            else if(GetPlayerbotMgr()->GetPlayerBot(guidlo) == NULL)
-            {
-                QueryResult *resultchar = CharacterDatabase.PQuery("SELECT COUNT(*) FROM characters WHERE online = '1' AND account = '%u'", m_session->GetAccountId());
-                if(resultchar)
-                {
-                    Field *fields = resultchar->Fetch();
-                    int maxnum = sWorld.getConfig(CONFIG_UINT32_PLAYERBOT_MAXBOTS);
-                    int acctcharcount = fields[0].GetUInt32();
-                    if(!(m_session->GetSecurity() > SEC_PLAYER))
-                        if(acctcharcount > maxnum)
-                        {
-                            ChatHandler(this).PSendSysMessage("|cffff0000You cannot summon anymore bots.(Current Max: |cffffffff%u)",maxnum);
-                            delete resultchar;
-                            break;
-                        }
-                }
-                delete resultchar;
-
-                QueryResult *resultlvl = CharacterDatabase.PQuery("SELECT level,name FROM characters WHERE guid = '%u'", guidlo);
-                if(resultlvl)
-                {
-                    Field *fields=resultlvl->Fetch();
-                    int maxlvl = sWorld.getConfig(CONFIG_UINT32_PLAYERBOT_RESTRICTLEVEL);
-                    int charlvl = fields[0].GetUInt32();
-                    if(!(m_session->GetSecurity() > SEC_PLAYER))
-                        if(charlvl > maxlvl)
-                        {
-                            ChatHandler(this).PSendSysMessage("|cffff0000You cannot summon |cffffffff[%s]|cffff0000, it's level is too high.(Current Max:lvl |cffffffff%u)",fields[1].GetString(),maxlvl);
-                            delete resultlvl;
-                            break;
-                        }
-                }
-                delete resultlvl;
-
-                GetPlayerbotMgr()->AddPlayerBot(guidlo);
-                this->ModifyMoney(-(int32)cost);
-            }
             break;
         }
     }
@@ -23989,6 +23923,9 @@ AreaLockStatus Player::GetAreaLockStatus(uint32 mapId, Difficulty difficulty)
 
 uint32 Player::GetEquipGearScore(bool withBags, bool withBank)
 {
+    if (m_cachedGS > 0)
+        return m_cachedGS;
+
     GearScoreMap gearScore (MAX_INVTYPE);
 
     for (uint8 i = INVTYPE_NON_EQUIP; i < MAX_INVTYPE; ++i)
@@ -24058,7 +23995,10 @@ uint32 Player::GetEquipGearScore(bool withBags, bool withBank)
     if (count)
     {
         DEBUG_LOG("Player: calculating gear score for %u. Result is %u",GetObjectGuid().GetCounter(), uint32( summ / count ));
-        return uint32( summ / count );
+
+        m_cachedGS = uint32( summ / count );
+
+        return m_cachedGS;
     }
     else return 0;
 }
@@ -24127,6 +24067,9 @@ uint8 Player::GetTalentsCount(uint8 tab)
     if (tab >2)
         return 0;
 
+    if (m_cachedTC[tab] > 0)
+        return m_cachedTC[tab];
+
     uint8 talentCount = 0;
 
     uint32 const* talentTabIds = GetTalentTabPages(getClass());
@@ -24146,5 +24089,34 @@ uint8 Player::GetTalentsCount(uint8 tab)
 
         talentCount += talent.currentRank + 1;
     }
+    m_cachedTC[tab] = talentCount;
     return talentCount;
+}
+
+bool Player::HasOrphan()
+{
+    if (GetMiniPet())
+    {
+        // We have a summon, is it an orphan?
+        bool hasOrphan = false;
+
+        switch (GetMiniPet()->GetEntry())
+        {
+            case 33532: //wolvar
+            case 14444: //orc
+            case 33533: //oracle
+            case 14305: //human
+            case 22818: //draenei
+            case 22817: //bloodelf
+            {
+                hasOrphan = true;
+                break;
+            }
+
+        }
+
+        if (hasOrphan)
+            return true;
+    }
+    return false;
 }
