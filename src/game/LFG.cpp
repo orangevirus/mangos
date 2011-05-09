@@ -18,6 +18,7 @@
 
 #include "Common.h"
 #include "SharedDefines.h"
+#include "ObjectMgr.h"
 #include "LFG.h"
 #include "LFGMgr.h"
 #include "Group.h"
@@ -77,6 +78,12 @@ LFGRoleMask LFGPlayerState::GetRoles()
     return rolesMask;
 };
 
+void LFGPlayerState::SetJoined()
+{
+    m_jointime = time_t(time(NULL));
+    m_teleported = false;
+};
+
 bool LFGPlayerState::IsSingleRole()
 {
     if (   LFGRoleMask(rolesMask & ~LFG_ROLE_MASK_TANK   & ~LFG_ROLE_MASK_LEADER) == LFG_ROLE_MASK_NONE
@@ -110,7 +117,6 @@ void LFGGroupState::Clear()
     queued = false;
     update = true;
     m_status = LFG_STATUS_NOT_SAVED;
-    dungeonEntry = 0;
     m_votesNeeded = 3;
     m_kicksLeft = 5;
     kickActive = false;
@@ -122,6 +128,7 @@ void LFGGroupState::Clear()
     m_proposal = NULL;
     m_roleCheckCancelTime = 0;
     m_roleCheckState      = LFG_ROLECHECK_NONE;
+    SetDungeon(NULL);
 }
 
 uint8 LFGGroupState::GetRoles(LFGRoles role)
@@ -197,4 +204,46 @@ LFGType LFGQueueInfo::GetDungeonType()
         return LFG_TYPE_NONE;
 
     return LFGType(dungeon->type);
+};
+
+LFGProposal::LFGProposal(LFGDungeonEntry const* _dungeon)
+{
+    m_dungeon = _dungeon;
+    m_state = LFG_PROPOSAL_INITIATING;
+    m_group = NULL;
+    m_cancelTime = 0;
+}
+
+void LFGProposal::Start()
+{
+    m_cancelTime = time_t(time(NULL)) + LFG_TIME_PROPOSAL;
+};
+
+void LFGProposal::RemoveDecliner(ObjectGuid guid)
+{
+    if (guid.IsEmpty())
+        return;
+
+    LFGQueueSet::iterator itr = playerGuids.find(guid);
+    if (itr != playerGuids.end())
+        playerGuids.erase(itr);
+
+    declinerGuids.insert(guid);
+};
+
+void LFGProposal::AddMember(ObjectGuid guid)
+{
+    playerGuids.insert(guid);
+};
+
+bool LFGProposal::IsDecliner(ObjectGuid guid)
+{
+    if (guid.IsEmpty())
+        return true;
+
+    LFGQueueSet::iterator itr = declinerGuids.find(guid);
+    if (itr != declinerGuids.end())
+        return true;
+
+    return false;
 };

@@ -27,6 +27,7 @@
 
 class Group;
 class Player;
+struct LFGDungeonExpansionEntry;
 
 // forward struct declarations
 struct LFGReward;
@@ -37,6 +38,7 @@ typedef std::multimap<uint32, LFGReward> LFGRewardMap;
 typedef std::pair<LFGRewardMap::const_iterator, LFGRewardMap::const_iterator> LFGRewardMapBounds;
 typedef std::map<ObjectGuid, LFGQueueInfo> LFGQueueInfoMap;
 typedef std::map<uint32/*ID*/, LFGDungeonEntry const*> LFGDungeonMap;
+typedef std::map<uint32/*ID*/, LFGDungeonExpansionEntry const*> LFGDungeonExpansionMap;
 typedef std::set<ObjectGuid>  LFGQueueSet;
 typedef std::map<ObjectGuid, LFGAnswer> LFGAnswerMap;
 typedef std::map<uint32/*ID*/, LFGProposal> LFGProposalMap;
@@ -82,28 +84,51 @@ struct LFGQueueInfo
 
 struct LFGQueueStatus
 {
+    LFGQueueStatus(): avgWaitTime(0), waitTime(0), waitTimeTanks(0), waitTimeDps(0),
+                      tanks(0), healers(0), dps(0), playersWaited(0) {};
+
     time_t                 avgWaitTime;                      // Average Wait time
     time_t                 waitTime;                         // Wait Time
     time_t                 waitTimeTanks;                    // Wait Tanks
     time_t                 waitTimeHealer;                   // Wait Healers
     time_t                 waitTimeDps;                      // Wait Dps
-    uint8                  tanks;                            // Tanks needed
-    uint8                  healers;                          // Healers needed
-    uint8                  dps;                              // Dps needed
-    time_t                 queuedTime;                       // Player wait time in queue
+    uint8                  tanks;                            // Tanks
+    uint8                  healers;                          // Healers
+    uint8                  dps;                              // Dps
+    uint32                 playersWaited;                    // players summ
 };
 
 /// Stores group data related to proposal to join
 struct LFGProposal
 {
-    LFGProposal(LFGDungeonEntry const* _dungeon): dungeon(_dungeon), state(LFG_PROPOSAL_INITIATING), group(NULL), cancelTime(0) {};
+    LFGProposal(LFGDungeonEntry const* _dungeon);
+    public:
+    uint32 ID;                                               // Proposal id
+    LFGQueueSet playerGuids;                                 // Players in this proposal
+    LFGQueueSet declinerGuids;                               // Decliners in this proposal
 
-    LFGDungeonEntry const* dungeon;                        // Dungeon
-    LFGQueueSet playerGuids;                               // Players in this proposal
-    LFGProposalState state;                                // State of the proposal
-    Group* group;                                          // Proposal group (NULL if not created)
-    time_t cancelTime;                                     // Time when we will cancel this proposal
-    uint32 ID;                                             // Proposal id
+    // helpers
+    Group* GetGroup() { return m_group; };
+    void SetGroup(Group* group) { m_group = group; };
+    void AddMember(ObjectGuid guid);
+
+    void RemoveDecliner(ObjectGuid guid);
+    bool IsDecliner(ObjectGuid guid);
+
+    LFGProposalState GetState() {return m_state;};
+    void SetState(LFGProposalState _state ) { m_state = _state;};
+
+    LFGDungeonEntry const* GetDungeon() { return m_dungeon;};
+    void SetDungeon(LFGDungeonEntry const* _dungeon) { m_dungeon = _dungeon;};
+
+    void Start();
+    bool IsActive() { return ( m_cancelTime >= time_t(time(NULL)));};
+
+    private:
+    LFGDungeonEntry const* m_dungeon;                        // Dungeon
+    LFGProposalState m_state;                                // State of the proposal
+    Group* m_group;                                          // Proposal group (NULL if not created)
+    time_t m_cancelTime;                                     // Time when we will cancel this proposal
 };
 
 /// Stores information of a current vote to kick someone from a group
@@ -118,9 +143,10 @@ struct LFGPlayerBoot
 };
 
 typedef std::map<ObjectGuid, LFGPlayerBoot>  LFGBootMap;
-typedef std::map<uint32/*ID*/, LFGQueueStatus> LFGQueueStatusMap;
+typedef std::map<LFGDungeonEntry const*, LFGQueueStatus> LFGQueueStatusMap;
 typedef std::map<ObjectGuid, LFGRoleMask>  LFGRolesMap;
 typedef std::set<LFGQueueInfo*> LFGQueue;
+typedef std::map<LFGDungeonEntry const*, LFGQueueSet> LFGSearchMap;
 
 class LFGMgr
 {
@@ -155,10 +181,12 @@ class LFGMgr
         void SendLFGReward(Player* player);
 
         // Proposal system
-        bool CreateProposal(LFGDungeonEntry const* dungeon, Group* group = NULL);
+        uint32 CreateProposal(LFGDungeonEntry const* dungeon, Group* group = NULL, LFGQueueSet* playerGuids = NULL);
+        bool SendProposal(uint32 ID, ObjectGuid guid);
         LFGProposal* GetProposal(uint32 ID);
         void RemoveProposal(uint32 ID);
         void UpdateProposal(uint32 ID, ObjectGuid guid, bool accept);
+        void CleanupProposals();
         Player* LeaderElection(LFGQueueSet* playerGuids);
 
         // boot vote system
@@ -167,13 +195,21 @@ class LFGMgr
         LFGPlayerBoot* GetBoot(ObjectGuid guid);
         void DeleteBoot(ObjectGuid guid);
         void UpdateBoot(Player* player, bool accept);
-        void Teleport(Group* group, bool out);
-        void Teleport(Player* player, bool out, bool fromOpcode = false);
+
+        // teleport system
+        void Teleport(Group* group, bool out = false);
+        void Teleport(Player* player, bool out = false, bool fromOpcode = false);
+
+        // LFG extend system
+        void UpdateLFRGroups();
+        bool IsGroupCompleted(Group* group, uint8 addMembers = 0);
 
         // Statistic system
-        LFGQueueStatus* GetDungeonQueueStatus(uint32 dungeonID);
-        void SetDungeonQueueStatus(uint32 dungeonID);
+        LFGQueueStatus* GetDungeonQueueStatus(LFGDungeonEntry const* dungeon);
+        void SetDungeonQueueStatus(LFGDungeonEntry const* dungeon);
+        void RemoveDungeonQueueStatus(LFGDungeonEntry const* dungeon);
         void UpdateQueueStatus(Player* player);
+        void UpdateStatistic(LFGType type);
 
         // Role check system
         void UpdateRoleCheck(Group* group);
@@ -182,10 +218,19 @@ class LFGMgr
         bool RoleChanged(Player* player, uint8 roles);
         void SetGroupRoles(Group* group);
 
+        // Social check system
+        bool HasIgnoreState(ObjectGuid guid1, ObjectGuid guid2);
+        bool HasIgnoreState(Group* group, ObjectGuid guid);
+
         // Dungeon operations
         LFGDungeonEntry const* GetDungeon(uint32 dungeonID);
+        LFGDungeonExpansionEntry const* GetDungeonExpansion(uint32 dungeonID);
         bool IsRandomDungeon(LFGDungeonEntry const* dungeon);
         LFGDungeonSet GetRandomDungeonsForPlayer(Player* player);
+
+        // Dungeon expand operations
+        LFGDungeonSet ExpandRandomDungeonsForGroup(LFGDungeonEntry const* randomDungeon, LFGQueueSet playerGuids);
+        LFGDungeonEntry const* SelectRandomDungeonFromList(LFGDungeonSet dugeons);
 
         // Checks
         LFGJoinResult GetPlayerJoinResult(Player* player);
@@ -193,8 +238,16 @@ class LFGMgr
 
         // Player status
         LFGLockStatusType GetPlayerLockStatus(Player* player, LFGDungeonEntry const* dungeon);
+        LFGLockStatusType GetPlayerExpansionLockStatus(Player* player, LFGDungeonEntry const* dungeon);
         LFGLockStatusType GetGroupLockStatus(Group* group, LFGDungeonEntry const* dungeon);
         LFGLockStatusMap GetPlayerLockMap(Player* player);
+
+        // Search matrix
+        void AddToSearchMatrix(ObjectGuid guid);
+        void RemoveFromSearchMatrix(ObjectGuid guid);
+        LFGQueueSet* GetSearchVector(LFGDungeonEntry const* dungeon);
+        bool IsInSearchFor(LFGDungeonEntry const* dungeon, ObjectGuid guid);
+        void CleanupSearchMatrix();
 
         // multithread locking
         typedef   ACE_RW_Thread_Mutex          LockType;
@@ -206,14 +259,19 @@ class LFGMgr
         void _Join(ObjectGuid guid, LFGType type);
         void _JoinGroup(ObjectGuid guid, LFGType type);
         uint32 GenerateProposalID();
+        uint32          m_proposalID;
         LFGRewardMap    m_RewardMap;                        // Stores rewards for random dungeons
         LFGQueueInfoMap m_queueInfoMap;                     // Storage for queues
         LFGQueue        m_playerQueue[LFG_TYPE_MAX];        // Queue's for players
         LFGQueue        m_groupQueue[LFG_TYPE_MAX];         // Queue's for groups
         LFGDungeonMap   m_dungeonMap;                       // sorted dungeon map
+        LFGDungeonExpansionMap m_dungeonExpansionMap;       // sorted dungeon expansion map
         LFGQueueStatusMap  m_queueStatus;                   // Queue statisic
         LFGProposalMap  m_proposalMap;                      // Proposal store
         LFGBootMap      m_bootMap;                          // boot store
+        LFGSearchMap    m_searchMatrix;                     // Search matrix
+
+        uint32          m_updateTimer;                      // update timer for cleanup/statistic
 
         LockType            i_lock;
 
