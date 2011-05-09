@@ -21,6 +21,7 @@
 #include "../MapManager.h"
 #include "../World.h"
 #include "../Guild.h"
+#include "../GuildMgr.h"
 #include "../ObjectMgr.h"
 #include "../AccountMgr.h"
 #include "../Language.h"
@@ -878,7 +879,7 @@ void IRCCmd::Lookup_Player(_CDATA *CD)
                 std::string guildinfo = "";
                 if (pguildid != 0)
                 {
-                    Guild* guild = sObjectMgr.GetGuildById(pguildid);
+                    Guild* guild = sGuildMgr.GetGuildById(pguildid);
                     if (guild)
                     {
                         guildinfo = " " + guild->GetRankName(pguildrank) + " Of " + guild->GetName();
