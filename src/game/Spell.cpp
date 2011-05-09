@@ -3551,8 +3551,14 @@ void Spell::cast(bool skipCheck)
             break;
         case SPELLFAMILY_HUNTER:
         {
+            // Kill Command
+            if (m_spellInfo->Id == 34026)
+            {
+                if (m_caster->HasAura(37483))               // Improved Kill Command - Item set bonus
+                    m_caster->CastSpell(m_caster, 37482, true);// Exploited Weakness
+            }
             // Lock and Load
-            if (m_spellInfo->Id == 56453)
+            else if (m_spellInfo->Id == 56453)
                 AddPrecastSpell(67544);                     // Lock and Load Marker
             break;
         }
@@ -6170,6 +6176,22 @@ SpellCastResult Spell::CheckCast(bool strict)
                     break;
 
                 if(m_targets.getUnitTarget()->getPowerType() != POWER_MANA)
+                    return SPELL_FAILED_BAD_TARGETS;
+
+                break;
+            }
+            case SPELL_AURA_MIRROR_IMAGE:
+            {
+                Unit* pTarget = m_targets.getUnitTarget();
+
+                if (!pTarget)
+                    return SPELL_FAILED_BAD_TARGETS;
+
+                if (pTarget == m_caster)                    // Clone self can't be accepted
+                    return SPELL_FAILED_BAD_TARGETS;
+
+                // It is assumed that target can not be cloned if already cloned by same or other clone auras
+                if (pTarget->HasAuraType(SPELL_AURA_MIRROR_IMAGE))
                     return SPELL_FAILED_BAD_TARGETS;
 
                 break;
