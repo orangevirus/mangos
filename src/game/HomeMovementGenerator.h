@@ -22,6 +22,7 @@
 #include "MovementGenerator.h"
 #include "DestinationHolder.h"
 #include "Traveller.h"
+#include "PathFinder.h"
 
 class Creature;
 
@@ -34,8 +35,8 @@ class MANGOS_DLL_SPEC HomeMovementGenerator<Creature>
 {
     public:
 
-        HomeMovementGenerator() {}
-        ~HomeMovementGenerator() {}
+        HomeMovementGenerator(){}
+        ~HomeMovementGenerator(){}
 
         void Initialize(Creature &);
         void Finalize(Creature &);
