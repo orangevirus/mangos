@@ -423,8 +423,6 @@ Player::Player (WorldSession *session): Unit(), m_mover(this), m_camera(this), m
 
     m_session = session;
 
-    m_divider = 0;
-
     m_ExtraFlags = 0;
     if(GetSession()->GetSecurity() >= SEC_GAMEMASTER)
         SetAcceptTicket(true);
@@ -1848,11 +1846,8 @@ bool Player::TeleportTo(uint32 mapid, float x, float y, float z, float orientati
     // We have to perform this check before the teleport, otherwise the
     // ObjectAccessor won't find the flag.
     if (duel && GetMapId() != mapid)
-    {
-        GameObject* obj = GetMap()->GetGameObject(GetUInt64Value(PLAYER_DUEL_ARBITER));
-        if (obj)
+        if (GameObject* obj = GetMap()->GetGameObject(GetGuidValue(PLAYER_DUEL_ARBITER)))
             DuelComplete(DUEL_FLED);
-    }
 
     // reset movement flags at teleport, because player will continue move with these flags after teleport
     m_movementInfo.SetMovementFlags(MOVEFLAG_NONE);
@@ -6868,39 +6863,39 @@ bool Player::RewardHonor(Unit *uVictim, uint32 groupsize, float honor)
         return false;
 
     // do not reward honor in arenas, but enable onkill spellproc
-    if(InArena())
+    if (InArena())
     {
-        if(!uVictim || uVictim == this || uVictim->GetTypeId() != TYPEID_PLAYER)
+        if (!uVictim || uVictim == this || uVictim->GetTypeId() != TYPEID_PLAYER)
             return false;
 
-        if( GetBGTeam() == ((Player*)uVictim)->GetBGTeam() )
+        if (GetBGTeam() == ((Player*)uVictim)->GetBGTeam())
             return false;
 
         return true;
     }
 
     // 'Inactive' this aura prevents the player from gaining honor points and battleground tokens
-    if(GetDummyAura(SPELL_AURA_PLAYER_INACTIVE))
+    if (GetDummyAura(SPELL_AURA_PLAYER_INACTIVE))
         return false;
 
-    uint64 victim_guid = 0;
+    ObjectGuid victim_guid;
     uint32 victim_rank = 0;
 
     // need call before fields update to have chance move yesterday data to appropriate fields before today data change.
     UpdateHonorFields();
 
-    if(honor <= 0)
+    if (honor <= 0)
     {
-        if(!uVictim || uVictim == this || uVictim->HasAuraType(SPELL_AURA_NO_PVP_CREDIT))
+        if (!uVictim || uVictim == this || uVictim->HasAuraType(SPELL_AURA_NO_PVP_CREDIT))
             return false;
 
-        victim_guid = uVictim->GetGUID();
+        victim_guid = uVictim->GetObjectGuid();
 
-        if( uVictim->GetTypeId() == TYPEID_PLAYER )
+        if (uVictim->GetTypeId() == TYPEID_PLAYER)
         {
             Player *pVictim = (Player *)uVictim;
 
-            if( GetTeam() == pVictim->GetTeam() && !sWorld.IsFFAPvPRealm() )
+            if (GetTeam() == pVictim->GetTeam() && !sWorld.IsFFAPvPRealm())
                 return false;
 
             float f = 1;                                    //need for total kills (?? need more info)
@@ -6922,18 +6917,18 @@ bool Player::RewardHonor(Unit *uVictim, uint32 groupsize, float honor)
                 //  title[15..28] -> rank[5..18]
                 //  title[other]  -> 0
                 if (victim_title == 0)
-                    victim_guid = 0;                        // Don't show HK: <rank> message, only log.
+                    victim_guid.Clear();                    // Don't show HK: <rank> message, only log.
                 else if (victim_title < 15)
                     victim_rank = victim_title + 4;
                 else if (victim_title < 29)
                     victim_rank = victim_title - 14 + 4;
                 else
-                    victim_guid = 0;                        // Don't show HK: <rank> message, only log.
+                    victim_guid.Clear();                    // Don't show HK: <rank> message, only log.
             }
 
             k_grey = MaNGOS::XP::GetGrayLevel(k_level);
 
-            if(v_level<=k_grey)
+            if (v_level<=k_grey)
                 return false;
 
             float diff_level = (k_level == k_grey) ? 1 : ((float(v_level) - float(k_grey)) / (float(k_level) - float(k_grey)));
@@ -6941,7 +6936,7 @@ bool Player::RewardHonor(Unit *uVictim, uint32 groupsize, float honor)
             int32 v_rank =1;                                //need more info
 
             honor = ((f * diff_level * (190 + v_rank*10))/6);
-            honor *= ((float)k_level) / 70.0f;              //factor of dependence on levels of the killer
+            honor *= float(k_level) / 70.0f;                //factor of dependence on levels of the killer
 
             // count the number of playerkills in one day
             ApplyModUInt32Value(PLAYER_FIELD_KILLS, 1, true);
@@ -6971,7 +6966,7 @@ bool Player::RewardHonor(Unit *uVictim, uint32 groupsize, float honor)
         honor *= sWorld.getConfig(CONFIG_FLOAT_RATE_HONOR);
         honor *= (GetMaxPositiveAuraModifier(SPELL_AURA_MOD_HONOR_GAIN) + 100.0f)/100.0f;
 
-        if(groupsize > 1)
+        if (groupsize > 1)
             honor /= groupsize;
 
         honor *= (((float)urand(8,12))/10);                 // approx honor: 80% - 120% of real honor
@@ -6982,11 +6977,10 @@ bool Player::RewardHonor(Unit *uVictim, uint32 groupsize, float honor)
     // victim_rank [1..4]  HK: <dishonored rank>
     // victim_rank [5..19] HK: <alliance\horde rank>
     // victim_rank [0,20+] HK: <>
-    WorldPacket data(SMSG_PVP_CREDIT,4+8+4);
-    data << (uint32) honor;
-    data << (uint64) victim_guid;
-    data << (uint32) victim_rank;
-
+    WorldPacket data(SMSG_PVP_CREDIT, 4 + 8 + 4);
+    data << uint32(honor);
+    data << ObjectGuid(victim_guid);
+    data << uint32(victim_rank);
     GetSession()->SendPacket(&data);
 
     // add honor points
@@ -7256,17 +7250,16 @@ void Player::UpdateZone(uint32 newZone, uint32 newArea)
 //If players are too far way of duel flag... then player loose the duel
 void Player::CheckDuelDistance(time_t currTime)
 {
-    if(!duel)
+    if (!duel)
         return;
 
-    uint64 duelFlagGUID = GetUInt64Value(PLAYER_DUEL_ARBITER);
-    GameObject* obj = GetMap()->GetGameObject(duelFlagGUID);
+    GameObject* obj = GetMap()->GetGameObject(GetGuidValue(PLAYER_DUEL_ARBITER));
     if(!obj)
         return;
 
-    if(duel->outOfBound == 0)
+    if (duel->outOfBound == 0)
     {
-        if(!IsWithinDistInMap(obj, 50))
+        if (!IsWithinDistInMap(obj, 50))
         {
             duel->outOfBound = currTime;
 
@@ -7276,14 +7269,14 @@ void Player::CheckDuelDistance(time_t currTime)
     }
     else
     {
-        if(IsWithinDistInMap(obj, 40))
+        if (IsWithinDistInMap(obj, 40))
         {
             duel->outOfBound = 0;
 
             WorldPacket data(SMSG_DUEL_INBOUNDS, 0);
             GetSession()->SendPacket(&data);
         }
-        else if(currTime >= (duel->outOfBound+10))
+        else if (currTime >= (duel->outOfBound+10))
         {
             DuelComplete(DUEL_FLED);
         }
@@ -7318,9 +7311,8 @@ void Player::DuelComplete(DuelCompleteType type)
     }
 
     //Remove Duel Flag object
-    GameObject* obj = GetMap()->GetGameObject(GetUInt64Value(PLAYER_DUEL_ARBITER));
-    if(obj)
-        duel->initiator->RemoveGameObject(obj,true);
+    if (GameObject* obj = GetMap()->GetGameObject(GetGuidValue(PLAYER_DUEL_ARBITER)))
+        duel->initiator->RemoveGameObject(obj, true);
 
     /* remove auras */
     std::vector<uint32> auras2remove;
@@ -7341,7 +7333,7 @@ void Player::DuelComplete(DuelCompleteType type)
         if (!i->second->IsPositive() && i->second->GetCasterGuid() == duel->opponent->GetObjectGuid() && i->second->GetAuraApplyTime() >= duel->startTime)
             auras2remove.push_back(i->second->GetId());
     }
-    for(size_t i=0; i<auras2remove.size(); ++i)
+    for (size_t i=0; i<auras2remove.size(); ++i)
         RemoveAurasDueToSpell(auras2remove[i]);
 
     // cleanup combo points
@@ -7356,9 +7348,9 @@ void Player::DuelComplete(DuelCompleteType type)
         duel->opponent->ClearComboPoints();
 
     //cleanups
-    SetUInt64Value(PLAYER_DUEL_ARBITER, 0);
+    SetGuidValue(PLAYER_DUEL_ARBITER, ObjectGuid());
     SetUInt32Value(PLAYER_DUEL_TEAM, 0);
-    duel->opponent->SetUInt64Value(PLAYER_DUEL_ARBITER, 0);
+    duel->opponent->SetGuidValue(PLAYER_DUEL_ARBITER, ObjectGuid());
     duel->opponent->SetUInt32Value(PLAYER_DUEL_TEAM, 0);
 
     delete duel->opponent->duel;
@@ -8355,8 +8347,9 @@ void Player::SendLootRelease(ObjectGuid guid)
 
 void Player::SendLoot(ObjectGuid guid, LootType loot_type)
 {
-    if (uint64 lguid = GetLootGUID())
-        m_session->DoLootRelease(lguid);
+    ObjectGuid lootGuid = GetLootGuid();
+    if (!lootGuid.IsEmpty())
+        m_session->DoLootRelease(lootGuid);
 
     Loot    *loot = 0;
     PermissionTypes permission = ALL_PERMISSION;
@@ -8685,7 +8678,7 @@ void Player::SendLoot(ObjectGuid guid, LootType loot_type)
         }
     }
 
-    SetLootGUID(guid);
+    SetLootGuid(guid);
 
     // LOOT_INSIGNIA and LOOT_FISHINGHOLE unsupported by client
     switch(loot_type)
@@ -8707,7 +8700,7 @@ void Player::SendLoot(ObjectGuid guid, LootType loot_type)
 
     // add 'this' player as one of the players that are looting 'loot'
     if (permission != NONE_PERMISSION)
-        loot->AddLooter(GetGUID());
+        loot->AddLooter(GetObjectGuid());
 
     if (loot_type == LOOT_CORPSE && !guid.IsItem())
         SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_LOOTING);
@@ -12884,12 +12877,12 @@ void Player::SendBuyError( BuyResult msg, Creature* pCreature, uint32 item, uint
     GetSession()->SendPacket(&data);
 }
 
-void Player::SendSellError( SellResult msg, Creature* pCreature, uint64 guid, uint32 param )
+void Player::SendSellError( SellResult msg, Creature* pCreature, ObjectGuid itemGuid, uint32 param )
 {
     DEBUG_LOG( "WORLD: Sent SMSG_SELL_ITEM" );
     WorldPacket data( SMSG_SELL_ITEM,(8+8+(param?4:0)+1));  // last check 2.0.10
     data << (pCreature ? pCreature->GetObjectGuid() : ObjectGuid());
-    data << uint64(guid);
+    data << ObjectGuid(itemGuid);
     if (param > 0)
         data << uint32(param);
     data << uint8(msg);
@@ -14385,7 +14378,7 @@ void Player::AddQuest( Quest const *pQuest, Object *questGiver )
     }
 
     // remove start item if not need
-    if (questGiver && questGiver->isType(TYPEID_ITEM))
+    if (questGiver && questGiver->isType(TYPEMASK_ITEM))
     {
         // destroy not required for quest finish quest starting item
         bool notRequiredItem = true;
@@ -16362,7 +16355,7 @@ bool Player::LoadFromDB(ObjectGuid guid, SqlQueryHolder *holder )
     ClearInCombat();
 
     // make sure the unit is considered not in duel for proper loading
-    SetUInt64Value(PLAYER_DUEL_ARBITER, 0);
+    SetGuidValue(PLAYER_DUEL_ARBITER, ObjectGuid());
     SetUInt32Value(PLAYER_DUEL_TEAM, 0);
 
     // reset stats before loading any modifiers
@@ -16374,7 +16367,7 @@ bool Player::LoadFromDB(ObjectGuid guid, SqlQueryHolder *holder )
     // rest bonus can only be calculated after InitStatsForLevel()
     m_rest_bonus = fields[21].GetFloat();
 
-    if(time_diff > 0)
+    if (time_diff > 0)
     {
         //speed collect rest bonus in offline, in logout, far from tavern, city (section/in hour)
         float bubble0 = 0.031f;
@@ -18152,7 +18145,7 @@ void Player::_SaveAuras()
         SpellAuraHolder *holder = itr->second;
         //skip all holders from spells that are passive or channeled
         //do not save single target holders (unless they were cast by the player)
-        if (!holder->IsPassive() && !IsChanneledSpell(holder->GetSpellProto()) && (holder->GetCasterGUID() == GetGUID() || !holder->IsSingleTarget()) && !IsChanneledSpell(holder->GetSpellProto()))
+        if (!holder->IsPassive() && !IsChanneledSpell(holder->GetSpellProto()) && (holder->GetCasterGuid() == GetObjectGuid() || !holder->IsSingleTarget()) && !IsChanneledSpell(holder->GetSpellProto()))
         {
             int32  damage[MAX_EFFECT_INDEX];
             uint32 periodicTime[MAX_EFFECT_INDEX];
@@ -18166,7 +18159,7 @@ void Player::_SaveAuras()
                 if (Aura *aur = holder->GetAuraByEffectIndex(SpellEffectIndex(i)))
                 {
                     // don't save not own area auras
-                    if (aur->IsAreaAura() && holder->GetCasterGUID() != GetGUID())
+                    if (aur->IsAreaAura() && holder->GetCasterGuid() != GetObjectGuid())
                         continue;
 
                     damage[i] = aur->GetModifier()->m_amount;
@@ -18987,14 +18980,14 @@ void Player::RemovePet(PetSaveMode mode)
 
 void Player::BuildPlayerChat(WorldPacket *data, uint8 msgtype, const std::string& text, uint32 language) const
 {
-    *data << (uint8)msgtype;
-    *data << (uint32)language;
-    *data << (uint64)GetGUID();
-    *data << (uint32)language;                               //language 2.1.0 ?
-    *data << (uint64)GetGUID();
-    *data << (uint32)(text.length()+1);
+    *data << uint8(msgtype);
+    *data << uint32(language);
+    *data << ObjectGuid(GetObjectGuid());
+    *data << uint32(language);                              //language 2.1.0 ?
+    *data << ObjectGuid(GetObjectGuid());
+    *data << uint32(text.length()+1);
     *data << text;
-    *data << (uint8)chatTag();
+    *data << uint8(chatTag());
 }
 
 void Player::Say(const std::string& text, const uint32 language)
@@ -19018,7 +19011,7 @@ void Player::TextEmote(const std::string& text)
     SendMessageToSetInRange(&data,sWorld.getConfig(CONFIG_FLOAT_LISTEN_RANGE_TEXTEMOTE),true, !sWorld.getConfig(CONFIG_BOOL_ALLOW_TWO_SIDE_INTERACTION_CHAT) );
 }
 
-void Player::Whisper(const std::string& text, uint32 language,uint64 receiver)
+void Player::Whisper(const std::string& text, uint32 language, ObjectGuid receiver)
 {
     if (language != LANG_ADDON)                             // if not addon data
         language = LANG_UNIVERSAL;                          // whispers should always be readable
@@ -21537,7 +21530,7 @@ void Player::RemoveItemDependentAurasAndCasts( Item * pItem )
 
         // skip passive (passive item dependent spells work in another way) and not self applied auras
         SpellEntry const* spellInfo = holder->GetSpellProto();
-        if(holder->IsPassive() ||  holder->GetCasterGUID()!=GetGUID())
+        if(holder->IsPassive() ||  holder->GetCasterGuid() != GetObjectGuid())
         {
             ++itr;
             continue;
@@ -21662,22 +21655,22 @@ void Player::RewardSinglePlayerAtKill(Unit* pVictim)
 
 void Player::RewardPlayerAndGroupAtEvent(uint32 creature_id, WorldObject* pRewardSource)
 {
-    uint64 creature_guid = pRewardSource->GetTypeId()==TYPEID_UNIT ? pRewardSource->GetGUID() : uint64(0);
+    ObjectGuid creature_guid = pRewardSource->GetTypeId()==TYPEID_UNIT ? pRewardSource->GetObjectGuid() : ObjectGuid();
 
     // prepare data for near group iteration
-    if(Group *pGroup = GetGroup())
+    if (Group *pGroup = GetGroup())
     {
-        for(GroupReference *itr = pGroup->GetFirstMember(); itr != NULL; itr = itr->next())
+        for (GroupReference *itr = pGroup->GetFirstMember(); itr != NULL; itr = itr->next())
         {
             Player* pGroupGuy = itr->getSource();
-            if(!pGroupGuy)
+            if (!pGroupGuy)
                 continue;
 
-            if(!pGroupGuy->IsAtGroupRewardDistance(pRewardSource))
+            if (!pGroupGuy->IsAtGroupRewardDistance(pRewardSource))
                 continue;                               // member (alive or dead) or his corpse at req. distance
 
             // quest objectives updated only for alive group member or dead but with not released body
-            if(pGroupGuy->isAlive()|| !pGroupGuy->HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_GHOST))
+            if (pGroupGuy->isAlive()|| !pGroupGuy->HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_GHOST))
                 pGroupGuy->KilledMonsterCredit(creature_id, creature_guid);
         }
     }
