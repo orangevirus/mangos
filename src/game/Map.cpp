@@ -1381,7 +1381,7 @@ bool DungeonMap::Add(Player *player)
                 // set up a solo bind or continue using it
                 if(!playerBind)
                     player->BindToInstance(GetPersistanceState(), false);
-                else
+                else if (playerBind->state != GetPersistentState())
                 {
                     player->RepopAtGraveyard();
                     return false;
