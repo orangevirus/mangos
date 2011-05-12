@@ -4827,7 +4827,7 @@ void Player::SpawnCorpseBones()
 
 Corpse* Player::GetCorpse() const
 {
-    return sObjectAccessor.GetCorpseForPlayerGUID(GetGUID());
+    return sObjectAccessor.GetCorpseForPlayerGUID(GetObjectGuid());
 }
 
 void Player::DurabilityLossAll(double percent, bool inventory)
@@ -5099,11 +5099,11 @@ void Player::LeftChannel(Channel *c)
 
 void Player::CleanupChannels()
 {
-    while(!m_channels.empty())
+    while (!m_channels.empty())
     {
         Channel* ch = *m_channels.begin();
         m_channels.erase(m_channels.begin());               // remove from player's channel list
-        ch->Leave(GetGUID(), false);                        // not send to client, not remove from player's channel list
+        ch->Leave(GetObjectGuid(), false);                  // not send to client, not remove from player's channel list
         if (ChannelMgr* cMgr = channelMgr(GetTeam()))
             cMgr->LeftChannel(ch->GetName());               // deleted channel if empty
 
@@ -5146,12 +5146,12 @@ void Player::UpdateLocalChannels(uint32 newZone )
         snprintf(new_channel_name_buf,100,ch->pattern[m_session->GetSessionDbcLocale()],current_zone_name.c_str());
         Channel* new_channel = cMgr->GetJoinChannel(new_channel_name_buf,ch->ChannelID);
 
-        if((*i)!=new_channel)
+        if ((*i)!=new_channel)
         {
-            new_channel->Join(GetGUID(),"");                // will output Changed Channel: N. Name
+            new_channel->Join(GetObjectGuid(),"");          // will output Changed Channel: N. Name
 
             // leave old channel
-            (*i)->Leave(GetGUID(),false);                   // not send leave channel, it already replaced at client
+            (*i)->Leave(GetObjectGuid(),false);             // not send leave channel, it already replaced at client
             std::string name = (*i)->GetName();             // store name, (*i)erase in LeftChannel
             LeftChannel(*i);                                // remove from player's channel list
             cMgr->LeftChannel(name);                        // delete if empty
@@ -5164,9 +5164,9 @@ void Player::LeaveLFGChannel()
 {
     for(JoinedChannelsList::iterator i = m_channels.begin(); i != m_channels.end(); ++i )
     {
-        if((*i)->IsLFG())
+        if ((*i)->IsLFG())
         {
-            (*i)->Leave(GetGUID());
+            (*i)->Leave(GetObjectGuid());
             break;
         }
     }
@@ -9210,7 +9210,7 @@ void Player::SendPetSkillWipeConfirm()
     if(!pet)
         return;
     WorldPacket data(SMSG_PET_UNLEARN_CONFIRM, (8+4));
-    data << pet->GetGUID();
+    data << ObjectGuid(pet->GetObjectGuid());
     data << uint32(pet->resetTalentsCost());
     GetSession()->SendPacket( &data );
 }
@@ -12749,7 +12749,7 @@ void Player::AddItemToBuyBackSlot( Item *pItem )
         uint32 etime = uint32(base - m_logintime + (30 * 3600));
         uint32 eslot = slot - BUYBACK_SLOT_START;
 
-        SetUInt64Value( PLAYER_FIELD_VENDORBUYBACK_SLOT_1 + (eslot * 2), pItem->GetGUID() );
+        SetGuidValue(PLAYER_FIELD_VENDORBUYBACK_SLOT_1 + (eslot * 2), pItem->GetObjectGuid());
         if (ItemPrototype const *pProto = pItem->GetProto())
             SetUInt32Value( PLAYER_FIELD_BUYBACK_PRICE_1 + eslot, pProto->SellPrice * pItem->GetCount() );
         else
@@ -13090,7 +13090,7 @@ void Player::AddEnchantmentDuration(Item *item,EnchantmentSlot slot,uint32 durat
     }
     if (item && duration > 0 )
     {
-        GetSession()->SendItemEnchantTimeUpdate(GetGUID(), item->GetGUID(), slot, uint32(duration/1000));
+        GetSession()->SendItemEnchantTimeUpdate(GetObjectGuid(), item->GetObjectGuid(), slot, uint32(duration/1000));
         m_enchantDuration.push_back(EnchantDuration(item, slot, duration));
     }
 }
@@ -13466,7 +13466,7 @@ void Player::SendEnchantmentDurations()
 {
     for(EnchantDurationList::const_iterator itr = m_enchantDuration.begin(); itr != m_enchantDuration.end(); ++itr)
     {
-        GetSession()->SendItemEnchantTimeUpdate(GetGUID(), itr->item->GetGUID(), itr->slot, uint32(itr->leftduration) / 1000);
+        GetSession()->SendItemEnchantTimeUpdate(GetObjectGuid(), itr->item->GetObjectGuid(), itr->slot, uint32(itr->leftduration) / 1000);
     }
 }
 
@@ -13690,7 +13690,7 @@ void Player::PrepareGossipMenu(WorldObject *pSource, uint32 menuId)
     if (canTalkToCredit)
     {
         if (pSource->HasFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP))
-            TalkedToCreature(pSource->GetEntry(), pSource->GetGUID());
+            TalkedToCreature(pSource->GetEntry(), pSource->GetObjectGuid());
     }
 
     // some gossips aren't handled in normal way ... so we need to do it this way .. TODO: handle it in normal way ;-)
@@ -13742,7 +13742,7 @@ void Player::SendPreparedGossip(WorldObject *pSource)
     if (uint32 menuId = PlayerTalkClass->GetGossipMenu().GetMenuId())
         textId = GetGossipTextId(menuId);
 
-    PlayerTalkClass->SendGossipMenu(textId, pSource->GetGUID());
+    PlayerTalkClass->SendGossipMenu(textId, pSource->GetObjectGuid());
 }
 
 void Player::OnGossipSelect(WorldObject* pSource, uint32 gossipListId, uint32 menuId)
@@ -13798,7 +13798,7 @@ void Player::OnGossipSelect(WorldObject* pSource, uint32 gossipListId, uint32 me
             else if (pMenuData.m_gAction_menu < 0)
             {
                 PlayerTalkClass->CloseGossip();
-                TalkedToCreature(pSource->GetEntry(), pSource->GetGUID());
+                TalkedToCreature(pSource->GetEntry(), pSource->GetObjectGuid());
             }
 
             if (pMenuData.m_gAction_script)
@@ -13813,7 +13813,7 @@ void Player::OnGossipSelect(WorldObject* pSource, uint32 gossipListId, uint32 me
         }
         case GOSSIP_OPTION_SPIRITHEALER:
             if (isDead())
-                ((Creature*)pSource)->CastSpell(((Creature*)pSource),17251,true,NULL,NULL,GetGUID());
+                ((Creature*)pSource)->CastSpell(((Creature*)pSource), 17251, true, NULL, NULL, GetObjectGuid());
             break;
         case GOSSIP_OPTION_QUESTGIVER:
             PrepareQuestMenu(guid);
@@ -16344,7 +16344,7 @@ bool Player::LoadFromDB(ObjectGuid guid, SqlQueryHolder *holder )
 
     // reset some aura modifiers before aura apply
 
-    SetUInt64Value(PLAYER_FARSIGHT, 0);
+    SetGuidValue(PLAYER_FARSIGHT, ObjectGuid());
     SetUInt32Value(PLAYER_TRACK_CREATURES, 0 );
     SetUInt32Value(PLAYER_TRACK_RESOURCES, 0 );
 
@@ -17732,7 +17732,7 @@ void Player::ConvertInstancesToGroup(Player *player, Group *group, ObjectGuid pl
 
     if (player)
     {
-        player_guid = player->GetGUID();
+        player_guid = player->GetObjectGuid();
         if (!group)
             group = player->GetGroup();
     }
@@ -19495,7 +19495,7 @@ void Player::HandleStealthedUnitsDetection()
         {
             if(!hasAtClient)
             {
-                ObjectGuid i_guid = (*i)->GetGUID();
+                ObjectGuid i_guid = (*i)->GetObjectGuid();
                 (*i)->SendCreateUpdateToPlayer(this);
                 m_clientGUIDs.insert(i_guid);
 
@@ -19512,7 +19512,7 @@ void Player::HandleStealthedUnitsDetection()
             if(hasAtClient)
             {
                 (*i)->DestroyForPlayer(this);
-                m_clientGUIDs.erase((*i)->GetGUID());
+                m_clientGUIDs.erase((*i)->GetObjectGuid());
             }
         }
     }
@@ -20728,14 +20728,14 @@ void Player::UpdateVisibilityOf(WorldObject const* viewPoint, WorldObject* targe
 template<class T>
 inline void UpdateVisibilityOf_helper(ObjectGuidSet& s64, T* target)
 {
-    s64.insert(target->GetGUID());
+    s64.insert(target->GetObjectGuid());
 }
 
 template<>
 inline void UpdateVisibilityOf_helper(ObjectGuidSet& s64, GameObject* target)
 {
     if(!target->IsTransport())
-        s64.insert(target->GetGUID());
+        s64.insert(target->GetObjectGuid());
 }
 
 template<class T>
@@ -21002,7 +21002,7 @@ void Player::ApplyEquipCooldown( Item * pItem )
         AddSpellCooldown(spellData.SpellId, pItem->GetEntry(), time(NULL) + 30);
 
         WorldPacket data(SMSG_ITEM_COOLDOWN, 12);
-        data << pItem->GetGUID();
+        data << ObjectGuid(pItem->GetObjectGuid());
         data << uint32(spellData.SpellId);
         GetSession()->SendPacket(&data);
     }

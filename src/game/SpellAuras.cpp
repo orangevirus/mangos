@@ -1944,7 +1944,7 @@ void Aura::TriggerSpell()
                 return;
             case 53563:                                     // Beacon of Light
                 // original caster must be target (beacon)
-                target->CastSpell(target, trigger_spell_id, true, NULL, this, target->GetGUID());
+                target->CastSpell(target, trigger_spell_id, true, NULL, this, target->GetObjectGuid());
                 return;
             case 56654:                                     // Rapid Recuperation (triggered energize have baspioints == 0)
             case 58882:
@@ -5853,7 +5853,7 @@ void Aura::HandlePeriodicDamage(bool apply, bool Real)
         else if (spellProto->Id == 74562) // SPELL_FIERY_COMBUSTION - Ruby sanctum boss Halion
             target->CastSpell(target, 74607, true, NULL, NULL, GetCasterGuid());
         else if (spellProto->Id == 74792) // SPELL_SOUL_CONSUMPTION - Ruby sanctum boss Halion
-            target->CastSpell(target, 74799, true, NULL, NULL, GetCasterGUID());
+            target->CastSpell(target, 74799, true, NULL, NULL, GetCasterGuid());
         else if (spellProto->Id == 55053)
             target->CastSpell(target, 55601, true);
         else if (spellProto->Id == 29865)
