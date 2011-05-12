@@ -415,7 +415,7 @@ void Unit::SendMonsterMove(float NewPosX, float NewPosY, float NewPosZ, SplineTy
             break;
         }
         case SPLINETYPE_FACINGTARGET:
-            data << uint64(va_arg(vargs,uint64));
+            data << uint64(va_arg(vargs,uint64));           // ObjectGuid in fact
             break;
         case SPLINETYPE_FACINGANGLE:
             data << float(va_arg(vargs,double));            // facing angle
@@ -1991,7 +1991,7 @@ void Unit::DealMeleeDamage(CalcDamageInfo *damageInfo, bool durabilityLoss)
                 SpellEntry const *i_spellProto = (*i)->GetSpellProto();
 
                 // Thorns
-                if (i_spellProto->SpellFamilyName == SPELLFAMILY_DRUID && i_spellProto->SpellFamilyFlags & UI64LIT(0x00000100))
+                if (i_spellProto && i_spellProto->SpellFamilyName == SPELLFAMILY_DRUID && i_spellProto->SpellFamilyFlags & UI64LIT(0x00000100))
                 {
                     Unit::AuraList const& dummyList = pVictim->GetAurasByType(SPELL_AURA_DUMMY);
                     for(Unit::AuraList::const_iterator iter = dummyList.begin(); iter != dummyList.end(); ++iter)
