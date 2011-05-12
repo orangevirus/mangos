@@ -639,7 +639,7 @@ bool ChatHandler::HandleReloadSpellScriptTargetCommand(char* /*args*/)
 
 bool ChatHandler::HandleReloadSpellTargetPositionCommand(char* /*args*/)
 {
-    sLog.outString( "Re-Loading Spell target coordinates..." );
+    sLog.outString( "Re-Loading spell target destination coordinates..." );
     sSpellMgr.LoadSpellTargetPositions();
     SendGlobalSysMessage("DB table `spell_target_position` (destination coordinates for spell targets) reloaded.");
     return true;
@@ -4369,7 +4369,7 @@ bool ChatHandler::HandleCharacterLevelCommand(char* args)
     if (newlevel > STRONG_MAX_LEVEL)                        // hardcoded maximum level
         newlevel = STRONG_MAX_LEVEL;
 
-    if (newlevel > sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL))
+    if (newlevel > int32(sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL)))
         newlevel = sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL);
 
     HandleCharacterLevel(target, target_guid, oldlevel, newlevel);
@@ -4417,7 +4417,7 @@ bool ChatHandler::HandleLevelUpCommand(char* args)
     if (newlevel > STRONG_MAX_LEVEL)                        // hardcoded maximum level
         newlevel = STRONG_MAX_LEVEL;
 
-    if (newlevel > sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL))
+    if (newlevel > int32(sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL)))
         newlevel = sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL);
 
     HandleCharacterLevel(target, target_guid, oldlevel, newlevel);
@@ -5017,7 +5017,7 @@ bool ChatHandler::HandleResetAllCommand(char* args)
 
     CharacterDatabase.PExecute("UPDATE characters SET at_login = at_login | '%u' WHERE (at_login & '%u') = '0'", atLogin, atLogin);
     HashMapHolder<Player>::MapType const& plist = sObjectAccessor.GetPlayers();
-    for(HashMapHolder<Player>::MapType::const_iterator itr = plist.begin(); itr != plist.end(); ++itr)
+    for (HashMapHolder<Player>::MapType::const_iterator itr = plist.begin(); itr != plist.end(); ++itr)
         itr->second->SetAtLoginFlag(atLogin);
 
     return true;
@@ -5894,7 +5894,7 @@ bool ChatHandler::HandlePDumpWriteCommand(char *args)
             return false;
         }
 
-        guid = sObjectMgr.GetPlayerGUIDByName(name);
+        guid = sObjectMgr.GetPlayerGuidByName(name);
         if (guid.IsEmpty())
         {
             PSendSysMessage(LANG_PLAYER_NOT_FOUND);
@@ -6977,3 +6977,70 @@ bool ChatHandler::HandleAccountFriendListCommand(char* args)
     return false;
 }
 
+bool ChatHandler::HandleMmap(char* args)
+{
+    bool on;
+    if (ExtractOnOff(&args, on))
+    {
+        if (on)
+        {
+            sWorld.setConfig(CONFIG_BOOL_MMAP_ENABLED, true);
+            SendSysMessage("WORLD: mmaps are now ENABLED (individual map settings still in effect)");
+        }
+        else
+        {
+            sWorld.setConfig(CONFIG_BOOL_MMAP_ENABLED, false);
+            SendSysMessage("WORLD: mmaps are now DISABLED");
+        }
+        return true;
+    }
+
+    on = sWorld.getConfig(CONFIG_BOOL_MMAP_ENABLED);
+    PSendSysMessage("mmaps are %sabled", on ? "en" : "dis");
+
+    return true;
+}
+
+bool ChatHandler::HandleMmapTestArea(char* args)
+{
+    float radius = 40.0f;
+    ExtractFloat(&args, radius);
+
+    CellPair pair(MaNGOS::ComputeCellPair( m_session->GetPlayer()->GetPositionX(), m_session->GetPlayer()->GetPositionY()) );
+    Cell cell(pair);
+    cell.SetNoCreate();
+
+    std::list<Creature*> creatureList;
+
+    MaNGOS::AnyUnitInObjectRangeCheck go_check(m_session->GetPlayer(), radius);
+    MaNGOS::CreatureListSearcher<MaNGOS::AnyUnitInObjectRangeCheck> go_search(creatureList, go_check);
+    TypeContainerVisitor<MaNGOS::CreatureListSearcher<MaNGOS::AnyUnitInObjectRangeCheck>, GridTypeMapContainer> go_visit(go_search);
+
+    // Get Creatures
+    cell.Visit(pair, go_visit, *(m_session->GetPlayer()->GetMap()), *(m_session->GetPlayer()), radius);
+
+    if (!creatureList.empty())
+    {
+        PSendSysMessage("Found %i Creatures.", creatureList.size());
+
+        uint32 paths = 0;
+        uint32 uStartTime = WorldTimer::getMSTime();
+
+        float gx,gy,gz;
+        m_session->GetPlayer()->GetPosition(gx,gy,gz);
+        for (std::list<Creature*>::iterator itr = creatureList.begin(); itr != creatureList.end(); ++itr)
+        {
+            PathInfo((*itr), gx, gy, gz);
+            ++paths;
+        }
+
+        uint32 uPathLoadTime = WorldTimer::getMSTimeDiff(uStartTime, WorldTimer::getMSTime());
+        PSendSysMessage("Generated %i paths in %i ms", paths, uPathLoadTime);
+    }
+    else
+    {
+        PSendSysMessage("No creatures in %f yard range.", radius);
+    }
+
+    return true;
+}

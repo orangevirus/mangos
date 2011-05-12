@@ -30,6 +30,7 @@
 #include "WaypointManager.h"
 #include "Path.h"
 #include "Traveller.h"
+#include "PathFinder.h"
 
 #include "Player.h"
 
@@ -98,6 +99,8 @@ public PathMovementBase<Creature, WaypointPath const*>
 
         bool GetResetPosition(Creature&, float& x, float& y, float& z);
 
+        void MoveToNextNode(CreatureTraveller &traveller);
+
     private:
         ShortTimeTracker i_nextMoveTime;
         bool m_isArrivalDone;
@@ -125,6 +128,7 @@ public PathMovementBase<Player,TaxiPathNodeList const*>
         MovementGeneratorType GetMovementGeneratorType() const { return FLIGHT_MOTION_TYPE; }
 
         TaxiPathNodeList const& GetPath() { return *i_path; }
+        uint32 GetPathId() { return (*i_path)[0].path; }
         uint32 GetPathAtMapEnd() const;
         bool HasArrived() const { return (i_currentNode >= i_path->size()); }
         void SetCurrentNodeAfterTeleport();

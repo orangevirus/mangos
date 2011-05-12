@@ -40,11 +40,20 @@ void WorldSession::HandleLfgJoinOpcode( WorldPacket & recv_data )
         DEBUG_LOG("CMSG_LFG_JOIN %u processing...", GetPlayer()->GetObjectGuid().GetCounter());
 
     uint8  numDungeons;
-    uint32 dungeon;
+    uint32 dungeonID;
     uint32 roles;
     std::string comment;
     LFGDungeonSet* newDungeons = GetPlayer()->GetLFGState()->GetDungeons();
-
+    newDungeons->clear();
+    LFGDungeonSet* groupDungeons = NULL;
+    if (GetPlayer()->GetGroup())
+    {
+        if (GetPlayer()->GetObjectGuid() == GetPlayer()->GetGroup()->GetLeaderGuid())
+        {
+            groupDungeons = GetPlayer()->GetGroup()->GetLFGState()->GetDungeons();
+            groupDungeons->clear();
+        }
+    }
 
     recv_data >> roles;                                     // lfg roles
     recv_data >> Unused<uint8>();                           // unk1 (unused?)
@@ -58,12 +67,16 @@ void WorldSession::HandleLfgJoinOpcode( WorldPacket & recv_data )
         return;
     }
 
-    newDungeons->clear();
-
     for (int8 i = 0 ; i < numDungeons; ++i)
     {
-        recv_data >> dungeon;
-        newDungeons->insert(sLFGMgr.GetDungeon(dungeon & 0x00FFFFFF));         // remove the type from the dungeon entry
+        recv_data >> dungeonID;
+        LFGDungeonEntry const* dungeon = sLFGMgr.GetDungeon(dungeonID & 0x00FFFFFF);    // remove the type from the dungeon entry
+        if (dungeon)
+        {
+            newDungeons->insert(dungeon);
+            if (groupDungeons)
+                groupDungeons->insert(dungeon);
+        }
     }
 
     uint8 counter2;                                         // unk - always 3
@@ -105,20 +118,15 @@ void WorldSession::HandleLfgGetStatus(WorldPacket & /*recv_data*/)
     if (!dungeons || dungeons->empty())
         return;
 
-    for (LFGDungeonSet::const_iterator itr = dungeons->begin(); itr != dungeons->end(); ++itr)
-    {
-        LFGDungeonEntry const* dungeon = *itr;
+    LFGDungeonEntry const* dungeon = (*dungeons->begin());
+    if (!dungeon)
+        return;
 
-        if (!dungeon)
-            continue;
+    LFGQueueStatus* status = sLFGMgr.GetDungeonQueueStatus(LFGType(dungeon->type));
+    if (!status)
+        return;
 
-        LFGQueueStatus* status = sLFGMgr.GetDungeonQueueStatus(dungeon);
-
-        if (!status)
-            continue;
-
-        GetPlayer()->GetSession()->SendLfgQueueStatus(dungeon, status);
-    }
+    GetPlayer()->GetSession()->SendLfgQueueStatus(dungeon, status);
 }
 
 void WorldSession::HandleLfrSearchOpcode( WorldPacket & recv_data )
@@ -187,16 +195,16 @@ void WorldSession::HandleLfgSetRolesOpcode(WorldPacket &recv_data)
     recv_data >> roles;
 
     Group* group = GetPlayer()->GetGroup();
-    if (group && group->isLFDGroup())
+    if (group)
     {
-        DEBUG_LOG("CMSG_LFG_SET_ROLES: Group %u, Player %u, Roles: %u", group->GetObjectGuid().GetCounter(), GetPlayer()->GetObjectGuid().GetCounter(), roles);
-        if (sLFGMgr.RoleChanged(GetPlayer(), roles))
-            sLFGMgr.UpdateRoleCheck(group);
+        bool isChanged = sLFGMgr.RoleChanged(GetPlayer(), roles);
+        DEBUG_LOG("CMSG_LFG_SET_ROLES: Group %u, Player %u, Roles: %u %", group->GetObjectGuid().GetCounter(), GetPlayer()->GetObjectGuid().GetCounter(), roles, isChanged ? "changed" : "not changed");
+        sLFGMgr.UpdateRoleCheck(group);
     }
     else
     {
         GetPlayer()->GetLFGState()->SetRoles(roles);
-        DEBUG_LOG("CMSG_LFG_SET_ROLES (not in LFD group) Player %u roles %u", GetPlayer()->GetObjectGuid().GetCounter(), roles);
+        DEBUG_LOG("CMSG_LFG_SET_ROLES (not in group) Player %u roles %u", GetPlayer()->GetObjectGuid().GetCounter(), roles);
     }
 }
 
@@ -443,10 +451,7 @@ void WorldSession::SendLfgJoinResult(LFGJoinResult checkResult, uint8 checkValue
         }
     }
 
-    if(GetPlayer()->GetGroup())
-        GetPlayer()->GetGroup()->BroadcastPacket(&data, false);
-    else
-        SendPacket(&data);
+    SendPacket(&data);
 }
 
 void WorldSession::SendLfgUpdateParty(LFGUpdateType updateType, LFGType type)
@@ -510,11 +515,7 @@ void WorldSession::SendLfgUpdateParty(LFGUpdateType updateType, LFGType type)
 
         data << comment.c_str();
     }
-
-    if(GetPlayer()->GetGroup())
-        GetPlayer()->GetGroup()->BroadcastPacket(&data, false);
-    else
-        SendPacket(&data);
+    SendPacket(&data);
 }
 
 void WorldSession::SendLfgUpdatePlayer(LFGUpdateType updateType, LFGType type)
@@ -985,10 +986,7 @@ void WorldSession::SendLfgRoleChosen(ObjectGuid guid, uint8 roles)
     data << uint8(roles != LFG_ROLE_MASK_NONE);    // Ready
     data << uint32(roles);                         // Roles
 
-    if (GetPlayer()->GetGroup())
-        GetPlayer()->GetGroup()->BroadcastPacket(&data, false);
-    else
-        SendPacket(&data);
+    SendPacket(&data);
 }
 
 void WorldSession::SendLfgBootPlayer(LFGPlayerBoot* pBoot)

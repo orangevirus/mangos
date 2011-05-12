@@ -469,6 +469,21 @@ namespace MaNGOS
         template<class NOT_INTERESTED> void Visit(GridRefManager<NOT_INTERESTED> &) {}
     };
 
+    template<class Check>
+    struct MANGOS_DLL_DECL PlayerListSearcher
+    {
+        uint32 i_phaseMask;
+        std::list<Player*> &i_objects;
+        Check& i_check;
+
+        PlayerListSearcher(std::list<Player*> &objects, Check & check)
+            : i_phaseMask(check.GetFocusObject().GetPhaseMask()), i_objects(objects),i_check(check) {}
+
+        void Visit(PlayerMapType &m);
+
+        template<class NOT_INTERESTED> void Visit(GridRefManager<NOT_INTERESTED> &) {}
+    };
+
     template<class Do>
     struct MANGOS_DLL_DECL PlayerWorker
     {
@@ -771,6 +786,27 @@ namespace MaNGOS
 
             // prevent clone this object
             GameObjectEntryInPosRangeCheck(GameObjectEntryInPosRangeCheck const&);
+    };
+
+    class GameObjectInRangeCheck
+    {
+        public:
+            GameObjectInRangeCheck(WorldObject const* _obj, float _x, float _y, float _z, float _range):
+              i_obj(_obj), x(_x), y(_y), z(_z), range(_range) {}
+
+            WorldObject const& GetFocusObject() const { return *i_obj; }
+
+            bool operator() (GameObject* go)
+            {
+                return go->IsInRange(x, y, z, range);
+            }
+
+        private:
+            WorldObject const* i_obj;
+            float x, y, z, range;
+
+            // prevent cloning this object
+            GameObjectInRangeCheck(GameObjectInRangeCheck const&);
     };
 
     // Unit checks
@@ -1160,26 +1196,26 @@ namespace MaNGOS
             NearestCreatureEntryWithLiveStateInObjectRangeCheck(NearestCreatureEntryWithLiveStateInObjectRangeCheck const&);
     };
 
-    class GameObjectInRangeCheck
+    class AllCreaturesOfEntryInRange
     {
         public:
-            GameObjectInRangeCheck(WorldObject const* _obj, float _x, float _y, float _z, float _range):
-              i_obj(_obj), x(_x), y(_y), z(_z), range(_range) {}
-
-            WorldObject const& GetFocusObject() const { return *i_obj; }
-
-            bool operator() (GameObject* go)
+            AllCreaturesOfEntryInRange(const WorldObject* pObject, uint32 uiEntry, float fMaxRange) : m_pObject(pObject), m_uiEntry(uiEntry), m_fRange(fMaxRange) {}
+            WorldObject const& GetFocusObject() const { return *m_pObject; }
+            bool operator() (Unit* pUnit)
             {
-                return go->IsInRange(x, y, z, range);
+                if (pUnit->GetEntry() == m_uiEntry && m_pObject->IsWithinDist(pUnit,m_fRange,false))
+                    return true;
+              
+                return false;
             }
 
         private:
-            WorldObject const* i_obj;
-            float x, y, z, range;
-
-            // prevent cloning this object
-            GameObjectInRangeCheck(GameObjectInRangeCheck const&);
+            const WorldObject* m_pObject;
+            uint32 m_uiEntry;
+            float m_fRange;
     };
+
+    // Player checks and do
 
     class AnyPlayerInObjectRangeCheck
     {
@@ -1198,26 +1234,23 @@ namespace MaNGOS
             float i_range;
     };
 
-    class AllCreaturesOfEntryInRange
+    class AnyPlayerInObjectRangeWithAuraCheck
     {
         public:
-            AllCreaturesOfEntryInRange(const WorldObject* pObject, uint32 uiEntry, float fMaxRange) : m_pObject(pObject), m_uiEntry(uiEntry), m_fRange(fMaxRange) {}
-            WorldObject const& GetFocusObject() const { return *m_pObject; }
-            bool operator() (Unit* pUnit)
+            AnyPlayerInObjectRangeWithAuraCheck(WorldObject const* obj, float range, uint32 spellId)
+                : i_obj(obj), i_range(range), i_spellId(spellId) {}
+            WorldObject const& GetFocusObject() const { return *i_obj; }
+            bool operator()(Player* u)
             {
-                if (pUnit->GetEntry() == m_uiEntry && m_pObject->IsWithinDist(pUnit,m_fRange,false))
-                    return true;
-
-                return false;
+                return u->isAlive()
+                    && i_obj->IsWithinDistInMap(u, i_range)
+                    && u->HasAura(i_spellId);
             }
-
         private:
-            const WorldObject* m_pObject;
-            uint32 m_uiEntry;
-            float m_fRange;
+            WorldObject const* i_obj;
+            float i_range;
+            uint32 i_spellId;
     };
-
-    // Player checks and do
 
     // Prepare using Builder localized packets with caching and send to player
     template<class Builder>

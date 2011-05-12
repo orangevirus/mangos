@@ -69,17 +69,16 @@ struct LFGReward
 // Stores player or group queue info
 struct LFGQueueInfo
 {
-    LFGQueueInfo(ObjectGuid _guid);
+    LFGQueueInfo(ObjectGuid _guid, LFGType type);
     ObjectGuid guid;                                        // guid (player or group) of queue owner
     time_t     joinTime;                                    // Player queue join time (to calculate wait times)
     uint8      tanks;                                       // Tanks needed
     uint8      healers;                                     // Healers needed
     uint8      dps;                                         // Dps needed
     // helpers
-    LFGDungeonSet* GetDungeons() { return m_dungeons; }
-    LFGType        GetDungeonType();
+    LFGType    GetDungeonType() {return m_type;};
     private:
-        LFGDungeonSet* m_dungeons;
+    LFGType    m_type;
 };
 
 struct LFGQueueStatus
@@ -111,6 +110,7 @@ struct LFGProposal
     Group* GetGroup() { return m_group; };
     void SetGroup(Group* group) { m_group = group; };
     void AddMember(ObjectGuid guid);
+    void RemoveMember(ObjectGuid guid);
 
     void RemoveDecliner(ObjectGuid guid);
     bool IsDecliner(ObjectGuid guid);
@@ -119,7 +119,7 @@ struct LFGProposal
     void SetState(LFGProposalState _state ) { m_state = _state;};
 
     LFGDungeonEntry const* GetDungeon() { return m_dungeon;};
-    void SetDungeon(LFGDungeonEntry const* _dungeon) { m_dungeon = _dungeon;};
+    LFGType GetType();
 
     void Start();
     bool IsActive() { return ( m_cancelTime >= time_t(time(NULL)));};
@@ -157,9 +157,9 @@ class LFGMgr
         // Update system
         void Update(uint32 diff);
 
-        void TruCompleteGroups(LFGType type);
-        bool TruCompleteGroup(Group* group, Player* player);
-        bool TruCreateGroup(LFGType type);
+        void TryCompleteGroups(LFGType type);
+        bool TryCompleteGroup(Group* group, Player* player);
+        bool TryCreateGroup(LFGType type);
 
         // Join system
         void Join(Player* player);
@@ -168,11 +168,12 @@ class LFGMgr
         void ClearLFRList(Player* player);
 
         // Queue system
-        void AddToQueue(ObjectGuid guid, bool inBegin = false);
+        void AddToQueue(ObjectGuid guid, LFGType type, bool inBegin = false);
         void RemoveFromQueue(ObjectGuid guid);
         LFGQueueInfo* GetQueueInfo(ObjectGuid guid);
         LFGQueueSet GetDungeonPlayerQueue(LFGDungeonEntry const* dungeon, Team team = TEAM_NONE);
         LFGQueueSet GetDungeonGroupQueue(LFGDungeonEntry const* dungeon, Team team = TEAM_NONE);
+        LFGQueueSet GetDungeonPlayerQueue(LFGType type);
 
         // reward system
         void LoadRewards();
@@ -184,7 +185,8 @@ class LFGMgr
         uint32 CreateProposal(LFGDungeonEntry const* dungeon, Group* group = NULL, LFGQueueSet* playerGuids = NULL);
         bool SendProposal(uint32 ID, ObjectGuid guid);
         LFGProposal* GetProposal(uint32 ID);
-        void RemoveProposal(uint32 ID);
+        void RemoveProposal(Player* decliner, uint32 ID);
+        void RemoveProposal(uint32 ID, bool success = false);
         void UpdateProposal(uint32 ID, ObjectGuid guid, bool accept);
         void CleanupProposals();
         Player* LeaderElection(LFGQueueSet* playerGuids);
@@ -200,18 +202,19 @@ class LFGMgr
         void Teleport(Group* group, bool out = false);
         void Teleport(Player* player, bool out = false, bool fromOpcode = false);
 
-        // LFG extend system
+        // LFR extend system
         void UpdateLFRGroups();
         bool IsGroupCompleted(Group* group, uint8 addMembers = 0);
 
         // Statistic system
-        LFGQueueStatus* GetDungeonQueueStatus(LFGDungeonEntry const* dungeon);
-        void SetDungeonQueueStatus(LFGDungeonEntry const* dungeon);
-        void RemoveDungeonQueueStatus(LFGDungeonEntry const* dungeon);
+        LFGQueueStatus* GetDungeonQueueStatus(LFGType type);
+        void SetDungeonQueueStatus(LFGType type);
         void UpdateQueueStatus(Player* player);
         void UpdateStatistic(LFGType type);
 
         // Role check system
+        void CleanupRoleChecks(LFGType type);
+        void StartRoleCheck(Group* group);
         void UpdateRoleCheck(Group* group);
         bool CheckRoles(Group* group, Player* player = NULL);
         bool CheckRoles(LFGRolesMap* roleMap);
@@ -228,6 +231,10 @@ class LFGMgr
         bool IsRandomDungeon(LFGDungeonEntry const* dungeon);
         LFGDungeonSet GetRandomDungeonsForPlayer(Player* player);
 
+        // Group operations
+        void AddMemberToLFDGroup(ObjectGuid guid);
+        void RemoveMemberFromLFDGroup(ObjectGuid guid);
+
         // Dungeon expand operations
         LFGDungeonSet ExpandRandomDungeonsForGroup(LFGDungeonEntry const* randomDungeon, LFGQueueSet playerGuids);
         LFGDungeonEntry const* SelectRandomDungeonFromList(LFGDungeonSet dugeons);
@@ -243,7 +250,7 @@ class LFGMgr
         LFGLockStatusMap GetPlayerLockMap(Player* player);
 
         // Search matrix
-        void AddToSearchMatrix(ObjectGuid guid);
+        void AddToSearchMatrix(ObjectGuid guid, bool inBegin = false);
         void RemoveFromSearchMatrix(ObjectGuid guid);
         LFGQueueSet* GetSearchVector(LFGDungeonEntry const* dungeon);
         bool IsInSearchFor(LFGDungeonEntry const* dungeon, ObjectGuid guid);
@@ -266,12 +273,13 @@ class LFGMgr
         LFGQueue        m_groupQueue[LFG_TYPE_MAX];         // Queue's for groups
         LFGDungeonMap   m_dungeonMap;                       // sorted dungeon map
         LFGDungeonExpansionMap m_dungeonExpansionMap;       // sorted dungeon expansion map
-        LFGQueueStatusMap  m_queueStatus;                   // Queue statisic
+        LFGQueueStatus  m_queueStatus[LFG_TYPE_MAX];        // Queue statisic
         LFGProposalMap  m_proposalMap;                      // Proposal store
         LFGBootMap      m_bootMap;                          // boot store
         LFGSearchMap    m_searchMatrix;                     // Search matrix
 
         uint32          m_updateTimer;                      // update timer for cleanup/statistic
+        uint32          m_updateTimer2;                     // update timer for LFR extend system
 
         LockType            i_lock;
 

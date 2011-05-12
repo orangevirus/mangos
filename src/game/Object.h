@@ -140,7 +140,7 @@ class MANGOS_DLL_SPEC Object
         }
 
         ObjectGuid const& GetObjectGuid() const { return GetGuidValue(OBJECT_FIELD_GUID); }
-        const uint64& GetGUID() const { return GetObjectGuid().GetRawValue(); }
+        const uint64& GetGUID() const { return GetObjectGuid().GetRawValue(); }  // DEPRECATED, not use, will removed soon
         uint32 GetGUIDLow() const { return GetObjectGuid().GetCounter(); }
         PackedGuid const& GetPackGUID() const { return m_PackGUID; }
         std::string GetGuidStr() const { return GetObjectGuid().GetString(); }
@@ -156,7 +156,7 @@ class MANGOS_DLL_SPEC Object
         void SetObjectScale(float newScale);
 
         uint8 GetTypeId() const { return m_objectTypeId; }
-        bool isType(uint16 mask) const { return (mask & m_objectType); }
+        bool isType(TypeMask mask) const { return (mask & m_objectType); }
 
         virtual void BuildCreateUpdateBlockForPlayer( UpdateData *data, Player *target ) const;
         void SendCreateUpdateToPlayer(Player* player);
@@ -499,6 +499,7 @@ class MANGOS_DLL_SPEC WorldObject : public Object
         virtual const char* GetNameForLocaleIdx(int32 /*locale_idx*/) const { return GetName(); }
 
         float GetDistance( const WorldObject* obj ) const;
+        float GetDistanceSqr(float x, float y, float z) const;
         float GetDistance(float x, float y, float z) const;
         float GetDistance2d(const WorldObject* obj) const;
         float GetDistance2d(float x, float y) const;
@@ -530,6 +531,7 @@ class MANGOS_DLL_SPEC WorldObject : public Object
 
         float GetAngle( const WorldObject* obj ) const;
         float GetAngle( const float x, const float y ) const;
+        bool HasInArc( const float arcangle, const float x, const float y) const;
         bool HasInArc( const float arcangle, const WorldObject* obj ) const;
         bool isInFrontInMap(WorldObject const* target,float distance, float arc = M_PI) const;
         bool isInBackInMap(WorldObject const* target, float distance, float arc = M_PI) const;
@@ -556,8 +558,8 @@ class MANGOS_DLL_SPEC WorldObject : public Object
         void PlayDistanceSound(uint32 sound_id, Player* target = NULL);
         void PlayDirectSound(uint32 sound_id, Player* target = NULL);
 
-        void SendObjectDeSpawnAnim(uint64 guid);
-        void SendGameObjectCustomAnim(uint64 guid, uint32 animprogress);
+        void SendObjectDeSpawnAnim(ObjectGuid guid);
+        void SendGameObjectCustomAnim(ObjectGuid guid, uint32 animprogress);
 
         virtual bool IsHostileTo(Unit const* unit) const =0;
         virtual bool IsFriendlyTo(Unit const* unit) const =0;

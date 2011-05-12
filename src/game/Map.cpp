@@ -35,7 +35,10 @@
 #include "DBCEnums.h"
 #include "MapPersistentStateMgr.h"
 #include "VMapFactory.h"
+#include "MoveMap.h"
 #include "BattleGroundMgr.h"
+
+#include "../recastnavigation/Detour/Include/DetourNavMesh.h"
 
 Map::~Map()
 {
@@ -52,6 +55,9 @@ Map::~Map()
         delete i_data;
         i_data = NULL;
     }
+
+    // unload instance specific navigation data
+    MMAP::MMapFactory::createOrGetMMapManager()->unloadMapInstance(m_TerrainData->GetMapId(), GetInstanceId());
 
     //release reference count
     if(m_TerrainData->Release())
@@ -1001,7 +1007,7 @@ void Map::RemoveAllObjectsInRemoveList()
             case TYPEID_CORPSE:
             {
                 // ??? WTF
-                Corpse* corpse = GetCorpse(obj->GetGUID());
+                Corpse* corpse = GetCorpse(obj->GetObjectGuid());
                 if (!corpse)
                     sLog.outError("Try delete corpse/bones %u that not in map", obj->GetGUIDLow());
                 else
@@ -1375,7 +1381,7 @@ bool DungeonMap::Add(Player *player)
                 // set up a solo bind or continue using it
                 if(!playerBind)
                     player->BindToInstance(GetPersistanceState(), false);
-                else
+                else if (playerBind->state != GetPersistentState())
                 {
                     player->RepopAtGraveyard();
                     return false;
@@ -2913,7 +2919,7 @@ Player* Map::GetPlayer(ObjectGuid guid)
  */
 Creature* Map::GetCreature(ObjectGuid guid)
 {
-    return m_objectsStore.find<Creature>(guid.GetRawValue(), (Creature*)NULL);
+    return m_objectsStore.find<Creature>(guid, (Creature*)NULL);
 }
 
 /**
@@ -2965,7 +2971,7 @@ Creature* Map::GetAnyTypeCreature(ObjectGuid guid)
  */
 GameObject* Map::GetGameObject(ObjectGuid guid)
 {
-    return m_objectsStore.find<GameObject>(guid.GetRawValue(), (GameObject*)NULL);
+    return m_objectsStore.find<GameObject>(guid, (GameObject*)NULL);
 }
 
 /**
@@ -2975,7 +2981,7 @@ GameObject* Map::GetGameObject(ObjectGuid guid)
  */
 DynamicObject* Map::GetDynamicObject(ObjectGuid guid)
 {
-    return m_objectsStore.find<DynamicObject>(guid.GetRawValue(), (DynamicObject*)NULL);
+    return m_objectsStore.find<DynamicObject>(guid, (DynamicObject*)NULL);
 }
 
 /**

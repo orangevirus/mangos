@@ -104,7 +104,7 @@ void IRCCmd::Account_Player(_CDATA *CD)
         return;
     }
     normalizePlayerName(_PARAMS[0]);
-    uint64 guid = sObjectMgr.GetPlayerGUIDByName(_PARAMS[0]);
+    ObjectGuid guid = sObjectMgr.GetPlayerGuidByName(_PARAMS[0]);
     uint32 account_id = 0;
     account_id = sObjectMgr.GetPlayerAccountIdByGUID(guid);
     if (account_id)
@@ -179,7 +179,7 @@ void IRCCmd::Ban_Player(_CDATA *CD)
     }
     if (_PARAMS[1] == "acct")
     {
-        uint64 guid = sObjectMgr.GetPlayerGUIDByName(_PARAMS[0].c_str());
+        ObjectGuid guid = sObjectMgr.GetPlayerGuidByName(_PARAMS[0].c_str());
         uint32 acctid = sObjectMgr.GetPlayerAccountIdByGUID(guid);
         if (_PARAMS[2] == "")
             _PARAMS[2] = "No Reason";
@@ -267,7 +267,7 @@ void IRCCmd::Char_Player(_CDATA *CD)
         return;
     }
     normalizePlayerName(_PARAMS[0]);
-    uint64 guid = sObjectMgr.GetPlayerGUIDByName(_PARAMS[0]);
+    ObjectGuid guid = sObjectMgr.GetPlayerGuidByName(_PARAMS[0]);
     Player* plr = sObjectMgr.GetPlayer(guid);
     if (plr)
     {
@@ -839,14 +839,14 @@ void IRCCmd::Lookup_Player(_CDATA *CD)
     }
     if (_PARAMS[0] == "char")
     {
-        uint32 plguid = atoi(_PARAMS[1].c_str());
-        if (sObjectMgr.GetPlayerGUIDByName(_PARAMS[1].c_str()))
-            plguid = sObjectMgr.GetPlayerGUIDByName(_PARAMS[1].c_str());
-        if (plguid > 0)
+        ObjectGuid plguid = ObjectGuid(uint64(_PARAMS[1].c_str()));
+        if (!sObjectMgr.GetPlayerGuidByName(_PARAMS[1].c_str()).IsEmpty())
+            plguid = sObjectMgr.GetPlayerGuidByName(_PARAMS[1].c_str());
+        if (!plguid.IsEmpty())
         {
             QueryResult *result = CharacterDatabase.PQuery("SELECT guid, account, name, race, class, online, SUBSTRING_INDEX(SUBSTRING_INDEX(`data`, ' ' , 35), ' ' , -1) AS level, SUBSTRING_INDEX(SUBSTRING_INDEX(`data`, ' ' , 238), ' ' , -1) AS guildid, SUBSTRING_INDEX(SUBSTRING_INDEX(`data`, ' ' , 239), ' ' , -1) AS guildrank, SUBSTRING_INDEX(SUBSTRING_INDEX(`data`, ' ' , 927), ' ' , -1) AS xp, SUBSTRING_INDEX(SUBSTRING_INDEX(`data`, ' ' , 928), ' ' , -1) AS maxxp, SUBSTRING_INDEX(SUBSTRING_INDEX(data, ' ' , 1462), ' ' , -1) AS gold, SUBSTRING_INDEX(SUBSTRING_INDEX(`data`, ' ' , 1454), ' ' , -1) AS hk, totaltime FROM characters WHERE guid =%i", plguid);
             uint32 latency = 0;
-            Player *chr = sObjectMgr.GetPlayer(ObjectGuid(HIGHGUID_PLAYER, plguid));
+            Player *chr = sObjectMgr.GetPlayer(plguid);
             if (chr)
             {
                 latency = chr->GetSession()->GetLatency();
@@ -1374,10 +1374,10 @@ void IRCCmd::Level_Player(_CDATA *CD)
     }
     std::string player  = _PARAMS[0];
     normalizePlayerName(player);
-    uint64 guid = sObjectMgr.GetPlayerGUIDByName(player.c_str());
+    ObjectGuid guid = sObjectMgr.GetPlayerGuidByName(player.c_str());
     std::string s_newlevel  = _PARAMS[1];
     uint8 i_newlvl = atoi(s_newlevel.c_str());
-    if (!guid)
+    if (guid.IsEmpty())
     {
         Send_IRCA(CD->USER, "\0034[ERROR] : Player Not Found!", true, "ERROR");
         return;
@@ -1435,7 +1435,7 @@ void IRCCmd::Money_Player(_CDATA *CD)
     }
     std::string player  = _PARAMS[0];
     normalizePlayerName(player);
-    uint64 guid = sObjectMgr.GetPlayerGUIDByName(player.c_str());
+    ObjectGuid guid = sObjectMgr.GetPlayerGuidByName(player.c_str());
     Player *chr = sObjectMgr.GetPlayer(guid);
 
     std::string s_money  = _PARAMS[1];
@@ -1445,7 +1445,7 @@ void IRCCmd::Money_Player(_CDATA *CD)
     unsigned int cop = (money % 10000) % 100;
     char tempgold [100];
     sprintf(tempgold, "\x2\x3\x30\x37%ug \x3\x31\x34%us \x3\x30\x35%uc\xF", gold, silv, cop);
-    if (!guid)
+    if (guid.IsEmpty())
     {
         Send_IRCA(CD->USER, "\0034[ERROR] : Player Not Found!", true, "ERROR");
         return;
@@ -1517,8 +1517,8 @@ void IRCCmd::Mute_Player(_CDATA *CD)
         return;
     }
     normalizePlayerName(_PARAMS[0]);
-    uint64 guid = sObjectMgr.GetPlayerGUIDByName(_PARAMS[0]);
-    if (guid)
+    ObjectGuid guid = sObjectMgr.GetPlayerGuidByName(_PARAMS[0]);
+    if (!guid.IsEmpty())
     {
         if (_PARAMS[1] == "release")
         {
@@ -1792,8 +1792,9 @@ void IRCCmd::Tele_Player(_CDATA *CD)
         }
         else
         {
-            if (uint64 guid = sObjectMgr.GetPlayerGUIDByName(_PARAMS[2].c_str()))
+            if (!sObjectMgr.GetPlayerGuidByName(_PARAMS[2].c_str()).IsEmpty())
             {
+                ObjectGuid guid = sObjectMgr.GetPlayerGuidByName(_PARAMS[2].c_str());
                 bool in_flight;
                 Player::LoadPositionFromDB(guid,mapid, pX, pY, pZ, pO, in_flight);
             }
@@ -1831,7 +1832,7 @@ void IRCCmd::Tele_Player(_CDATA *CD)
             }
             else
             {
-                uint64 guid = sObjectMgr.GetPlayerGUIDByName(_PARAMS[0]);
+                ObjectGuid guid = sObjectMgr.GetPlayerGuidByName(_PARAMS[0]);
                 Player::SavePositionInDB(guid,mapid,pX,pY,pZ,pO,TerrainManager::Instance().GetZoneId(mapid,pX,pY,pZ));
                 sIRC.Send_IRC_Channel(ChanOrPM(CD), rMsg + " \0034*Offline Tele.* ", true, CD->TYPE);
             }
@@ -1969,7 +1970,7 @@ void IRCCmd::GM_Ticket(_CDATA *CD)
     if (_PARAMS[0] == "read")
     {
         std::string CharName = _PARAMS[1].c_str();
-        uint64 guid = sObjectMgr.GetPlayerGUIDByName(CharName);
+        ObjectGuid guid = sObjectMgr.GetPlayerGuidByName(CharName);
         QueryResult *result = CharacterDatabase.PQuery("SELECT guid, ticket_text, DATE_FORMAT(ticket_lastchange, '%s'), response_text FROM character_ticket WHERE guid=%u",DateTime.c_str(), guid);
         if (result)
         {
@@ -1986,7 +1987,7 @@ void IRCCmd::GM_Ticket(_CDATA *CD)
             Send_IRCA(ChanOrPM(CD), tptime, true, CD->TYPE);
             return;
         }
-        if (!guid)
+        if (guid.IsEmpty())
         {
             Send_IRCA(CD->USER, "\0034[ERROR] : Character not found." ,true, "ERROR");
             return;
@@ -2002,7 +2003,7 @@ void IRCCmd::GM_Ticket(_CDATA *CD)
             return;
 		}
 		std::string CharName = _PARAMS[1].c_str();
-        ObjectGuid guid = sObjectMgr.GetPlayerGUIDByName(CharName);
+        ObjectGuid guid = sObjectMgr.GetPlayerGuidByName(CharName);
 
         if (guid.IsEmpty())
         {
@@ -2042,7 +2043,7 @@ void IRCCmd::GM_Ticket(_CDATA *CD)
             return;
         }
         std::string CharName = _PARAMS[1].c_str();
-        ObjectGuid guid = sObjectMgr.GetPlayerGUIDByName(CharName);
+        ObjectGuid guid = sObjectMgr.GetPlayerGuidByName(CharName);
         GMTicket* ticket = sTicketMgr.GetGMTicket(guid);
         if (!ticket)
         {

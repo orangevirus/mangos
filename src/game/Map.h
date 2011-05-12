@@ -40,6 +40,8 @@
 #include <bitset>
 #include <list>
 
+#include "../../dep/recastnavigation/Detour/Include/DetourNavMesh.h"
+
 class Creature;
 class Unit;
 class WorldPacket;
@@ -230,7 +232,8 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>
         Unit* GetUnit(ObjectGuid guid);                     // only use if sure that need objects at current map, specially for player case
         WorldObject* GetWorldObject(ObjectGuid guid);       // only use if sure that need objects at current map, specially for player case
 
-        TypeUnorderedMapContainer<AllMapStoredObjectTypes>& GetObjectsStore() { return m_objectsStore; }
+        typedef TypeUnorderedMapContainer<AllMapStoredObjectTypes, ObjectGuid> MapStoredObjectTypesContainer;
+        MapStoredObjectTypesContainer& GetObjectsStore() { return m_objectsStore; }
 
         void AddUpdateObject(Object *obj)
         {
@@ -307,7 +310,7 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>
         typedef std::set<WorldObject*> ActiveNonPlayers;
         ActiveNonPlayers m_activeNonPlayers;
         ActiveNonPlayers::iterator m_activeNonPlayersIter;
-        TypeUnorderedMapContainer<AllMapStoredObjectTypes> m_objectsStore;
+        MapStoredObjectTypesContainer m_objectsStore;
     private:
         time_t i_gridExpiry;
 
@@ -339,6 +342,21 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>
 
         template<class T>
             void RemoveFromGrid(T*, NGridType *, Cell const&);
+
+        // begin movemap-related
+    public:
+        dtNavMesh const* GetNavMesh() const;
+        static void preventPathfindingOnMaps(std::string ignoreMapIds);
+        bool IsPathfindingEnabled() const;
+
+    private:
+        void LoadNavMesh(int gx, int gy);
+        void UnloadNavMesh(int gx, int gy);
+        dtNavMesh* m_navMesh;
+        UNORDERED_MAP<uint32, dtTileRef> m_mmapLoadedTiles;    // maps [map grid coords] to [dtTile]
+
+        static std::set<uint32> s_mmapDisabledIds;      // stores list of mapids which do not use pathfinding
+        // end movemap-related
 };
 
 class MANGOS_DLL_SPEC WorldMap : public Map
