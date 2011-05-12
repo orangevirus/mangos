@@ -1248,7 +1248,7 @@ void WorldSession::HandleCharFactionOrRaceChangeOpcode(WorldPacket& recv_data)
     }
 
     // character with this name already exist
-    if (!sObjectMgr.GetPlayerGUIDByName(newname).IsEmpty())
+    if (!sObjectMgr.GetPlayerGuidByName(newname).IsEmpty())
     {
         ObjectGuid newguid = sObjectMgr.GetPlayerGuidByName(newname);
         if (newguid != guid)
