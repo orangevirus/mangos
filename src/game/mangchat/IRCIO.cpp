@@ -342,7 +342,7 @@ void IRCClient::Send_WoW_Player(std::string sPlayer, std::string sMsg)
 void IRCClient::Send_WoW_Player(Player *plr, string sMsg)
 {
     WorldPacket data(SMSG_MESSAGECHAT, 200);
-    ChatHandler::FillMessageData(&data, plr->GetSession(), CHAT_MSG_SYSTEM, LANG_UNIVERSAL, NULL, plr->GetObjectGuid().GetCounter(), sMsg.c_str(), NULL);
+    ChatHandler::FillMessageData(&data, plr->GetSession(), CHAT_MSG_SYSTEM, LANG_UNIVERSAL, NULL, plr->GetObjectGuid(), sMsg.c_str(), NULL);
     plr->GetSession()->SendPacket(&data);
 }
 
