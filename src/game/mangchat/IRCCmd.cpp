@@ -721,9 +721,9 @@ std::string IRCCmd::GetAcctNameFromID(uint32 acctid)
     return "";
 }
 
-std::string IRCCmd::GetCharNameFromGUID(uint32 chrid)
+std::string IRCCmd::GetCharNameFromGUID(ObjectGuid guid)
 {
-    QueryResult *result = CharacterDatabase.PQuery("SELECT name FROM characters WHERE guid = '%d'", chrid);
+    QueryResult *result = CharacterDatabase.PQuery("SELECT name FROM characters WHERE guid = '%d'", guid.GetCounter());
     if(result)
     {
         std::string name = (*result)[0].GetCppString();
