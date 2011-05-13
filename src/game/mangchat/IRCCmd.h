@@ -123,7 +123,7 @@ class IRCCmd
         std::string GetAccName(std::string sName);
         std::string GetNameFromAcct(std::string sName);
         std::string GetAcctNameFromID(uint32 acctid);
-        std::string GetCharNameFromGUID(uint32 acctid);
+        std::string GetCharNameFromGUID(ObjectGuid guid);
         std::string GetIPFromPlayer(std::string player);
         std::string SecToDay(std::string secons);
         int GetAcctIDFromName(std::string sName);

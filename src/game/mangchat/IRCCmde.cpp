@@ -143,7 +143,7 @@ void IRCCmd::Account_Player(_CDATA *CD)
                     plr->SetAtLoginFlag(AT_LOGIN_RENAME);
                     Send_Player(plr, MakeMsg("%s Has Requested You Change This Characters Name, Rename Will Be Forced On Next Login!", CD->USER.c_str()));
                 }
-                CharacterDatabase.PExecute("UPDATE `characters` SET `at_login` = `at_login` | '1' WHERE `guid` = '%u'", guid);
+                CharacterDatabase.PExecute("UPDATE `characters` SET `at_login` = `at_login` | '1' WHERE `guid` = '%u'", guid.GetCounter());
                 Send_IRCA(ChanOrPM(CD), "\00313["+GetAcctNameFromID(account_id)+"] : Has Been Forced To Change Their Characters Name, Rename Will Be Forced On Next Login!", true, CD->TYPE);
             }
         }
@@ -681,7 +681,7 @@ void IRCCmd::Jail_Player(_CDATA *CD)
                 float rposx, rposy, rposz, rposo = 0;
                 uint32 rmapid = 0;
                 CharacterDatabase.escape_string(_PARAMS[0]);
-                QueryResult *result = CharacterDatabase.PQuery( "SELECT `map`, `position_x`, `position_y`, `position_z` FROM `character_homebind` WHERE `guid` = '" UI64FMTD "'", plr->GetGUID() );
+                QueryResult *result = CharacterDatabase.PQuery( "SELECT `map`, `position_x`, `position_y`, `position_z` FROM `character_homebind` WHERE `guid` = '" UI64FMTD "'", plr->GetObjectGuid() );
                 if (result)
                 {
                     Field *fields = result->Fetch();
@@ -844,7 +844,7 @@ void IRCCmd::Lookup_Player(_CDATA *CD)
             plguid = sObjectMgr.GetPlayerGuidByName(_PARAMS[1].c_str());
         if (!plguid.IsEmpty())
         {
-            QueryResult *result = CharacterDatabase.PQuery("SELECT guid, account, name, race, class, online, SUBSTRING_INDEX(SUBSTRING_INDEX(`data`, ' ' , 35), ' ' , -1) AS level, SUBSTRING_INDEX(SUBSTRING_INDEX(`data`, ' ' , 238), ' ' , -1) AS guildid, SUBSTRING_INDEX(SUBSTRING_INDEX(`data`, ' ' , 239), ' ' , -1) AS guildrank, SUBSTRING_INDEX(SUBSTRING_INDEX(`data`, ' ' , 927), ' ' , -1) AS xp, SUBSTRING_INDEX(SUBSTRING_INDEX(`data`, ' ' , 928), ' ' , -1) AS maxxp, SUBSTRING_INDEX(SUBSTRING_INDEX(data, ' ' , 1462), ' ' , -1) AS gold, SUBSTRING_INDEX(SUBSTRING_INDEX(`data`, ' ' , 1454), ' ' , -1) AS hk, totaltime FROM characters WHERE guid =%i", plguid);
+            QueryResult *result = CharacterDatabase.PQuery("SELECT guid, account, name, race, class, online, SUBSTRING_INDEX(SUBSTRING_INDEX(`data`, ' ' , 35), ' ' , -1) AS level, SUBSTRING_INDEX(SUBSTRING_INDEX(`data`, ' ' , 238), ' ' , -1) AS guildid, SUBSTRING_INDEX(SUBSTRING_INDEX(`data`, ' ' , 239), ' ' , -1) AS guildrank, SUBSTRING_INDEX(SUBSTRING_INDEX(`data`, ' ' , 927), ' ' , -1) AS xp, SUBSTRING_INDEX(SUBSTRING_INDEX(`data`, ' ' , 928), ' ' , -1) AS maxxp, SUBSTRING_INDEX(SUBSTRING_INDEX(data, ' ' , 1462), ' ' , -1) AS gold, SUBSTRING_INDEX(SUBSTRING_INDEX(`data`, ' ' , 1454), ' ' , -1) AS hk, totaltime FROM characters WHERE guid =%i", plguid.GetCounter());
             uint32 latency = 0;
             Player *chr = sObjectMgr.GetPlayer(plguid);
             if (chr)
@@ -1480,7 +1480,7 @@ void IRCCmd::Money_Player(_CDATA *CD)
                     Send_Player(chr, MakeMsg("You Have Been Liquidated By: %s. Total Money Is Now 0.", CD->USER.c_str()));
                 }
                 else
-                    CharacterDatabase.PExecute("UPDATE `characters` SET data=concat(substring_index(data,' ',1462-1),' ','%u',' ', right(data,length(data)-length(substring_index(data,' ',1462))-1) ) where guid='%u'",newmoney, guid );
+                    CharacterDatabase.PExecute("UPDATE `characters` SET data=concat(substring_index(data,' ',1462-1),' ','%u',' ', right(data,length(data)-length(substring_index(data,' ',1462))-1) ) where guid='%u'",newmoney, guid.GetCounter() );
             }
             else
             {
@@ -1491,7 +1491,7 @@ void IRCCmd::Money_Player(_CDATA *CD)
                     Send_Player(chr, MakeMsg("You Have Had %s Copper Taken From You By: %s.", _PARAMS[1].c_str(), CD->USER.c_str()));
                 }
                 else
-                    CharacterDatabase.PExecute("UPDATE `characters` SET data=concat(substring_index(data,' ',1462-1),' ','%u',' ', right(data,length(data)-length(substring_index(data,' ',1462))-1) ) where guid='%u'",newmoney, guid );
+                    CharacterDatabase.PExecute("UPDATE `characters` SET data=concat(substring_index(data,' ',1462-1),' ','%u',' ', right(data,length(data)-length(substring_index(data,' ',1462))-1) ) where guid='%u'",newmoney, guid.GetCounter() );
             }
         }
         else
@@ -1503,7 +1503,7 @@ void IRCCmd::Money_Player(_CDATA *CD)
                 Send_Player(chr, MakeMsg("You Have Been Given %s Copper. From: %s.", _PARAMS[1].c_str(), CD->USER.c_str()));
             }
             else
-                CharacterDatabase.PExecute("UPDATE `characters` SET data=concat(substring_index(data,' ',1462-1),' ','%u',' ', right(data,length(data)-length(substring_index(data,' ',1462))-1) ) where guid='%u'",newmoney, guid );
+                CharacterDatabase.PExecute("UPDATE `characters` SET data=concat(substring_index(data,' ',1462-1),' ','%u',' ', right(data,length(data)-length(substring_index(data,' ',1462))-1) ) where guid='%u'",newmoney, guid.GetCounter() );
         }
     }
 }
@@ -1953,7 +1953,7 @@ void IRCCmd::GM_Ticket(_CDATA *CD)
             std::string tptime = MakeMsg("\x2 First %d Tickets:\x3\x31\x30 ", limitr);
             for (uint64 i=0; i < result->GetRowCount(); i++)
             {
-                uint32 guid = fields[0].GetUInt32();
+                ObjectGuid guid = ObjectGuid(fields[0].GetUInt64());
                 std::string CharName = GetCharNameFromGUID(guid);
                 std::string lastchange = fields[1].GetCppString();
                 uint32 tindex = i+1;
@@ -1971,7 +1971,7 @@ void IRCCmd::GM_Ticket(_CDATA *CD)
     {
         std::string CharName = _PARAMS[1].c_str();
         ObjectGuid guid = sObjectMgr.GetPlayerGuidByName(CharName);
-        QueryResult *result = CharacterDatabase.PQuery("SELECT guid, ticket_text, DATE_FORMAT(ticket_lastchange, '%s'), response_text FROM character_ticket WHERE guid=%u",DateTime.c_str(), guid);
+        QueryResult *result = CharacterDatabase.PQuery("SELECT guid, ticket_text, DATE_FORMAT(ticket_lastchange, '%s'), response_text FROM character_ticket WHERE guid=%u",DateTime.c_str(), guid.GetCounter());
         if (result)
         {
             Field *fields = result->Fetch();
