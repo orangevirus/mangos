@@ -162,16 +162,38 @@ void WorldSession::HandleSendMail(WorldPacket & recv_data )
         return;
     }
 
+    uint32 rc_account = receive
+        ? receive->GetSession()->GetAccountId()
+        : sObjectMgr.GetPlayerAccountIdByGUID(rc);
+
+    // check for account bound 
+    bool m_bAccountBound = false;
+
+    if (pl->GetSession()->GetAccountId() != rc_account && !(money > 0))
+    {
+        for (uint8 i = 0; i < items_count; ++i)
+        {
+            Item* item = pl->GetItemByGuid(itemGuids[i]);
+
+            if (item)
+            {
+                if (item->IsBoundAccountWide())
+                    m_bAccountBound = true;
+                else
+                {
+                    m_bAccountBound = false;
+                    break;
+                }
+            }
+        }
+    }
+
     // check the receiver's Faction...
-    if (!sWorld.getConfig(CONFIG_BOOL_ALLOW_TWO_SIDE_INTERACTION_MAIL) && pl->GetTeam() != rc_team && GetSecurity() == SEC_PLAYER)
+    if (!m_bAccountBound && !sWorld.getConfig(CONFIG_BOOL_ALLOW_TWO_SIDE_INTERACTION_MAIL) && pl->GetTeam() != rc_team && GetSecurity() == SEC_PLAYER)
     {
         pl->SendMailResult(0, MAIL_SEND, MAIL_ERR_NOT_YOUR_TEAM);
         return;
     }
-
-    uint32 rc_account = receive
-        ? receive->GetSession()->GetAccountId()
-        : sObjectMgr.GetPlayerAccountIdByGUID(rc);
 
     Item* items[MAX_MAIL_ITEMS];
 
