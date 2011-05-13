@@ -6528,13 +6528,12 @@ void Unit::RemoveGuardian( Pet* pet )
 
 void Unit::RemoveGuardians()
 {
-    if (m_guardianPets.empty())
-        return;
-
-    for (GuardianPetList::const_iterator itr = m_guardianPets.begin(); itr != m_guardianPets.end(); ++itr)
+    while (!m_guardianPets.empty())
     {
-        if (Pet* pet = _GetPet(*itr))
+        if (Pet* pet = GetMap()->GetPet(*m_guardianPets.begin()))
             pet->Unsummon(PET_SAVE_AS_DELETED, this);
+
+        m_guardianPets.erase(m_guardianPets.begin());
     }
     m_guardianPets.clear();
 }
