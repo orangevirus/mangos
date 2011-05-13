@@ -23,7 +23,6 @@
 #include "../Channel.h"
 #include "../World.h"
 #include "../Chat.h"
-#include "../ObjectGuid.h"
 
 IRCCmd Command;
 void IRCClient::Handle_IRC(std::string sData)
@@ -285,12 +284,12 @@ void IRCClient::Handle_WoW_Channel(std::string Channel, Player *plr, int nAction
             {
                 case CHANNEL_JOIN:
                     Send_IRC_Channel(GetIRCChannel(Channel), MakeMsg(MakeMsg(MakeMsg(GetChatLine(JOIN_WOW), "$Name", ChatTag + plr->GetName()), "$Channel", Channel), "$GM", GMRank));
-                    WorldDatabase.PExecute(lchan.c_str(), plr->GetObjectGuid());
-                    WorldDatabase.PExecute(query.c_str(), plr->GetObjectGuid());
+                    WorldDatabase.PExecute(lchan.c_str(), plr->GetObjectGuid().GetCounter());
+                    WorldDatabase.PExecute(query.c_str(), plr->GetObjectGuid().GetCounter());
                     break;
                 case CHANNEL_LEAVE:
                     Send_IRC_Channel(GetIRCChannel(Channel), MakeMsg(MakeMsg(MakeMsg(GetChatLine(LEAVE_WOW), "$Name", ChatTag + plr->GetName()), "$Channel", Channel), "$GM", GMRank));
-                    WorldDatabase.PExecute(lchan.c_str(), plr->GetObjectGuid());
+                    WorldDatabase.PExecute(lchan.c_str(), plr->GetObjectGuid().GetCounter());
                     break;
             }
         }
@@ -430,7 +429,7 @@ void IRCClient::AutoJoinChannel(Player *plr)
     {
         if (itr->second && itr->second->GetSession()->GetPlayer() && itr->second->GetSession()->GetPlayer()->IsInWorld())
         {
-            data << ObjectGuid(itr->second->GetObjectGuid());
+            data << itr->second->GetObjectGuid();
             break;
         }
     }
