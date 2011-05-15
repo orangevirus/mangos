@@ -1771,6 +1771,12 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                 case 45958:                                 // Signal Alliance
                 {
                     m_caster->CastSpell(m_caster, m_spellInfo->CalculateSimpleValue(eff_idx), true);
+					return;
+                }
+                case 22096:                                 // Ebon Blade Prisoner Credit
+                {
+                    if(m_caster->GetTypeId() == TYPEID_PLAYER)
+                        ((Player*)m_caster)->KilledMonsterCredit(30186);
                     return;
                 }
                 case 45980:                                 // Re-Cursive Transmatter Injection
