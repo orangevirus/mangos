@@ -382,7 +382,7 @@ void Spell::EffectSchoolDMG(SpellEffectIndex effect_idx)
                     case 47496:
                     {
                         // Special Effect only for caster (ghoul in this case)
-                        if (unitTarget->GetEntry() == 26125 && (unitTarget->GetGUID() == m_caster->GetGUID()))
+                        if (unitTarget->GetEntry() == 26125 && (unitTarget->GetObjectGuid() == m_caster->GetObjectGuid()))
                         {
                             // After explode the ghoul must be killed
                             unitTarget->DealDamage(unitTarget, unitTarget->GetMaxHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, NULL, false);
@@ -2696,6 +2696,16 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                             break;
                     }
                     m_caster->CastSpell(m_caster, spell_id, true);
+                    return;
+                }
+                case 67400:                                 // Zergling Attack (on Grunty companion)
+                {
+                    if (!unitTarget || unitTarget->GetTypeId() != TYPEID_UNIT || !((Creature*)unitTarget)->IsPet())
+                        return;
+
+                    m_caster->DealDamage(unitTarget, unitTarget->GetMaxHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, NULL, false);
+                    ((Pet*)unitTarget)->Unsummon(PET_SAVE_AS_DELETED);
+                    m_caster->GetMotionMaster()->MovementExpired();
                     return;
                 }
                 case 69922:                                 // Temper Quel'Delar
@@ -7957,7 +7967,7 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                 // Glyph of Starfire
                 case 54846:
                 {
-                    if (Aura* aura = unitTarget->GetAura(SPELL_AURA_PERIODIC_DAMAGE, SPELLFAMILY_DRUID, UI64LIT(0x00000002), 0, m_caster->GetGUID()))
+                    if (Aura* aura = unitTarget->GetAura(SPELL_AURA_PERIODIC_DAMAGE, SPELLFAMILY_DRUID, UI64LIT(0x00000002), 0, m_caster->GetObjectGuid()))
                     {
                         uint32 countMin = aura->GetAuraMaxDuration();
                         uint32 countMax = GetSpellMaxDuration(aura->GetSpellProto());
@@ -8307,6 +8317,24 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     // Totem of the Earthen Ring does not really require or take reagents.
                     // Expecting RewardQuest() to already destroy them or we need additional code here to destroy.
                     unitTarget->CastSpell(unitTarget, 66747, true);
+                    return;
+                }
+                case 67398:                                 // Zergling Periodic Effect (Called by Zergling Passive)
+                {
+                    if (!unitTarget || !unitTarget->isAlive())
+                        return;
+                                                            // Only usable on Grunty companion
+                    Unit* pGrunty = unitTarget->GetMiniPet();
+                    if (pGrunty && pGrunty->GetEntry() == 34694)
+                    {
+                        if (m_caster->IsWithinDist(pGrunty, 2.0f))
+                            m_caster->CastSpell(pGrunty, 67400, true); //zerg attack
+                        else
+                        {
+                            m_caster->CastSpell(pGrunty, 67397, true); // zerg rush dummy aura
+                            m_caster->GetMotionMaster()->MoveFollow(pGrunty,0,0);
+                        }
+                    }
                     return;
                 }
                 case 68861:                                 // Consume Soul (ICC FoS: Bronjahm)
@@ -9850,6 +9878,7 @@ void Spell::EffectKnockBack(SpellEffectIndex eff_idx)
     // Glyph of Typhoon
     if (m_spellInfo->SpellFamilyName == SPELLFAMILY_DRUID && m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000000001000000))
         if (m_caster->HasAura(62135))
+            return;
 
     // Glyph of Thunderstorm
     if (m_spellInfo->SpellFamilyName == SPELLFAMILY_SHAMAN && m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000000000002000))
@@ -10659,79 +10688,6 @@ void Spell::EffectFriendSummon( SpellEffectIndex eff_idx )
     DEBUG_LOG( "Spell::EffectFriendSummon called for player %u", ((Player*)m_caster)->GetSelectionGuid().GetCounter());
 
     m_caster->CastSpell(m_caster, m_spellInfo->EffectTriggerSpell[eff_idx], true);
-}
-
-// Used only for snake trap
-void Spell::DoSummonSnakes(SpellEffectIndex eff_idx)
-{
-    uint32 creature_entry = m_spellInfo->EffectMiscValue[eff_idx];
-    if (!creature_entry || !m_caster)
-        return;
-
-    // Find trap GO and get it coordinates to spawn snakes
-    GameObject* pTrap = m_caster->GetMap()->GetGameObject(m_originalCasterGUID);
-    if (!pTrap)
-    {
-        sLog.outError("EffectSummonSnakes faild to find trap for caster %s (GUID: %u)",m_caster->GetName(),m_caster->GetGUID());
-        return;
-    }
-
-    float position_x, position_y, position_z;
-    pTrap->GetPosition(position_x, position_y, position_z);
-
-    // Find summon duration based on DBC
-    int32 duration = GetSpellDuration(m_spellInfo);
-    if(Player* modOwner = m_caster->GetSpellModOwner())
-        modOwner->ApplySpellMod(m_spellInfo->Id, SPELLMOD_DURATION, duration);
-
-    int32 amount = damage > 0 ? damage : 1;
-
-    for(int32 count = 0; count < amount; ++count)
-    {
-        TemporarySummon* pSummon = new TemporarySummon(m_caster->GetObjectGuid());
-
-        Team team = TEAM_NONE;
-        if (m_caster->GetTypeId()==TYPEID_PLAYER)
-            team = ((Player*)this)->GetTeam();
-
-        float x, y, z;
-        pTrap->GetClosePoint(x, y, z, 2.0f, frand(0.0f, 5.0f), frand(0.0f, M_PI_F*2));
-        CreatureCreatePos pos(m_caster->GetMap(), x, y, z, -m_caster->GetOrientation(), m_caster->GetPhaseMask());
-
-        const CreatureInfo* creature_info = sCreatureStorage.LookupEntry<CreatureInfo>(creature_entry);
-        if(creature_info)
-        {
-            if (!pSummon->Create(m_caster->GetMap()->GenerateLocalLowGuid(HIGHGUID_UNIT), pos, creature_info, team))
-            {
-                delete pSummon;
-                return;
-            }
-        }
-
-        pSummon->SetSummonPoint(pos);
-
-        if(!pSummon->IsPositionValid())
-        {
-            sLog.outError("EffectSummonSnakes failed to summon snakes for Unit %s (GUID: %u) bacause of invalid position (x = %f, y = %f, z = %f map = %u)"
-                ,m_caster->GetName(),m_caster->GetGUID(), x, y, z, m_caster->GetMap());
-            delete pSummon;
-            return;
-        }
-
-        // Active state set before added to map
-        pSummon->SetActiveObjectState(false);
-
-        // Apply stats
-        pSummon->SetUInt32Value(UNIT_CREATED_BY_SPELL, m_spellInfo->Id);
-        pSummon->SetUInt32Value(UNIT_FIELD_FLAGS, UNIT_FLAG_PVP_ATTACKABLE | UNIT_FLAG_PET_IN_COMBAT | UNIT_FLAG_PVP);
-        pSummon->SetCreatorGuid(m_caster->GetObjectGuid());
-        pSummon->SetOwnerGuid(m_caster->GetObjectGuid());
-        pSummon->setFaction(m_caster->getFaction());
-        pSummon->SetLevel(m_caster->getLevel());
-        pSummon->SetMaxHealth(m_caster->getLevel()+ urand(20,30));
-
-        pSummon->Summon(TEMPSUMMON_TIMED_DESPAWN, duration);
-    }
 }
 
 void Spell::EffectCancelAura(SpellEffectIndex eff_idx)
