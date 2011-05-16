@@ -1767,7 +1767,7 @@ void AchievementMgr::UpdateAchievementCriteria(AchievementCriteriaTypes type, ui
             case ACHIEVEMENT_CRITERIA_TYPE_GET_KILLING_BLOWS:
             {	
                 BattleGround* bg = GetPlayer()->GetBattleGround();
-                if (!bg || !miscvalue1 || GetPlayer()->GetMapId() != achievementCriteria->healing_done.mapid)
+                if (!bg || GetPlayer()->GetMapId() != achievementCriteria->healing_done.mapid)
                     continue;
 
                 // some hardcoded requirements

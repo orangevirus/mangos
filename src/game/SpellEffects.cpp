@@ -511,7 +511,7 @@ void Spell::EffectSchoolDMG(SpellEffectIndex effect_idx)
                         {
                             uint8 count = 0;
                             for (TargetList::iterator itr = m_UniqueTargetInfo.begin(); itr != m_UniqueTargetInfo.end(); ++itr)
-                                if (itr->targetGUID != m_caster->GetGUID())
+                                if (itr->targetGUID != m_caster->GetObjectGuid())
                                     if (Player *target = m_caster->GetMap()->GetPlayer(itr->targetGUID))
                                         if (target->HasAura(m_triggeredByAuraSpell->Id))
                                             ++count;
@@ -532,7 +532,7 @@ void Spell::EffectSchoolDMG(SpellEffectIndex effect_idx)
                                     m_caster->CastSpell(m_caster, spellId, false);
                                 }
 
-                                if (SpellAuraHolder* chargesholder = m_caster->GetSpellAuraHolder(spellId, m_caster->GetGUID()))
+                                if (SpellAuraHolder* chargesholder = m_caster->GetSpellAuraHolder(spellId, m_caster->GetObjectGuid()))
                                     chargesholder->SetStackAmount(count);
                                 //chargesholder->SetAuraCharges
                             }
@@ -946,7 +946,7 @@ void Spell::EffectSchoolDMG(SpellEffectIndex effect_idx)
             case SPELLFAMILY_DEATHKNIGHT:
             {
                 // Blood Boil - bonus for diseased targets
-                if (m_spellInfo->SpellFamilyFlags & 0x00040000 && unitTarget->GetAura(SPELL_AURA_PERIODIC_DAMAGE, SPELLFAMILY_DEATHKNIGHT, 0, 0x00000002, m_caster->GetGUID()))
+                if (m_spellInfo->SpellFamilyFlags & 0x00040000 && unitTarget->GetAura(SPELL_AURA_PERIODIC_DAMAGE, SPELLFAMILY_DEATHKNIGHT, 0, 0x00000002, m_caster->GetObjectGuid()))
                 {
                     damage += damage / 2;
                     damage += int32(m_caster->GetTotalAttackPowerValue(BASE_ATTACK)* 0.035f);
@@ -9025,7 +9025,7 @@ void Spell::EffectSanctuary(SpellEffectIndex /*eff_idx*/)
         for (uint32 i = CURRENT_FIRST_NON_MELEE_SPELL; i < CURRENT_MAX_SPELL; ++i)
         {
             if ((*tIter)->GetCurrentSpell(CurrentSpellTypes(i))
-            && (*tIter)->GetCurrentSpell(CurrentSpellTypes(i))->m_targets.getUnitTargetGuid() == unitTarget->GetGUID())
+            && (*tIter)->GetCurrentSpell(CurrentSpellTypes(i))->m_targets.getUnitTargetGuid() == unitTarget->GetObjectGuid())
             {
                 (*tIter)->InterruptSpell(CurrentSpellTypes(i), false);
             }
