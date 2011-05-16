@@ -2946,9 +2946,6 @@ bool Pet::Summon()
         }
     }
 
-    if (owner->GetTypeId() == TYPEID_PLAYER)
-        ((Player*)owner)->AddKnownPetName(GetCharmInfo()->GetPetNumber(),GetName());
-
     if(owner->IsPvP())
         SetPvP(true);
 
