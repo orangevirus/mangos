@@ -485,6 +485,11 @@ void Map::Update(const uint32 &t_diff)
         //lets update mobs/objects in ALL visible cells around player!
         CellArea area = Cell::CalculateCellArea(plr->GetPositionX(), plr->GetPositionY(), GetVisibilityDistance());
 
+        //hackfix for Noblegarden Achievement "Hardboiled"
+        if(sGameEventMgr.IsActiveHoliday(HOLIDAY_NOBLEGARDEN) && plr->GetAreaId() == 543 && (plr->HasAura(61716) || plr->HasAura(61734)))
+            if(!plr->isMoving() && !plr->HasAura(61719))
+                plr->CastSpell(plr,61719,true);
+
         for(uint32 x = area.low_bound.x_coord; x <= area.high_bound.x_coord; ++x)
         {
             for(uint32 y = area.low_bound.y_coord; y <= area.high_bound.y_coord; ++y)
