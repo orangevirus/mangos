@@ -169,7 +169,7 @@ void WorldSession::HandleSendMail(WorldPacket & recv_data )
     // check for account bound 
     bool m_bAccountBound = false;
 
-    if (pl->GetSession()->GetAccountId() != rc_account && !(money > 0))
+    if (pl->GetSession()->GetAccountId() == rc_account && !(money > 0))
     {
         for (uint8 i = 0; i < items_count; ++i)
         {
