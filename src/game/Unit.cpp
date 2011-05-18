@@ -9571,6 +9571,13 @@ int32 Unit::CalculateSpellDamage(Unit const* target, SpellEntry const* spellProt
 
     int32 value = basePoints;
 
+    // Life Burst (Malygos) hack
+    if (spellProto->Id == 57143)
+    {
+        value /= 2;
+        comboDamage = value;
+    }
+
     // random damage
     if (comboDamage != 0 && unitPlayer && target && (target->GetObjectGuid() == unitPlayer->GetComboTargetGuid() || IsAreaOfEffectSpell(spellProto)))
         value += (int32)(comboDamage * comboPoints);
@@ -11926,7 +11933,7 @@ void Unit::ExitVehicle()
     float y = GetPositionY();
     float z = GetPositionZ() + 2.0f;
     GetClosePoint(x, y, z, 2.0f);
-    UpdateAllowedPositionZ(x, y, z);
+    //UpdateAllowedPositionZ(x, y, z);
     SendMonsterMove(x, y, z + 0.5f, SPLINETYPE_NORMAL, SPLINEFLAG_WALKMODE, 0);
 }
 

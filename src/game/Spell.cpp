@@ -771,7 +771,11 @@ void Spell::FillTargetMap()
                         }
                         break;
                     case 0:
-                        SetTargetMap(SpellEffectIndex(i), m_spellInfo->EffectImplicitTargetA[i], tmpUnitMap);
+                        // Life Burst (Wyrmrest Skytalon) hack - spell is AoE but implicitTargets dont match here :/
+                        if (m_spellInfo->Id == 57143)
+                            SetTargetMap(SpellEffectIndex(i), TARGET_ALL_FRIENDLY_UNITS_AROUND_CASTER, tmpUnitMap);
+                        else
+                            SetTargetMap(SpellEffectIndex(i), m_spellInfo->EffectImplicitTargetA[i], tmpUnitMap);
                         tmpUnitMap.push_back(m_caster);
                         break;
                     default:
