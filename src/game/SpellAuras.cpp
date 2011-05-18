@@ -450,20 +450,15 @@ m_isPersistent(false), m_in_use(0), m_spellAuraHolder(holder)
         // Apply haste to duration
         if (applyHaste)
         {
-            uint32 oldDuration = GetHolder()->GetAuraDuration();
-
-            int32 new_duration = (int32)(oldDuration * caster->GetFloatValue(UNIT_MOD_CAST_SPEED));
-            GetHolder()->SetAuraMaxDuration(new_duration);
-            GetHolder()->SetAuraDuration(new_duration);
-
-            uint32 _periodicTime = m_modifier.periodictime;
-
+            int32 oldDuration = GetSpellMaxDuration(spellproto); // Maximum duration of aura
+            int32 new_duration = GetHolder()->GetAuraDuration(); // Modified duration of aura
+            uint32 _periodicTime = m_modifier.periodictime; // Periodic time
             // Calculate new periodic timer
-            int32 ticks = oldDuration / _periodicTime;
+            int32 ticks = oldDuration / _periodicTime; // Calculate tick count based on old duration
 
-            _periodicTime =  ticks == 0 ? new_duration : new_duration / ticks;
+            _periodicTime =  ticks == 0 ? new_duration : new_duration / ticks; // Recalculate periodic time
 
-            m_modifier.periodictime = _periodicTime;
+            m_modifier.periodictime = _periodicTime; // Set new Periodic time
         }
     }
 
@@ -2535,6 +2530,17 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
             case 12479:                                     // Hex of Jammal'an
                 target->CastSpell(target, 12480, true, NULL, this);
                 return;
+            case 12774:                                     // (DND) Belnistrasz Idol Shutdown Visual
+            {
+                if (m_removeMode == AURA_REMOVE_BY_DEATH)
+                    return;
+
+                // Idom Rool Camera Shake <- wtf, don't drink while making spellnames?
+                if (Unit* caster = GetCaster())
+                    caster->CastSpell(caster, 12816, true);
+
+                return;
+            }
             case 28169:                                     // Mutating Injection
             {
                 // Mutagen Explosion

@@ -48,6 +48,8 @@ char serviceDescription[] = "Massive Network Game Object Server";
  *  2 - paused
  */
 int m_ServiceStatus = -1;
+#else
+#include "PosixDaemon.h"
 #endif
 
 DatabaseType WorldDatabase;                                 ///< Accessor to the world database
@@ -68,7 +70,10 @@ void usage(const char *prog)
         "    -s install               install service\n\r"
         "    -s uninstall             uninstall service\n\r"
         "    -m MangChat_config       use Mangchat_config as configuration file for MangChat\n\r"
-
+        #else
+        "    Running as daemon functions:\n\r"
+        "    -s run                   run as daemon\n\r"
+        "    -s stop                  stop daemon\n\r"
         #endif
         ,prog);
 }
@@ -81,14 +86,19 @@ extern int main(int argc, char **argv)
     char const* mc_cfg_file = _MANGCHAT_CONFIG;
 
 
-#ifdef WIN32
     char const *options = ":c:m:s:";
-#else
-    char const *options = ":c:m:";
-#endif
 
     ACE_Get_Opt cmd_opts(argc, argv, options);
     cmd_opts.long_option("version", 'v');
+
+#ifndef WIN32                                               // need call before options for posix daemon
+    if (!sConfig.SetSource(cfg_file))
+    {
+        sLog.outError("Could not find configuration file %s.", cfg_file);
+        Log::WaitBeforeContinueIfNeed();
+        return 1;
+    }
+#endif
 
     int option;
     while ((option = cmd_opts()) != EOF)
@@ -104,9 +114,9 @@ extern int main(int argc, char **argv)
             case 'v':
                 printf("%s\n", _FULLVERSION(REVISION_DATE,REVISION_TIME,REVISION_NR,REVISION_ID));
                 return 0;
-#ifdef WIN32
             case 's':
-            {
+                        {
+#ifdef WIN32
                 const char *mode = cmd_opts.opt_arg();
 
                 if (!strcmp(mode, "install"))
@@ -131,8 +141,22 @@ extern int main(int argc, char **argv)
                     return 1;
                 }
                 break;
-            }
+#else
+                const char *mode = cmd_opts.opt_arg();
+                if (!strcmp(mode, "run"))
+                    startDaemon(120);
+                else if (!strcmp(mode, "stop"))
+                    stopDaemon();
+                else
+                {
+                    sLog.outError("Runtime-Error: -%c unsupported argument %s", cmd_opts.opt_opt(), mode);
+                    usage(argv[0]);
+                    Log::WaitBeforeContinueIfNeed();
+                    return 1;
+                }
 #endif
+            }
+            break;
             case ':':
                 sLog.outError("Runtime-Error: -%c option requires an input argument", cmd_opts.opt_opt());
                 usage(argv[0]);
@@ -146,12 +170,14 @@ extern int main(int argc, char **argv)
         }
     }
 
+#ifdef WIN32                                                // need call after options for windows service
     if (!sConfig.SetSource(cfg_file))
     {
         sLog.outError("Could not find configuration file %s.", cfg_file);
         Log::WaitBeforeContinueIfNeed();
         return 1;
     }
+#endif
 
     sIRC.SetCfgFile(mc_cfg_file);
 

@@ -7162,7 +7162,6 @@ uint32 Unit::SpellDamageBonusTaken(Unit *pCaster, SpellEntry const *spellProto, 
     TakenTotalMod *= GetTotalAuraMultiplierByMiscMask(SPELL_AURA_MOD_DAMAGE_PERCENT_TAKEN, schoolMask);
 
     // .. taken pct: dummy auras
-    // .. taken (dummy auras)
     AuraList const& m_dummyAuras = GetAurasByType(SPELL_AURA_DUMMY);
     for(AuraList::const_iterator itr = m_dummyAuras.begin(); itr != m_dummyAuras.end(); ++itr)
     {
@@ -7192,6 +7191,16 @@ uint32 Unit::SpellDamageBonusTaken(Unit *pCaster, SpellEntry const *spellProto, 
                 }
                 break;
             }
+            default:
+                break;
+        }
+
+        switch((*itr)->GetId())
+        {
+            case 20911:                                     // Blessing of Sanctuary
+            case 25899:                                     // Greater Blessing of Sanctuary
+                TakenTotalMod *= ((*itr)->GetModifier()->m_amount + 100.0f) / 100.0f;
+                break;
             default:
                 break;
         }
@@ -8248,11 +8257,9 @@ uint32 Unit::MeleeDamageBonusTaken(Unit *pCaster, uint32 pdamage,WeaponAttackTyp
     if (!mDummyAuras.empty())
     for(AuraList::const_iterator i = mDummyAuras.begin(); i != mDummyAuras.end(); ++i)
     {
-      if ((*i)->GetId())
-        switch((*i)->GetSpellProto()->SpellIconID)
+        switch((*i)->GetId())
         {
-            //Cheat Death
-            case 2109:
+            case 45182:                                     // Cheating Death
                 if((*i)->GetModifier()->m_miscvalue & SPELL_SCHOOL_MASK_NORMAL)
                 {
                     if(GetTypeId() != TYPEID_PLAYER)
@@ -8264,6 +8271,10 @@ uint32 Unit::MeleeDamageBonusTaken(Unit *pCaster, uint32 pdamage,WeaponAttackTyp
 
                     TakenPercent *= (mod + 100.0f) / 100.0f;
                 }
+                break;
+            case 20911:                                     // Blessing of Sanctuary
+            case 25899:                                     // Greater Blessing of Sanctuary
+                TakenPercent *= ((*i)->GetModifier()->m_amount + 100.0f) / 100.0f;
                 break;
         }
     }

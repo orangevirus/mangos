@@ -77,6 +77,9 @@ int32 CalculateSpellDuration(SpellEntry const *spellInfo, Unit const* caster)
         {
             modOwner->ApplySpellMod(spellInfo->Id, SPELLMOD_DURATION, duration);
 
+            if ((spellInfo->AttributesEx5 & SPELL_ATTR_EX5_AFFECTED_BY_HASTE) != 0)
+                duration = (int32)(duration * modOwner->GetFloatValue(UNIT_MOD_CAST_SPEED));
+
             if (duration < 0)
                 duration = 0;
         }
@@ -2447,6 +2450,11 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
 
                 // Divine Sacrifice and Divine Guardian
                 if (spellInfo_1->SpellIconID == 3837 && spellInfo_2->SpellIconID == 3837)
+                    return false;
+
+                // Blood Corruption, Holy Vengeance, Righteous Vengeance
+                if ((spellInfo_1->SpellIconID == 2292 && spellInfo_2->SpellIconID == 3025) ||
+                    (spellInfo_2->SpellIconID == 2292 && spellInfo_1->SpellIconID == 3025))
                     return false;
 
                 // Blessing of Sanctuary (multi-family check, some from 16 spell icon spells)
