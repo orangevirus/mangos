@@ -1208,6 +1208,9 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         }
         void _removeAttacker(Unit *pAttacker)               // must be called only from Unit::AttackStop()
         {
+            if (m_attackers.empty())
+                return;
+
             if (pAttacker)
                 m_attackers.erase(pAttacker);
         }
