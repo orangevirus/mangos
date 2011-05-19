@@ -152,6 +152,7 @@ void TemporarySummon::Summon(TempSummonType type, uint32 lifetime)
 void TemporarySummon::UnSummon()
 {
     CombatStop();
+    RemoveAllAuras();
 
     if (GetSummonerGuid().IsCreatureOrVehicle())
         if(Creature* sum = GetMap()->GetCreature(GetSummonerGuid()))
