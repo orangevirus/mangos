@@ -70,7 +70,7 @@ int32 CalculateSpellDuration(SpellEntry const *spellInfo, Unit const* caster)
     {
         int32 maxduration = GetSpellMaxDuration(spellInfo);
 
-        if (duration != maxduration && caster->GetTypeId() == TYPEID_PLAYER)
+        if (duration != maxduration)
             duration += int32((maxduration - duration) * ((Player*)caster)->GetComboPoints() / 5);
 
         if (Player* modOwner = caster->GetSpellModOwner())
@@ -2405,6 +2405,10 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                 // Serpent Sting & (Immolation/Explosive Trap Effect)
                 if (((spellInfo_1->SpellFamilyFlags & UI64LIT(0x4)) && (spellInfo_2->SpellFamilyFlags & UI64LIT(0x00000004000))) ||
                     ((spellInfo_2->SpellFamilyFlags & UI64LIT(0x4)) && (spellInfo_1->SpellFamilyFlags & UI64LIT(0x00000004000))))
+                    return false;
+
+                // Deterrence
+                if (spellInfo_1->SpellIconID == 83 && spellInfo_2->SpellIconID == 83)
                     return false;
 
                 // Bestial Wrath
