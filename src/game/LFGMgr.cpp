@@ -1492,7 +1492,7 @@ void LFGMgr::CleanupProposals(LFGType type)
     }
     if (!expiredProposals.empty())
     {
-        WriteGuard Guard(GetLock());
+//        WriteGuard Guard(GetLock());
         for(std::set<uint32>::const_iterator itr = expiredProposals.begin(); itr != expiredProposals.end(); ++itr)
             RemoveProposal(*itr);
     }
@@ -2031,7 +2031,7 @@ Player* LFGMgr::LeaderElection(LFGQueueSet* playerGuids)
     for (LFGQueueSet::const_iterator itr = playerGuids->begin(); itr != playerGuids->end(); ++itr)
     {
         Player* member  = sObjectMgr.GetPlayer(*itr);
-        if (member->IsInWorld())
+        if (member && member->IsInWorld())
         {
             if (member->GetLFGState()->GetRoles() & LFG_ROLE_MASK_LEADER)
                 leaders.insert(member);
