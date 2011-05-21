@@ -20,7 +20,6 @@
 #define MANGOS_INSTANCE_DATA_H
 
 #include "Common.h"
-#include "GameObject.h"
 #include "ObjectGuid.h"
 
 class Map;
@@ -64,11 +63,6 @@ class MANGOS_DLL_SPEC InstanceData
 
         //Called when a player leaves the instance (before really removed from map (or possibly world))
         virtual void OnPlayerLeave(Player *) {}
-
-        //Handle open / close objects
-        //use HandleGameObject(NULL,boolen,GO); in OnObjectCreate in instance scripts
-        //use HandleGameObject(GUID,boolen,NULL); in any other script
-        void HandleGameObject(uint64 GUID, bool open, GameObject *go = NULL);
 
         //Called when a player successfully enters the other zone
         virtual void OnPlayerEnterZone(Player*, uint32 /*uiNewZoneId*/, uint32 /*uiNewAreaId*/) {}
