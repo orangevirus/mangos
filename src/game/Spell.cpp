@@ -1455,9 +1455,16 @@ void Spell::DoSpellHitOnUnit(Unit *unit, uint32 effectMask)
             }
 
             // not break stealth by cast targeting
-            if (!(m_spellInfo->AttributesEx & SPELL_ATTR_EX_NOT_BREAK_STEALTH) && m_spellInfo->Id != 51690 && m_spellInfo->Id != 53055 &&
-				m_spellInfo->Id != 58838)
-                unit->RemoveSpellsCausingAura(SPELL_AURA_MOD_STEALTH);
+            if (!(m_spellInfo->AttributesEx & SPELL_ATTR_EX_NOT_BREAK_STEALTH))
+            {
+                // some spells should not break stealth
+                if (m_spellInfo->SpellFamilyName == SPELLFAMILY_ROGUE && m_spellInfo->SpellFamilyFlags == SPELLFAMILYFLAG_ROGUE_SAP &&
+                    m_spellInfo->Id != 3600 && m_spellInfo->Id != 32375 && m_spellInfo->Id != 32592 && m_spellInfo->Id != 72734 &&
+                    m_spellInfo->Id != 51690 && m_spellInfo->Id != 53055 && m_spellInfo->Id != 58838)
+                {
+                    unit->RemoveSpellsCausingAura(SPELL_AURA_MOD_STEALTH);
+                }
+            }
 
             // can cause back attack (if detected), stealth removed at Spell::cast if spell break it
             if (!(m_spellInfo->AttributesEx3 & SPELL_ATTR_EX3_NO_INITIAL_AGGRO) && !IsPositiveSpell(m_spellInfo->Id) &&
@@ -1476,6 +1483,21 @@ void Spell::DoSpellHitOnUnit(Unit *unit, uint32 effectMask)
                 if (!(m_spellInfo->AttributesEx & SPELL_ATTR_EX_NO_THREAT) && 
                     !unit->isInCombat() && unit->GetTypeId() != TYPEID_PLAYER && ((Creature*)unit)->AI())
                     unit->AttackedBy(realCaster);
+
+                unit->AddThreat(realCaster);
+                unit->SetInCombatWith(realCaster);
+                realCaster->SetInCombatWith(unit);
+
+                if (Player *attackedPlayer = unit->GetCharmerOrOwnerPlayerOrPlayerItself())
+                    realCaster->SetContestedPvP(attackedPlayer);
+            }
+
+            // some AoE spells don't break stealth but they set in combat with targets
+            // Mass Dispel
+            if (m_spellInfo->Id == 32592)
+            {
+                if (!unit->isInCombat() && unit->GetTypeId() != TYPEID_PLAYER && ((Creature*)unit)->AI())
+                    ((Creature*)unit)->AI()->AttackedBy(realCaster);
 
                 unit->AddThreat(realCaster);
                 unit->SetInCombatWith(realCaster);
