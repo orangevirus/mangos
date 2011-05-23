@@ -1606,8 +1606,10 @@ void Aura::TriggerSpell()
 //                    case 62571: break;
 //                    // Mulgore Hatchling
 //                    case 62586: break;
-//                    // Durotar Scorpion
-//                    case 62679: break;
+                    // Durotar Scorpion
+                    case 62679:
+                        trigger_spell_id = auraSpellInfo->CalculateSimpleValue(m_effIndex);
+                        break;
 //                    // Fighting Fish
 //                    case 62833: break;
 //                    // Shield Level 1
@@ -2167,6 +2169,14 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                     case 48025:                             // Headless Horseman's Mount
                         Spell::SelectMountByAreaAndSkill(target, GetSpellProto(), 51621, 48024, 51617, 48023, 0);
                         return;
+                    case 48143:                             // Forgotten Aura
+                        // See Death's Door
+                        target->CastSpell(target, 48814, true, NULL, this);
+                        return;
+                    case 51405:                             // Digging for Treasure
+                        target->HandleEmote(EMOTE_STATE_WORK);
+                        // Pet will be following owner, this makes him stop
+                        target->addUnitState(UNIT_STAT_STUNNED);
                     case 50141:                             // Blood Oath
                         // Blood Oath
                         target->CastSpell(target, 50001, true, NULL, this);
@@ -3555,8 +3565,12 @@ void Aura::HandleAuraModShapeshift(bool apply, bool Real)
                     (aurSpellInfo->SpellIconID == 15 && aurSpellInfo->Dispel == 0 &&
                     (aurMechMask & (1 << (MECHANIC_SNARE-1))) == 0))
                 {
-                    ++iter;
-                    continue;
+                    // Aftermath - should be removed by shapeshifting
+                    if ((*iter)->GetId() != 18118)
+                    {
+                        ++iter;
+                        continue;
+                    }
                 }
 
                 // some aura exceptions that should not be removed
@@ -4901,6 +4915,9 @@ void Aura::HandleInvisibility(bool apply, bool Real)
                     target->SetVisibility(VISIBILITY_ON);
             }
         }
+
+        if (GetId() == 48809)                               // Binding Life
+            target->CastSpell(target, GetSpellProto()->CalculateSimpleValue(m_effIndex), true);
     }
 }
 
@@ -5294,12 +5311,10 @@ void Aura::HandleModMechanicImmunity(bool apply, bool /*Real*/)
     {
         if (target->GetTypeId() != TYPEID_PLAYER)
             return;
+
         if (apply)
-        {
-            GameObject* obj = target->GetGameObject(48018);
-            if (obj)
-                ((Player*)target)->TeleportTo(obj->GetMapId(),obj->GetPositionX(),obj->GetPositionY(),obj->GetPositionZ(),obj->GetOrientation());
-        }
+            if (GameObject* obj = target->GetGameObject(48018))
+                ((Player*)target)->TeleportTo(obj->GetMapId(),obj->GetPositionX(),obj->GetPositionY(),obj->GetPositionZ(),obj->GetOrientation(), TELE_TO_NOT_LEAVE_COMBAT);
     }
 
     // Bestial Wrath
@@ -8419,14 +8434,14 @@ void Aura::PeriodicDummyTick()
                 case 52441:                                 // Cool Down
                     target->CastSpell(target, 52443, true);
                     return;
-                case 53035:                                 // Summon Anub'ar Champion (Azjol Nerub)
-                    target->CastSpell(target, 53014, true);
+                case 53035:                                 // Summon Anub'ar Champion Periodic (Azjol Nerub)
+                    target->CastSpell(target, 53014, true); // Summon Anub'ar Champion
                     return;
-                case 53036:                                 // Summon Anub'ar Necromancer (Azjol Nerub)
-                    target->CastSpell(target, 53015, true);
+                case 53036:                                 // Summon Anub'ar Necromancer Periodic (Azjol Nerub)
+                    target->CastSpell(target, 53015, true); // Summon Anub'ar Necromancer
                     return;
-                case 53037:                                 // Summon Crypt Fiend (Azjol Nerub)
-                    target->CastSpell(target, 53016, true);
+                case 53037:                                 // Summon Anub'ar Crypt Fiend Periodic (Azjol Nerub)
+                    target->CastSpell(target, 53016, true); // Summon Anub'ar Crypt Fiend
                     return;
                 case 53520:                                 // Carrion Beetles
                     target->CastSpell(target, 53521, true, NULL, this);
@@ -8862,7 +8877,8 @@ void Aura::HandleAuraControlVehicle(bool apply, bool Real)
         if (caster->GetTypeId() == TYPEID_PLAYER)
             ((Player*)caster)->RemovePet(PET_SAVE_AS_CURRENT);
 
-        caster->EnterVehicle(target->GetVehicleKit());
+        int8 seat = target->GetVehicleKit()->HasEmptySeat(GetModifier()->m_amount) ? GetModifier()->m_amount : -1;
+        caster->EnterVehicle(target->GetVehicleKit(), seat);
     }
     else
     {
@@ -9606,6 +9622,25 @@ void SpellAuraHolder::SetStackAmount(uint32 stackAmount)
                     aur->ApplyModifier(false, true);
                     aur->GetModifier()->m_amount = amount;
                     aur->ApplyModifier(true, true);
+
+                    // change duration if aura refreshes
+                    if (refresh)
+                    {
+                        int32 maxduration = GetSpellMaxDuration(aur->GetSpellProto());
+                        int32 duration = GetSpellDuration(aur->GetSpellProto());
+
+                        // new duration based on combo points
+                        if (duration != maxduration)
+                        {
+                            if (Unit *caster = aur->GetCaster())
+                            {
+                                duration += int32((maxduration - duration) * caster->GetComboPoints() / 5);
+                                SetAuraMaxDuration(duration);
+                                SetAuraDuration(duration);
+                                refresh = false;
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -9902,16 +9937,14 @@ void SpellAuraHolder::HandleSpellSpecificBoosts(bool apply)
                 case 48108:                                 // Hot Streak (triggered)
                 case 57761:                                 // Fireball! (Brain Freeze triggered)
                 {
-                    // consumed aura
-                    if (!apply && m_removeMode != AURA_REMOVE_BY_EXPIRE && m_removeMode != AURA_REMOVE_BY_STACK)
+                    if (!apply)
                     {
                         Unit* caster = GetCaster();
-                        // Item - Mage T10 2P Bonus
-                        if (!caster || !caster->HasAura(70752))
-                            return;
-
-                        cast_at_remove = true;
-                        spellId1 = 70753;                   // Pushing the Limit
+                        if (caster || caster->HasAura(70752))   // Item - Mage T10 2P Bonus
+                        {
+                            cast_at_remove = true;
+                            spellId1 = 70753;                   // Pushing the Limit
+                        }
                     }
                     else
                         return;

@@ -931,8 +931,8 @@ void Spell::prepareDataForTriggerSystem()
                     m_canTrigger = true;
                 break;
             case SPELLFAMILY_PRIEST:
-                // For Penance,Mind Sear,Mind Flay, Empowered Renew heal/damage triggers need do it
-                if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0001800000800000) || (m_spellInfo->SpellFamilyFlags2 & 0x00001040))
+                // For Penance,Mind Sear,Mind Flay,Improved Devouring Plague heal/damage triggers need do it
+                if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0001800000800000) || (m_spellInfo->SpellFamilyFlags2 & 0x00000048))
                     m_canTrigger = true;
                 break;
             case SPELLFAMILY_ROGUE:
@@ -1455,9 +1455,16 @@ void Spell::DoSpellHitOnUnit(Unit *unit, uint32 effectMask)
             }
 
             // not break stealth by cast targeting
-            if (!(m_spellInfo->AttributesEx & SPELL_ATTR_EX_NOT_BREAK_STEALTH) && m_spellInfo->Id != 51690 && m_spellInfo->Id != 53055 &&
-				m_spellInfo->Id != 58838)
-                unit->RemoveSpellsCausingAura(SPELL_AURA_MOD_STEALTH);
+            if (!(m_spellInfo->AttributesEx & SPELL_ATTR_EX_NOT_BREAK_STEALTH))
+            {
+                // some spells should not break stealth
+                if (m_spellInfo->SpellFamilyName == SPELLFAMILY_ROGUE && m_spellInfo->SpellFamilyFlags == SPELLFAMILYFLAG_ROGUE_SAP &&
+                    m_spellInfo->Id != 3600 && m_spellInfo->Id != 32375 && m_spellInfo->Id != 32592 && m_spellInfo->Id != 72734 &&
+                    m_spellInfo->Id != 51690 && m_spellInfo->Id != 53055 && m_spellInfo->Id != 58838)
+                {
+                    unit->RemoveSpellsCausingAura(SPELL_AURA_MOD_STEALTH);
+                }
+            }
 
             // can cause back attack (if detected), stealth removed at Spell::cast if spell break it
             if (!(m_spellInfo->AttributesEx3 & SPELL_ATTR_EX3_NO_INITIAL_AGGRO) && !IsPositiveSpell(m_spellInfo->Id) &&
@@ -1476,6 +1483,21 @@ void Spell::DoSpellHitOnUnit(Unit *unit, uint32 effectMask)
                 if (!(m_spellInfo->AttributesEx & SPELL_ATTR_EX_NO_THREAT) && 
                     !unit->isInCombat() && unit->GetTypeId() != TYPEID_PLAYER && ((Creature*)unit)->AI())
                     unit->AttackedBy(realCaster);
+
+                unit->AddThreat(realCaster);
+                unit->SetInCombatWith(realCaster);
+                realCaster->SetInCombatWith(unit);
+
+                if (Player *attackedPlayer = unit->GetCharmerOrOwnerPlayerOrPlayerItself())
+                    realCaster->SetContestedPvP(attackedPlayer);
+            }
+
+            // some AoE spells don't break stealth but they set in combat with targets
+            // Mass Dispel
+            if (m_spellInfo->Id == 32592)
+            {
+                if (!unit->isInCombat() && unit->GetTypeId() != TYPEID_PLAYER && ((Creature*)unit)->AI())
+                    ((Creature*)unit)->AI()->AttackedBy(realCaster);
 
                 unit->AddThreat(realCaster);
                 unit->SetInCombatWith(realCaster);
@@ -2218,6 +2240,19 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                 break;
             else
                 FillAreaTargets(targetUnitMap, radius, PUSH_DEST_CENTER, SPELL_TARGETS_AOE_DAMAGE);
+
+            // Starfall - exclude stealthed targets
+            if (m_spellInfo->Id == 50286)
+            {
+                for (UnitList::iterator itr = targetUnitMap.begin(), next; itr != targetUnitMap.end(); itr = next)
+                {
+                    next = itr;
+                    ++next;
+
+                    if (!(*itr)->isVisibleForOrDetect(m_caster, m_caster, false, false, false))
+                        targetUnitMap.erase(itr);
+                }
+            }
             break;
         case TARGET_AREAEFFECT_INSTANT:
         {
@@ -3545,6 +3580,16 @@ void Spell::cast(bool skipCheck)
             // Ice Block
             if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000008000000000))
                 AddPrecastSpell(41425);                     // Hypothermia
+            // Icy Veins
+            else if (m_spellInfo->Id == 12472)
+            {
+                // Glyph of Icy Veins
+                if (m_caster->HasAura(56374))
+                {
+                    m_caster->RemoveSpellsCausingAura(SPELL_AURA_MOD_DECREASE_SPEED);
+                    m_caster->RemoveSpellsCausingAura(SPELL_AURA_HASTE_SPELLS);
+                }
+            }
             // Fingers of Frost
             else if (m_spellInfo->Id == 44544)
                 AddPrecastSpell(74396);                     // Fingers of Frost
@@ -3928,8 +3973,8 @@ void Spell::update(uint32 difftime)
         return;
     }
 
-    // check if the player caster has moved before the spell finished
-    if ((m_caster->GetTypeId() == TYPEID_PLAYER && m_timer != 0) &&
+    // check if the player caster has moved before the spell finished (exclude casting on vehicles)
+    if (!m_caster->GetVehicle() && (m_caster->GetTypeId() == TYPEID_PLAYER && m_timer != 0) &&
         (m_castPositionX != m_caster->GetPositionX() || m_castPositionY != m_caster->GetPositionY() || m_castPositionZ != m_caster->GetPositionZ()) &&
         (m_spellInfo->Effect[EFFECT_INDEX_0] != SPELL_EFFECT_STUCK || !((Player*)m_caster)->m_movementInfo.HasMovementFlag(MOVEFLAG_FALLINGFAR)))
     {
@@ -5182,6 +5227,17 @@ SpellCastResult Spell::CheckCast(bool strict)
             if ((!((Player*)m_caster)->m_movementInfo.HasMovementFlag(MOVEFLAG_FALLINGFAR) || m_spellInfo->Effect[EFFECT_INDEX_0] != SPELL_EFFECT_STUCK) &&
                 (IsAutoRepeat() || (m_spellInfo->AuraInterruptFlags & AURA_INTERRUPT_FLAG_NOT_SEATED) != 0))
                 return SPELL_FAILED_MOVING;
+        }
+
+        if (((Player*)m_caster)->hasUnitState(UNIT_STAT_STUNNED))
+        {
+            if (m_spellInfo->SpellFamilyName == SPELLFAMILY_PRIEST && m_spellInfo->SpellIconID == 2178)
+            {
+                // Glyph of Desperation
+                if (m_caster->HasAura(63248))
+                    return SPELL_CAST_OK;
+                else return SPELL_FAILED_STUNNED;
+            }
         }
 
         if (!m_IsTriggeredSpell && NeedsComboPoints(m_spellInfo) && !m_caster->IsIgnoreUnitState(m_spellInfo, IGNORE_UNIT_TARGET_STATE) &&
